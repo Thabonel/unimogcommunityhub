@@ -20,6 +20,15 @@ export interface ManualReference {
   page_image_url?: string;
   filename?: string;
   manual_type?: string;
+  // RPS-specific fields
+  cdn_url?: string;
+  rps_illustration_url?: string;
+  is_rps_exploded_view?: boolean;
+  rps_number?: string;
+  rps_figure_number?: string;
+  rps_group_code?: string;
+  group_code?: string;
+  group_name?: string;
 }
 
 interface ManualCitationProps {
@@ -29,11 +38,43 @@ interface ManualCitationProps {
 }
 
 export function ManualCitation({ reference, onClick, className }: ManualCitationProps) {
+  // Check if this is an RPS illustration
+  const isRpsIllustration = reference.is_rps_exploded_view || reference.manual_type === 'RPS';
+  const illustrationUrl = reference.rps_illustration_url || reference.cdn_url || reference.storage_url;
+
   // Create short preview from content (first 150 chars)
   const preview = reference.content
     ? reference.content.substring(0, 150) + (reference.content.length > 150 ? '...' : '')
     : 'Click to view full manual section';
 
+  // If it's an RPS illustration with a URL, show the image inline
+  if (isRpsIllustration && illustrationUrl) {
+    return (
+      <div className={cn("flex flex-col gap-2 p-2 border border-primary/30 rounded-md bg-card", className)}>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="border-primary/30 text-primary">
+            <BookOpen className="h-3 w-3 mr-1" />
+            <span className="text-xs">
+              RPS Page {reference.page_number}
+              {reference.rps_number && ` - ${reference.rps_number}`}
+            </span>
+          </Badge>
+          {reference.group_name && (
+            <span className="text-xs text-muted-foreground">{reference.group_name}</span>
+          )}
+        </div>
+        <img
+          src={illustrationUrl}
+          alt={`RPS Exploded View - Page ${reference.page_number}`}
+          className="w-full max-w-md rounded cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={onClick}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  // Regular manual citation (non-RPS or no illustration)
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip>
