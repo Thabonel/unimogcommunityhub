@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, MessageCircle, X } from 'lucide-react';
-import { WISBarryTab } from './WISBarryTab';
+import { TabbedBarryLayout } from '@/components/knowledge/TabbedBarryLayout';
 import { useWISStore } from '@/stores/wisStore';
 import { useShallow } from 'zustand/react/shallow';
 import {
@@ -1022,22 +1022,30 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   // Render content based on active tab
   const renderTabContent = () => {
     if (showBarry) {
-      const currentProcedure = activeTab
-        ? {
-            id: activeTab.procedure.id,
-            title: activeTab.procedure.title,
-            description: `${activeTab.system} - ${activeTab.component}`,
-          }
-        : undefined;
-
       return (
-        <div className="h-full">
-          <WISBarryTab
-            currentProcedure={currentProcedure}
-            vehicleModel={selectedVehicle}
-            className="h-full"
-            onClose={() => setShowBarry(false)}
-          />
+        <div className="h-full flex flex-col">
+          {/* Header with close button */}
+          <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white">
+            <div className="flex items-center gap-2">
+              <Bot className="w-5 h-5" />
+              <span className="font-semibold">Barry AI Mechanic</span>
+              <span className="text-green-200 text-sm">| {selectedVehicleLabel}</span>
+            </div>
+            <button
+              onClick={() => setShowBarry(false)}
+              className="p-1 hover:bg-white/20 rounded transition-colors"
+              title="Close Barry"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          {/* TabbedBarryLayout with clickable citations */}
+          <div className="flex-1 overflow-hidden">
+            <TabbedBarryLayout
+              userModel={selectedVehicle}
+              className="h-full"
+            />
+          </div>
         </div>
       );
     }
