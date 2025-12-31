@@ -900,17 +900,60 @@ The ONLY acceptable exceptions:
 ### Critical Rules
 1. **NEVER push to production** without explicit permission
 2. **Always push to staging first**: `git push staging main:main`
-3. **Check before pushing**: `git diff --stat staging/main`
-4. **Never use --force** without permission
-5. **Pre-push hook** enforces safety checks for production deploys
+3. **Staging soak period**: Minimum 24 hours before production deploy
+4. **Validate Barry AI**: Compare staging vs production responses before deploying
+5. **Check before pushing**: `git diff --stat staging/main`
+6. **Never use --force** without permission
+7. **Pre-push hook** enforces safety checks for production deploys
 
 ### Safe Workflow
 ```bash
+# Step 1: Commit and push to staging
 git add -A
 git commit -m "feat: description"
 git push staging main:main  # Automatic - safe
-# git push origin main      # REQUIRES PERMISSION
+
+# Step 2: Wait 24 hours, monitor staging
+
+# Step 3: Validate staging vs production
+./scripts/compare-staging-production.sh
+
+# Step 4: Complete validation checklist
+# Read: docs/STAGING_VALIDATION.md
+
+# Step 5: Production deploy (ONLY after validation)
+# Read: PUSH_TO_MAIN.md
+git push origin main      # REQUIRES PERMISSION + VALIDATION
 ```
+
+### Preventing Staging from Breaking Production
+
+**Problem**: Staging might have untested code that breaks production
+
+**Solution**: Multi-layer validation before production deploy
+
+1. **Staging Soak Period** (24-48 hours)
+   - Monitor for errors in browser console
+   - Check Supabase edge function logs
+   - Wait for user feedback
+
+2. **Barry AI Validation** (CRITICAL)
+   - Test same queries on staging AND production
+   - Compare citation counts, RPS pages, routing mode
+   - Run: `./scripts/compare-staging-production.sh`
+
+3. **Automated Checks**
+   - Pre-push hook validates safety checklist
+   - Build must succeed: `npm run build`
+   - No hardcoded secrets: `node scripts/check-secrets.js`
+
+4. **Manual Validation**
+   - Complete checklist: `docs/STAGING_VALIDATION.md`
+   - Sign-off required: `PUSH_TO_MAIN.md`
+
+5. **Rollback Plan**
+   - Document current production commit before deploy
+   - Know how to revert: `git revert HEAD` or `git reset --hard <hash>`
 
 See [Git Workflow Documentation](docs/GIT_WORKFLOW.md) for details.
 

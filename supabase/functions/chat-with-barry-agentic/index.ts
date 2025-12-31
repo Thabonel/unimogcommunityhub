@@ -1420,7 +1420,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
 
     // Rule 2: Repair/diagnosis phrases → Manual mode
     const repairDiagnosisPhrases = [
-      'replace', 'remove', 'install', 'fit', 'rebuild', 'overhaul', 'repair', 'fix', 'service',
+      'replace', 'remove', 'install', 'fit', 'rebuild', 'overhaul', 'repair', 'fix', 'service', 'change',
       'adjust', 'align', 'bleed', 'calibrate', 'torque', 'spec', 'specs', 'specification', 'specifications',
       'procedure', 'manual', 'how do i change', 'how to replace', 'how to fix', 'how to repair', 'steps',
       'stuck', 'seized', 'leaking', 'overheats', 'won\'t start', 'grinding', 'squeal', 'pressure low',
