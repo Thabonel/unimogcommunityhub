@@ -20,7 +20,6 @@ export interface ManualReference {
   page_image_url?: string;
   filename?: string;
   manual_type?: string;
-  type?: string; // 'rps_illustration' | 'workshop_manual' | etc.
   // RPS-specific fields
   cdn_url?: string;
   rps_illustration_url?: string;
