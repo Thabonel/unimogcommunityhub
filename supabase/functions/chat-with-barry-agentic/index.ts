@@ -1662,7 +1662,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
             page_number: chunk.page_number,
             pdf_page_number: chunk.page_number,
             chapter_filename: 'RPS_Catalog',
-            storage_url: chunk.page_image_url,
+            storage_url: getIllustrationCDNUrl(chunk.page_number),
             system_category: 'parts_catalog',
             metadata: chunk.metadata
           })) || [];
