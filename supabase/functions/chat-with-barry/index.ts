@@ -1020,6 +1020,55 @@ function formatManualResultsForContext(results: any[]): string {
   return formatted;
 }
 
+// Enrich manual references with RPS illustration URLs
+async function enrichWithRpsIllustrations(results: any[], supabase: any): Promise<any[]> {
+  const rpsPages = results.filter(item =>
+    item.manual_title === 'RPS Catalog' && item.page_number
+  );
+
+  if (rpsPages.length === 0) {
+    return results;
+  }
+
+  console.log(`🖼️ Fetching RPS illustrations for ${rpsPages.length} pages...`);
+
+  const pageNumbers = rpsPages.map(p => p.page_number);
+  const { data: illustrations, error } = await supabase
+    .from('rps_illustrations')
+    .select('page_number, cdn_url, rps_number, figure_number, group_code')
+    .in('page_number', pageNumbers);
+
+  if (error) {
+    console.error('❌ Error fetching RPS illustrations:', error);
+    return results;
+  }
+
+  if (!illustrations || illustrations.length === 0) {
+    console.log('⚠️ No RPS illustrations found for these pages');
+    return results;
+  }
+
+  console.log(`✅ Found ${illustrations.length} RPS illustrations`);
+
+  const illustrationMap = new Map(
+    illustrations.map((ill: any) => [ill.page_number, ill])
+  );
+
+  return results.map(item => {
+    if (item.manual_title === 'RPS Catalog' && illustrationMap.has(item.page_number)) {
+      const illustration: any = illustrationMap.get(item.page_number);
+      return {
+        ...item,
+        rps_illustration_url: illustration.cdn_url,
+        rps_number: illustration.rps_number,
+        rps_figure_number: illustration.figure_number,
+        rps_group_code: illustration.group_code
+      };
+    }
+    return item;
+  });
+}
+
 // Convert manual results to frontend format
 function convertToManualReferences(results: any[]): any[] {
   return results.map(item => {
@@ -1028,6 +1077,7 @@ function convertToManualReferences(results: any[]): any[] {
     // but manual_chunks content comes from Workshop Manual full PDF
     // Solution: If content is from Workshop Manual, link to full PDF with actual page number
     const isWorkshopManual = item.actual_manual_title?.includes('Workshop Manual Volume 1');
+    const isRpsCatalog = item.manual_title === 'RPS Catalog';
     const actualPageNumber = item.actual_page_number || item.page_number || 0;
 
     let storageUrl = item.storage_url || '';
@@ -1036,16 +1086,16 @@ function convertToManualReferences(results: any[]): any[] {
       storageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/U1700L%20U435%20Workshop%20Manual%20Volume%201.pdf#page=${actualPageNumber}`;
     }
 
-    return {
+    const baseReference = {
       type: 'u435_optimized_index',
-      title: item.term || 'Manual Entry',
+      title: item.term || item.section_title || 'Manual Entry',
       page_number: actualPageNumber,  // v86: Use actual page from manual_chunks
       original_page: actualPageNumber,  // v86: Use actual page from manual_chunks
       pdf_page: actualPageNumber,  // v86: Use actual page from manual_chunks
       storage_url: storageUrl,
       chapter_filename: isWorkshopManual ? 'U1700L U435 Workshop Manual Volume 1.pdf' : (item.chapter_filename || ''),
       filename: isWorkshopManual ? 'U1700L U435 Workshop Manual Volume 1.pdf' : (item.chapter_filename || ''),
-      section_title: item.system_category || '',
+      section_title: item.system_category || item.section_title || '',
       system_category: item.system_category || 'general',
       has_safety_warning: item.has_safety_warning || false,
       match_type: item.match_type || 'manual',
@@ -1053,6 +1103,21 @@ function convertToManualReferences(results: any[]): any[] {
       manual_type: 'U435',
       is_maintenance_manual: !isWorkshopManual && ((item.chapter_filename && item.chapter_filename.includes('Maint_')) || false)
     };
+
+    // Add RPS illustration data if available
+    if (isRpsCatalog && item.rps_illustration_url) {
+      return {
+        ...baseReference,
+        rps_illustration_url: item.rps_illustration_url,
+        rps_number: item.rps_number,
+        rps_figure_number: item.rps_figure_number,
+        rps_group_code: item.rps_group_code,
+        manual_title: 'RPS Catalog',
+        is_rps_exploded_view: true
+      };
+    }
+
+    return baseReference;
   });
 }
 
@@ -1449,14 +1514,17 @@ What you're after is in there - the proper way to do it with all the specificati
       pdf_references_found: allManualReferences.length
     });
 
+    // Enrich manual references with RPS illustration URLs before sending to frontend
+    const enrichedReferences = await enrichWithRpsIllustrations(allManualReferences, supabaseAdmin);
+
     return new Response(JSON.stringify({
       content: finalContent,
-      manualReferences: convertToManualReferences(allManualReferences),
+      manualReferences: convertToManualReferences(enrichedReferences),
       knowledgeMode: knowledgeMode,
       knowledgeSources: knowledgeSources,
       attachments: knowledgeAttachments,
-      searchResultCount: allManualReferences.length,
-      usage: data.usage
+      searchResultCount: enrichedReferences.length,
+      usage: tokensUsed
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200
