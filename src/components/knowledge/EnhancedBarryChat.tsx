@@ -302,7 +302,11 @@ export function EnhancedBarryChat({
                       {/* Manual Citations - shown inline for assistant messages */}
                       {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-border/50 max-w-full overflow-x-auto">
-                          {message.manualReferences.map((ref, refIdx) => (
+                          {message.manualReferences
+                            .filter((ref, index, self) =>
+                              index === self.findIndex(r => r.page_number === ref.page_number && r.title === ref.title)
+                            )
+                            .map((ref, refIdx) => (
                             <ManualCitation
                               key={refIdx}
                               reference={ref}
