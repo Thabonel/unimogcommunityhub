@@ -39,27 +39,6 @@ function getIllustrationCDNUrl(pageNumber: number): string {
   const paddedPage = pageNumber.toString().padStart(4, '0');
   return `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/rps_illustrations/rps_page_${paddedPage}.png`;
 }
-
-// Deduplicate RPS illustrations before merging into manualReferences
-function deduplicateRpsIllustrations(manualReferences: any[], rpsIllustrations: any[]): any[] {
-  const existingPageNumbers = new Set(
-    manualReferences
-      .filter((r: any) => r.type === 'rps_illustration')
-      .map((r: any) => r.page_number)
-  );
-
-  const uniqueRpsIllustrations = rpsIllustrations.filter(
-    (r: any) => !existingPageNumbers.has(r.page_number)
-  );
-
-  const duplicateCount = rpsIllustrations.length - uniqueRpsIllustrations.length;
-  if (duplicateCount > 0) {
-    console.log(`[Dedup] Filtered ${duplicateCount} duplicate RPS illustrations`);
-  }
-
-  return uniqueRpsIllustrations;
-}
-
 // -------- Learning cache helpers --------
 function normalizeComponentName(name: string | null | undefined): string | null {
   if (!name) return null;
@@ -1730,8 +1709,7 @@ Always cite specific page numbers and PDF files in your response.`;
             console.warn('[Agentic] Missing ANTHROPIC_API_KEY; returning graceful message.');
             // Merge RPS illustrations if any, so UI still shows something
             if (rpsIllustrations.length > 0) {
-              const uniqueRps = deduplicateRpsIllustrations(manualReferences, rpsIllustrations);
-              manualReferences = [...manualReferences, ...uniqueRps];
+              manualReferences = [...manualReferences, ...rpsIllustrations];
             }
             return new Response(JSON.stringify({
               content: 'I’m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
@@ -1806,8 +1784,7 @@ Always cite specific page numbers and PDF files in your response.`;
               }));
 
               if (rpsIllustrations.length > 0) {
-                const uniqueRps = deduplicateRpsIllustrations(manualReferences, rpsIllustrations);
-                manualReferences = [...manualReferences, ...uniqueRps];
+                manualReferences = [...manualReferences, ...rpsIllustrations];
               }
 
               const content = manualReferences.length > 0
@@ -1826,8 +1803,7 @@ Always cite specific page numbers and PDF files in your response.`;
               console.warn('[Deterministic Manual Fallback] Error:', e);
               // Final graceful response
               if (rpsIllustrations.length > 0) {
-                const uniqueRps = deduplicateRpsIllustrations(manualReferences, rpsIllustrations);
-                manualReferences = [...manualReferences, ...uniqueRps];
+                manualReferences = [...manualReferences, ...rpsIllustrations];
               }
               return new Response(JSON.stringify({
                 content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
@@ -1918,9 +1894,8 @@ Always cite specific page numbers and PDF files in your response.`;
 
           // Merge RPS illustrations into manual references (if gatherer found any)
           if (rpsIllustrations.length > 0) {
-            const uniqueRps = deduplicateRpsIllustrations(manualReferences, rpsIllustrations);
-            manualReferences = [...manualReferences, ...uniqueRps];
-            console.log(`[Technical Mode] Merged ${uniqueRps.length} unique RPS illustrations (${rpsIllustrations.length} total, ${rpsIllustrations.length - uniqueRps.length} duplicates filtered)`);
+            manualReferences = [...manualReferences, ...rpsIllustrations];
+            console.log(`[Technical Mode] Merged ${rpsIllustrations.length} RPS illustrations into manual references`);
           }
 
           // Log the agentic response
