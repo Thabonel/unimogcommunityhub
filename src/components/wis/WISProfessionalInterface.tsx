@@ -253,7 +253,6 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
       loadProcedures,
       loadProcedure,
       setSelectedModel,
-      cachedProcedures,
     } = useWISStore(
       useShallow((state) => {
         console.log('🔧 WISProfessionalInterface: useShallow selector called', { state: !!state });
@@ -264,10 +263,13 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
           loadProcedures: state?.loadProcedures,
           loadProcedure: state?.loadProcedure,
           setSelectedModel: state?.setSelectedModel,
-          cachedProcedures: state?.cache?.procedures || {},
         };
       })
     );
+
+    // Access cached procedures separately to avoid infinite re-render loop
+    // (Don't use || {} inside useShallow - creates new object reference each render)
+    const cachedProcedures = useWISStore((state) => state?.cache?.procedures) || {};
 
     console.log('🔧 WISProfessionalInterface: useShallow selector completed', {
       hasLoadModels: !!loadModels,
