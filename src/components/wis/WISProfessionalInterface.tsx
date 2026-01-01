@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, Image, Video, ExternalLink, FileImage } from 'lucide-react';
+import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, Image, Video, ExternalLink, FileImage, Globe, Loader2 } from 'lucide-react';
+import { translateBatch } from '@/hooks/use-auto-translate';
 import { TabbedBarryLayout } from '@/components/knowledge/TabbedBarryLayout';
 import { useWISStore } from '@/stores/wisStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -282,6 +283,9 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
   const [activeMainTab, setActiveMainTab] = useState<'barry' | 'procedures'>('barry');
   const [expandedSystems, setExpandedSystems] = useState<string[]>([]);
   const [procedureSteps, setProcedureSteps] = useState<{[procedureId: string]: any[]}>({});
+  const [translatedSteps, setTranslatedSteps] = useState<{[procedureId: string]: any[]}>({});
+  const [translateEnabled, setTranslateEnabled] = useState<{[procedureId: string]: boolean}>({});
+  const [isTranslating, setIsTranslating] = useState<{[procedureId: string]: boolean}>({});
   const [loadingCount, setLoadingCount] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [breadcrumb, setBreadcrumb] = useState<string[]>(['Home', selectedVehicleLabel]);
@@ -330,6 +334,91 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
 
     return `${hours.toFixed(1)} hours`;
   }, []);
+
+  // Translation handler for procedure steps
+  const handleTranslateSteps = useCallback(async (procedureId: string) => {
+    const steps = procedureSteps[procedureId];
+    if (!steps || steps.length === 0) return;
+
+    // Toggle translation off if already translated
+    if (translateEnabled[procedureId]) {
+      setTranslateEnabled(prev => ({ ...prev, [procedureId]: false }));
+      return;
+    }
+
+    // Check if we already have translations cached
+    if (translatedSteps[procedureId]) {
+      setTranslateEnabled(prev => ({ ...prev, [procedureId]: true }));
+      return;
+    }
+
+    // Start translation
+    setIsTranslating(prev => ({ ...prev, [procedureId]: true }));
+
+    try {
+      // Collect all texts to translate
+      const textsToTranslate: string[] = [];
+      const textMapping: { stepIdx: number; field: string; arrayIdx?: number }[] = [];
+
+      steps.forEach((step: any, stepIdx: number) => {
+        if (step.instruction) {
+          textsToTranslate.push(step.instruction);
+          textMapping.push({ stepIdx, field: 'instruction' });
+        }
+        if (step.step_title) {
+          textsToTranslate.push(step.step_title);
+          textMapping.push({ stepIdx, field: 'step_title' });
+        }
+        if (step.detailed_notes) {
+          textsToTranslate.push(step.detailed_notes);
+          textMapping.push({ stepIdx, field: 'detailed_notes' });
+        }
+        if (step.safety_warnings && Array.isArray(step.safety_warnings)) {
+          step.safety_warnings.forEach((warning: string, arrIdx: number) => {
+            textsToTranslate.push(warning);
+            textMapping.push({ stepIdx, field: 'safety_warnings', arrayIdx: arrIdx });
+          });
+        }
+        if (step.verification_points && Array.isArray(step.verification_points)) {
+          step.verification_points.forEach((point: string, arrIdx: number) => {
+            textsToTranslate.push(point);
+            textMapping.push({ stepIdx, field: 'verification_points', arrayIdx: arrIdx });
+          });
+        }
+        if (step.common_mistakes && Array.isArray(step.common_mistakes)) {
+          step.common_mistakes.forEach((mistake: string, arrIdx: number) => {
+            textsToTranslate.push(mistake);
+            textMapping.push({ stepIdx, field: 'common_mistakes', arrayIdx: arrIdx });
+          });
+        }
+      });
+
+      // Translate all texts in batch
+      const translations = await translateBatch(textsToTranslate, 'en');
+
+      // Build translated steps
+      const newTranslatedSteps = steps.map((step: any) => ({ ...step }));
+
+      textMapping.forEach((mapping, idx) => {
+        const translation = translations[idx];
+        const step = newTranslatedSteps[mapping.stepIdx];
+
+        if (mapping.arrayIdx !== undefined) {
+          if (!step[mapping.field]) step[mapping.field] = [];
+          step[mapping.field][mapping.arrayIdx] = translation;
+        } else {
+          step[mapping.field] = translation;
+        }
+      });
+
+      setTranslatedSteps(prev => ({ ...prev, [procedureId]: newTranslatedSteps }));
+      setTranslateEnabled(prev => ({ ...prev, [procedureId]: true }));
+    } catch (err) {
+      console.error('Translation failed:', err);
+    } finally {
+      setIsTranslating(prev => ({ ...prev, [procedureId]: false }));
+    }
+  }, [procedureSteps, translateEnabled, translatedSteps]);
 
   const applyComponentsToSystem = useCallback((systemId: string, componentNodes: ComponentNode[]) => {
     setSystems((currentSystems) =>
@@ -1193,12 +1282,42 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         );
 
       case 'steps':
-        const steps = procedureSteps[selectedProcedure.id] || [];
+        const originalSteps = procedureSteps[selectedProcedure.id] || [];
+        const isTranslationEnabled = translateEnabled[selectedProcedure.id] || false;
+        const isCurrentlyTranslating = isTranslating[selectedProcedure.id] || false;
+        const steps = isTranslationEnabled && translatedSteps[selectedProcedure.id]
+          ? translatedSteps[selectedProcedure.id]
+          : originalSteps;
         const isLoadingSteps = !procedureSteps.hasOwnProperty(selectedProcedure.id);
 
         return (
           <div className="p-2">
-            <h3 className="text-base font-bold mb-5 uppercase">Procedure Steps</h3>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-bold uppercase">Procedure Steps</h3>
+              {originalSteps.length > 0 && (
+                <button
+                  onClick={() => handleTranslateSteps(selectedProcedure.id)}
+                  disabled={isCurrentlyTranslating}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    isTranslationEnabled
+                      ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                      : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                  } ${isCurrentlyTranslating ? 'opacity-50 cursor-wait' : ''}`}
+                  title={isTranslationEnabled ? 'Show original German' : 'Translate to English'}
+                >
+                  {isCurrentlyTranslating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Globe className="w-4 h-4" />
+                  )}
+                  {isCurrentlyTranslating
+                    ? 'Translating...'
+                    : isTranslationEnabled
+                    ? 'English'
+                    : 'Translate'}
+                </button>
+              )}
+            </div>
             {isLoadingSteps ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-gray-500">Loading procedure steps...</div>
