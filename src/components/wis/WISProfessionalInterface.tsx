@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot } from 'lucide-react';
+import { ChevronDown, ChevronRight, Home, Search, BookmarkPlus, Settings, FileText, Wrench, Clock, Bookmark, AlertTriangle, Bot, Image, Video, ExternalLink, FileImage } from 'lucide-react';
 import { TabbedBarryLayout } from '@/components/knowledge/TabbedBarryLayout';
 import { useWISStore } from '@/stores/wisStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -1277,39 +1277,129 @@ const WISProfessionalInterface: React.FC<WISProfessionalInterfaceProps> = ({
         );
 
       case 'media':
+        // Collect all media from procedure steps
+        const mediaSteps = procedureSteps[selectedProcedure.id] || [];
+        const allMedia: Array<{
+          type: 'image' | 'video' | 'diagram';
+          url: string;
+          label: string;
+          stepNumber?: number;
+        }> = [];
+
+        mediaSteps.forEach((step: any) => {
+          const stepNum = step.step_number;
+
+          if (step.primary_image_url) {
+            allMedia.push({
+              type: 'image',
+              url: step.primary_image_url,
+              label: `Step ${stepNum} - Primary Image`,
+              stepNumber: stepNum
+            });
+          }
+
+          if (step.additional_image_urls && Array.isArray(step.additional_image_urls)) {
+            step.additional_image_urls.forEach((url: string, idx: number) => {
+              allMedia.push({
+                type: 'image',
+                url,
+                label: `Step ${stepNum} - Image ${idx + 2}`,
+                stepNumber: stepNum
+              });
+            });
+          }
+
+          if (step.video_url) {
+            allMedia.push({
+              type: 'video',
+              url: step.video_url,
+              label: `Step ${stepNum} - Video`,
+              stepNumber: stepNum
+            });
+          }
+
+          if (step.diagram_urls && Array.isArray(step.diagram_urls)) {
+            step.diagram_urls.forEach((url: string, idx: number) => {
+              allMedia.push({
+                type: 'diagram',
+                url,
+                label: `Step ${stepNum} - Diagram ${idx + 1}`,
+                stepNumber: stepNum
+              });
+            });
+          }
+        });
+
+        const isLoadingMedia = !procedureSteps.hasOwnProperty(selectedProcedure.id);
+
         return (
           <div className="p-2">
             <h3 className="text-base font-bold mb-5 uppercase">Media & Diagrams</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4 text-center">
-                <div className="w-full h-32 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-gray-400" />
-                </div>
-                <div className="text-sm font-semibold">Wiring Diagram</div>
-                <div className="text-xs text-gray-600">WIS-{selectedProcedure.code}-01.pdf</div>
+            {isLoadingMedia ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">Loading media...</div>
               </div>
-              <div className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4 text-center">
-                <div className="w-full h-32 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-gray-400" />
-                </div>
-                <div className="text-sm font-semibold">Component Layout</div>
-                <div className="text-xs text-gray-600">WIS-{selectedProcedure.code}-02.pdf</div>
+            ) : allMedia.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileImage className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <div className="text-sm">No media available for this procedure.</div>
+                <div className="text-xs mt-2">Technical diagrams and images may be added in future updates.</div>
               </div>
-              <div className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4 text-center">
-                <div className="w-full h-32 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-gray-400" />
-                </div>
-                <div className="text-sm font-semibold">Torque Specifications</div>
-                <div className="text-xs text-gray-600">WIS-{selectedProcedure.code}-03.pdf</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {allMedia.map((media, index) => (
+                  <div
+                    key={`${media.url}-${index}`}
+                    className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4 text-center cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition-colors group"
+                    onClick={() => window.open(media.url, '_blank')}
+                  >
+                    <div className="w-full h-32 bg-gray-200 rounded-md mb-3 flex items-center justify-center overflow-hidden relative">
+                      {media.type === 'image' || media.type === 'diagram' ? (
+                        <>
+                          <img
+                            src={media.url}
+                            alt={media.label}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const icon = document.createElement('div');
+                                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                                parent.appendChild(icon);
+                              }
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                            <ExternalLink className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center">
+                          <Video className="w-8 h-8 text-gray-400" />
+                          <span className="text-xs text-gray-500 mt-1">Video</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold flex items-center justify-center gap-2">
+                      {media.type === 'video' ? (
+                        <Video className="w-4 h-4 text-blue-500" />
+                      ) : media.type === 'diagram' ? (
+                        <FileText className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Image className="w-4 h-4 text-purple-500" />
+                      )}
+                      {media.label}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1 flex items-center justify-center gap-1">
+                      <ExternalLink className="w-3 h-3" />
+                      Click to view
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="bg-[#f9f9f9] border border-[#e0e0e0] rounded-md p-4 text-center">
-                <div className="w-full h-32 bg-gray-200 rounded-md mb-3 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-gray-400" />
-                </div>
-                <div className="text-sm font-semibold">Video Guide</div>
-                <div className="text-xs text-gray-600">WIS-{selectedProcedure.code}-video.mp4</div>
-              </div>
-            </div>
+            )}
           </div>
         );
 
