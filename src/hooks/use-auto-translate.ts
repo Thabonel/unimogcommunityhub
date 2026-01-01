@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GEMINI_CONFIG } from '@/config/env';
+import { supabase } from '@/lib/supabase-client';
 
 interface AutoTranslateResult {
   translatedText: string;
@@ -12,7 +12,7 @@ interface AutoTranslateResult {
 // Simple in-memory cache for translations
 const translationCache = new Map<string, string>();
 
-async function translateWithGemini(text: string, targetLang: string): Promise<string> {
+async function translateWithEdgeFunction(text: string, targetLang: string): Promise<string> {
   const cacheKey = `${targetLang}:${text}`;
 
   // Check cache first
@@ -20,39 +20,25 @@ async function translateWithGemini(text: string, targetLang: string): Promise<st
     return translationCache.get(cacheKey)!;
   }
 
-  if (!GEMINI_CONFIG.apiKey) {
-    console.warn('Gemini API key not configured, returning original text');
-    return text;
-  }
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_CONFIG.apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Translate the following German text to ${targetLang === 'en' ? 'English' : targetLang}. Only output the translation, no explanations:\n\n${text}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 1024,
-          }
-        })
+    // Call the ai-router edge function with a translation prompt
+    const { data, error } = await supabase.functions.invoke('ai-router', {
+      body: {
+        mode: 'generate',
+        input: `Translate the following German text to English. Only output the translation, no explanations or quotes:\n\n${text}`,
+        constraints: {
+          preferSpeed: true,
+          targetLatencyMs: 2000
+        }
       }
-    );
+    });
 
-    if (!response.ok) {
-      throw new Error(`Translation API error: ${response.status}`);
+    if (error) {
+      console.error('Translation edge function error:', error);
+      return text;
     }
 
-    const data = await response.json();
-    const translatedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text;
+    const translatedText = data?.output?.text?.trim() || text;
 
     // Cache the result
     translationCache.set(cacheKey, translatedText);
@@ -92,7 +78,7 @@ export function useAutoTranslate(text: string, skip: boolean = false): AutoTrans
     async function doTranslate() {
       try {
         setIsLoading(true);
-        const result = await translateWithGemini(text, i18n.language);
+        const result = await translateWithEdgeFunction(text, i18n.language);
         setTranslatedText(result);
         setError(null);
       } catch (err) {
@@ -112,20 +98,22 @@ export function useAutoTranslate(text: string, skip: boolean = false): AutoTrans
 
 // Batch translation for multiple texts (more efficient)
 export async function translateBatch(texts: string[], targetLang: string = 'en'): Promise<string[]> {
-  if (!GEMINI_CONFIG.apiKey || targetLang === 'de') {
+  if (targetLang === 'de' || texts.length === 0) {
     return texts;
   }
 
   // Check which texts need translation
-  const results: string[] = [];
+  const results: string[] = new Array(texts.length);
   const textsToTranslate: { index: number; text: string }[] = [];
 
   texts.forEach((text, index) => {
     const cacheKey = `${targetLang}:${text}`;
     if (translationCache.has(cacheKey)) {
       results[index] = translationCache.get(cacheKey)!;
-    } else {
+    } else if (text && text.trim()) {
       textsToTranslate.push({ index, text });
+    } else {
+      results[index] = text;
     }
   });
 
@@ -134,38 +122,33 @@ export async function translateBatch(texts: string[], targetLang: string = 'en')
   }
 
   try {
-    // Combine texts for batch translation
+    // Combine texts for batch translation with numbered format
     const combinedText = textsToTranslate
       .map((item, i) => `[${i + 1}] ${item.text}`)
       .join('\n\n');
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_CONFIG.apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Translate the following German texts to English. Keep the numbered format [1], [2], etc. Only output the translations:\n\n${combinedText}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 4096,
-          }
-        })
+    // Call the ai-router edge function
+    const { data, error } = await supabase.functions.invoke('ai-router', {
+      body: {
+        mode: 'generate',
+        input: `Translate the following German texts to English. Keep the numbered format [1], [2], etc. Only output the translations, no explanations:\n\n${combinedText}`,
+        constraints: {
+          preferSpeed: true,
+          targetLatencyMs: 5000
+        }
       }
-    );
+    });
 
-    if (!response.ok) {
-      throw new Error(`Translation API error: ${response.status}`);
+    if (error) {
+      console.error('Batch translation error:', error);
+      // Fill in original texts for failed translations
+      textsToTranslate.forEach((item) => {
+        results[item.index] = item.text;
+      });
+      return results;
     }
 
-    const data = await response.json();
-    const translatedCombined = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+    const translatedCombined = data?.output?.text?.trim() || '';
 
     // Parse the numbered responses
     const translatedParts = translatedCombined.split(/\[\d+\]\s*/).filter(Boolean);
@@ -178,7 +161,7 @@ export async function translateBatch(texts: string[], targetLang: string = 'en')
 
     // Fill any gaps with original text
     texts.forEach((text, index) => {
-      if (!results[index]) {
+      if (results[index] === undefined) {
         results[index] = text;
       }
     });
@@ -186,6 +169,7 @@ export async function translateBatch(texts: string[], targetLang: string = 'en')
     return results;
   } catch (error) {
     console.error('Batch translation error:', error);
+    // Return original texts on error
     return texts;
   }
 }
