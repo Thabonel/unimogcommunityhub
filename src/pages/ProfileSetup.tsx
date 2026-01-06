@@ -18,8 +18,6 @@ import { Switch } from '@/components/ui/switch';
 import { PhotoUpload } from '@/components/shared/PhotoUpload';
 import UnimogModelSelector from '@/components/profile/UnimogModelSelector';
 import { supabase } from '@/lib/supabase-client';
-import { Loader2, Truck, User } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 
 const ProfileSetup = () => {
   const [activeTab, setActiveTab] = useState('vehicle');
@@ -187,13 +185,14 @@ const ProfileSetup = () => {
                   />
                   
                   <div className="space-y-2">
-                    <Label htmlFor="year">Year</Label>
+                    <Label htmlFor="year">Year *</Label>
                     <Input
                       id="year"
                       type="text"
-                      placeholder="e.g. 1985 (optional)"
+                      placeholder="e.g. 1985"
                       value={year}
                       onChange={(e) => setYear(e.target.value)}
+                      required
                     />
                   </div>
 
@@ -253,18 +252,13 @@ const ProfileSetup = () => {
                       type="button"
                       className="w-full"
                       onClick={handleNext}
-                      disabled={!model}
+                      disabled={!model || !year}
                     >
                       Next: Personal Details
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleNext}
-                    >
-                      Skip Vehicle Details
-                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Model and year are required to continue
+                    </p>
                   </div>
                 </form>
               </TabsContent>
@@ -364,14 +358,6 @@ const ProfileSetup = () => {
                         {isLoading ? "Completing setup..." : "Complete Setup"}
                       </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full"
-                      onClick={() => navigate('/signup-success')}
-                    >
-                      Skip for Now - I'll Add Details Later
-                    </Button>
                   </div>
                 </form>
               </TabsContent>
