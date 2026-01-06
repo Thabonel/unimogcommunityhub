@@ -1033,9 +1033,10 @@ serve(async (req) => {
       });
     }
 
-    // Get user's vehicle information
+    // VEHICLE CONTEXT GATHERER: Get user's vehicle information for personalization
     let userContext = '';
     try {
+      // Get profile info
       const { data: profile } = await supabaseClient
         .from('profiles')
         .select('unimog_model, full_name, display_name')
@@ -1047,12 +1048,46 @@ serve(async (req) => {
         if (userName) {
           userContext += `User's Name: ${userName}\n`;
         }
-        if (profile.unimog_model) {
-          userContext += `User's Vehicle: ${profile.unimog_model}\n`;
+      }
+
+      // Get detailed vehicle info from vehicles table
+      const { data: vehicles } = await supabaseAdmin
+        .from('vehicles')
+        .select('id, name, model, year, current_odometer, odometer_unit, modifications')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (vehicles && vehicles.length > 0) {
+        const vehicle = vehicles[0];
+        userContext += `\nUser's Vehicle Details:\n`;
+        userContext += `- Model: Unimog ${vehicle.model || profile?.unimog_model || 'Unknown'}\n`;
+        if (vehicle.year) userContext += `- Year: ${vehicle.year}\n`;
+        if (vehicle.current_odometer) userContext += `- Current Odometer: ${vehicle.current_odometer.toLocaleString()} ${vehicle.odometer_unit || 'km'}\n`;
+        if (vehicle.modifications) userContext += `- Modifications: ${vehicle.modifications}\n`;
+
+        // Get recent maintenance for context
+        const { data: recentService } = await supabaseAdmin
+          .from('vehicle_service_logs')
+          .select('service_type, service_date, mileage_at_service')
+          .eq('vehicle_id', vehicle.id)
+          .order('service_date', { ascending: false })
+          .limit(3);
+
+        if (recentService && recentService.length > 0) {
+          userContext += `\nRecent Maintenance:\n`;
+          for (const service of recentService) {
+            const daysAgo = Math.floor((Date.now() - new Date(service.service_date).getTime()) / (1000 * 60 * 60 * 24));
+            userContext += `- ${service.service_type} (${daysAgo} days ago at ${service.mileage_at_service?.toLocaleString() || 'N/A'} km)\n`;
+          }
         }
+
+        console.log('[Vehicle Gatherer] Vehicle context injected for user');
+      } else if (profile?.unimog_model) {
+        userContext += `User's Vehicle: ${profile.unimog_model}\n`;
       }
     } catch (error) {
-      console.log('Error fetching user profile:', error);
+      console.log('[Vehicle Gatherer] Error fetching vehicle info:', error);
     }
 
     // Add location context if provided
