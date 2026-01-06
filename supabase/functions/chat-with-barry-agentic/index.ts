@@ -24,7 +24,8 @@ const ANTHROPIC_MODEL_AGENTIC = Deno.env.get('ANTHROPIC_MODEL_AGENTIC') || 'clau
 const ANTHROPIC_MODEL_GENERAL = Deno.env.get('ANTHROPIC_MODEL_GENERAL') || 'claude-haiku-4-5';
 const ANTHROPIC_MODEL_SEMANTIC = Deno.env.get('ANTHROPIC_MODEL_SEMANTIC') || 'claude-haiku-4';
 const ANTHROPIC_MODEL_VISION = Deno.env.get('ANTHROPIC_MODEL_VISION') || 'claude-haiku-4-5';
-const FEATURE_FLAG_INTENT_ROUTING = (Deno.env.get('FEATURE_FLAG_INTENT_ROUTING') || '').toLowerCase() === 'true';
+// Intent routing feature flag - reserved for future use with classifyIntentWithClaude
+// const FEATURE_FLAG_INTENT_ROUTING = (Deno.env.get('FEATURE_FLAG_INTENT_ROUTING') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_RPS_DETERMINISTIC = (Deno.env.get('FEATURE_FLAG_RPS_DETERMINISTIC') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_RPS_CLARIFY = (Deno.env.get('FEATURE_FLAG_RPS_CLARIFY') || '').toLowerCase() === 'true';
@@ -148,10 +149,10 @@ async function filterExistingIllustrationPages(
     // Build set of existing file names from both locations
     const existingNames = new Set<string>();
     if (rootFiles) {
-      rootFiles.forEach(f => existingNames.add(`rps_illustrations/${f.name}`));
+      rootFiles.forEach((f: { name: string }) => existingNames.add(`rps_illustrations/${f.name}`));
     }
     if (nestedFiles) {
-      nestedFiles.forEach(f => existingNames.add(`rps_illustrations/rps_illustrations/${f.name}`));
+      nestedFiles.forEach((f: { name: string }) => existingNames.add(`rps_illustrations/rps_illustrations/${f.name}`));
     }
     const existing: number[] = [];
     const missing: number[] = [];
@@ -212,7 +213,7 @@ function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; c
 // RPS PHASE 7: Extract component from conversation context
 function extractComponentFromConversation(messages: any[], currentQuery: string): string | null {
   // Try detecting component in current message first
-  const { isComponentQuery, componentName } = detectComponentQuery(currentQuery);
+  const { componentName } = detectComponentQuery(currentQuery);
 
   if (componentName) {
     console.log(`[Context] Component found in current message: ${componentName}`);
@@ -254,7 +255,9 @@ function detectPartsListQuery(userQuery: string): boolean {
   return partsListKeywords.some(kw => queryLower.includes(kw));
 }
 
-// -------- Intent Classification (Feature-flagged) --------
+// -------- Intent Classification (Feature-flagged, reserved for future use) --------
+// This function will be used when FEATURE_FLAG_INTENT_ROUTING is enabled
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type BarryIntent = {
   domain: 'unimog_technical' | 'general';
   task: 'procedure' | 'troubleshoot' | 'exploded_view' | 'parts_lookup' | 'weather' | 'other';
@@ -265,6 +268,7 @@ type BarryIntent = {
   clarifying_question?: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function classifyIntentWithClaude(prompt: string, messages: any[]): Promise<BarryIntent | null> {
   try {
     const system = `You are an intent classifier for Barry the Unimog mechanic. Read the latest user message in context and output STRICT JSON.
@@ -487,7 +491,7 @@ async function deterministicRPSLookup(
 ): Promise<{ pages: number[]; group_code?: string; group_name?: string; score?: number; candidates?: any[] }> {
   try {
     // Prefer v2 with score; fallback to v1
-    let data, error;
+    let data: any[] | null, error: any;
     try {
       const res = await supabaseAdmin.rpc('get_rps_exploded_view_v2', { p_component: componentName });
       data = res.data; error = res.error;
@@ -616,8 +620,6 @@ function detectNIINQuery(userQuery: string): { isNIINQuery: boolean; groupCode: 
 
 // RPS GROUP CODE: Detect group code queries
 function detectGroupCodeQuery(userQuery: string): { hasGroupCode: boolean; groupCode: string | null } {
-  const queryLower = userQuery.toLowerCase();
-
   // Pattern: "PBA group", "group PA", "parts in PB", "what parts are in PBA"
   const groupCodePattern = /\b(?:group\s+)?([A-Z]{1,3}[AB]?)\s+(?:group|parts)/i;
   const match = userQuery.match(groupCodePattern);
@@ -639,8 +641,6 @@ function detectGroupCodeQuery(userQuery: string): { hasGroupCode: boolean; group
 
 // RPS ITEM NUMBER: Detect item number queries
 function detectItemNumberQuery(userQuery: string): { hasItemNumber: boolean; groupCode: string | null; itemNumber: string | null } {
-  const queryLower = userQuery.toLowerCase();
-
   // Pattern: "PA 051", "item PBA 010", "tell me about PA 051"
   const itemPattern = /\b([A-Z]{1,3}[AB]?)\s+(\d{3,4})\b/i;
   const match = userQuery.match(itemPattern);
@@ -1780,8 +1780,8 @@ Always cite specific page numbers and PDF files in your response.`;
             // Deterministic manual fallback: query u435_manual_index for likely pages
             try {
               const q = (lastUserMessage.content || '').toLowerCase();
-              const tokens = Array.from(new Set(q.split(/[^a-z0-9]+/g).filter(Boolean)));
-              const keywords = tokens.filter(t => ['portal','hub','seal','front','rear','replace','installation','removal','disassembly','assembly'].includes(t));
+              const tokens: string[] = Array.from(new Set(q.split(/[^a-z0-9]+/g).filter(Boolean)));
+              const keywords: string[] = tokens.filter((t: string) => ['portal','hub','seal','front','rear','replace','installation','removal','disassembly','assembly'].includes(t));
               let likeClauses: string[] = [];
               let params: any[] = [];
               if (keywords.length === 0) {
