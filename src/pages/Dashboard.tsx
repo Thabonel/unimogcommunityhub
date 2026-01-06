@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Loader2, Car, TrendingUp, Eye, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Car, TrendingUp, Eye, ShoppingBag } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
@@ -18,6 +19,9 @@ import { MobileAppCard } from '@/components/dashboard/MobileAppCard';
 import { FeaturedVendors } from '@/components/dashboard/FeaturedVendors';
 import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 import { VehicleStatsCard } from '@/components/dashboard/VehicleStatsCard';
+import { FloatingActionButton } from '@/components/dashboard/FloatingActionButton';
+import { QuickFuelLogModal } from '@/components/dashboard/QuickFuelLogModal';
+import { QuickMaintenanceLogModal } from '@/components/dashboard/QuickMaintenanceLogModal';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -33,6 +37,10 @@ const Dashboard = () => {
   const { userData, isLoading } = useProfile();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  // FAB modal states
+  const [showQuickFuelModal, setShowQuickFuelModal] = useState(false);
+  const [showQuickMaintenanceModal, setShowQuickMaintenanceModal] = useState(false);
 
   // Get the tab from URL parameter, default to 'activity'
   const activeTab = searchParams.get('tab') || 'activity';
@@ -512,6 +520,27 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Action Button for quick logging */}
+      <FloatingActionButton
+        onLogFuel={() => setShowQuickFuelModal(true)}
+        onLogService={() => setShowQuickMaintenanceModal(true)}
+        onLogTrip={() => {
+          toast.info('Trip logging coming soon!', {
+            description: 'Track your Unimog adventures',
+          });
+        }}
+      />
+
+      {/* Quick logging modals */}
+      <QuickFuelLogModal
+        open={showQuickFuelModal}
+        onOpenChange={setShowQuickFuelModal}
+      />
+      <QuickMaintenanceLogModal
+        open={showQuickMaintenanceModal}
+        onOpenChange={setShowQuickMaintenanceModal}
+      />
       </Layout>
     </ErrorBoundary>
   );
