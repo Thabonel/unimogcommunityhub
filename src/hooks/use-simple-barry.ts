@@ -1,6 +1,16 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
+
+export interface BarryConversation {
+  id: string;
+  user_id: string;
+  vehicle_id?: string;
+  title?: string;
+  messages: ChatMessage[];
+  created_at: string;
+  updated_at: string;
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -102,7 +112,144 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user, profile } = useAuth();
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<BarryConversation[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const { user } = useAuth();
+
+  // Load past conversations on mount
+  useEffect(() => {
+    if (user?.id) {
+      loadConversations();
+    }
+  }, [user?.id]);
+
+  const loadConversations = useCallback(async () => {
+    if (!user?.id) return;
+
+    setIsLoadingConversations(true);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('user_barry_conversations')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (fetchError) {
+        console.error('Failed to load Barry conversations:', fetchError);
+        return;
+      }
+
+      // Parse messages from JSONB
+      const parsedConversations = (data || []).map(conv => ({
+        ...conv,
+        messages: (conv.messages || []).map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }))
+      }));
+
+      setConversations(parsedConversations);
+    } catch (err) {
+      console.error('Error loading conversations:', err);
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, [user?.id]);
+
+  const saveConversation = useCallback(async (newMessages: ChatMessage[]) => {
+    if (!user?.id || newMessages.length === 0) return;
+
+    try {
+      // Generate title from first user message
+      const firstUserMsg = newMessages.find(m => m.role === 'user');
+      const title = firstUserMsg
+        ? firstUserMsg.content.slice(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '')
+        : 'New Conversation';
+
+      // Serialize messages for JSONB storage
+      const serializedMessages = newMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        manualReferences: msg.manualReferences
+      }));
+
+      if (conversationId) {
+        // Update existing conversation
+        const { error: updateError } = await supabase
+          .from('user_barry_conversations')
+          .update({
+            messages: serializedMessages,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', conversationId);
+
+        if (updateError) {
+          console.error('Failed to update conversation:', updateError);
+        }
+      } else {
+        // Create new conversation
+        const { data, error: insertError } = await supabase
+          .from('user_barry_conversations')
+          .insert({
+            user_id: user.id,
+            title,
+            messages: serializedMessages
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Failed to save conversation:', insertError);
+        } else if (data) {
+          setConversationId(data.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error saving conversation:', err);
+    }
+  }, [user?.id, conversationId]);
+
+  const loadConversation = useCallback(async (convId: string) => {
+    const conversation = conversations.find(c => c.id === convId);
+    if (conversation) {
+      setConversationId(convId);
+      setMessages(conversation.messages);
+      return;
+    }
+
+    // Fetch from database if not in cache
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('user_barry_conversations')
+        .select('*')
+        .eq('id', convId)
+        .single();
+
+      if (fetchError || !data) {
+        console.error('Failed to load conversation:', fetchError);
+        return;
+      }
+
+      const parsedMessages = (data.messages || []).map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+
+      setConversationId(data.id);
+      setMessages(parsedMessages);
+    } catch (err) {
+      console.error('Error loading conversation:', err);
+    }
+  }, [conversations]);
+
+  const startNewConversation = useCallback(() => {
+    setConversationId(null);
+    setMessages([]);
+    setError(null);
+  }, []);
 
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim()) return;
@@ -144,7 +291,12 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
         manualReferences: enrichedReferences
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      const updatedMessages = [...messages, userMessage, assistantMessage];
+      setMessages(updatedMessages);
+
+      // Save conversation to database
+      saveConversation(updatedMessages);
+
       return data.content;
 
     } catch (err) {
@@ -163,9 +315,10 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
     } finally {
       setIsLoading(false);
     }
-  }, [messages, profile?.unimog_model, location]);
+  }, [messages, location, saveConversation]);
 
   const clearChat = useCallback(() => {
+    setConversationId(null);
     setMessages([]);
     setError(null);
   }, []);
@@ -195,6 +348,13 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
     isAuthenticated: !!user,
     sendMessage,
     clearChat,
-    retry
+    retry,
+    // Conversation persistence
+    conversations,
+    isLoadingConversations,
+    conversationId,
+    loadConversation,
+    startNewConversation,
+    loadConversations
   };
 }

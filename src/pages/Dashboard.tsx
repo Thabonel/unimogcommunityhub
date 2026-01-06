@@ -17,6 +17,7 @@ import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
 import { MobileAppCard } from '@/components/dashboard/MobileAppCard';
 import { FeaturedVendors } from '@/components/dashboard/FeaturedVendors';
 import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
+import { VehicleStatsCard } from '@/components/dashboard/VehicleStatsCard';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -196,6 +197,9 @@ const Dashboard = () => {
           <div className="flex-1">
             {/* Vehicle Hero Banner */}
             <VehicleHeroBanner />
+
+            {/* Your Unimog Stats Card - Primary sticky feature */}
+            <VehicleStatsCard />
 
             {/* Showroom Feature Card */}
             <Card className="mb-6 bg-gradient-to-r from-military-green to-camo-brown text-white">
