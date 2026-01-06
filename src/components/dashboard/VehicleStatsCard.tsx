@@ -183,7 +183,7 @@ export function VehicleStatsCard() {
                 </p>
               </div>
             </div>
-            <Link to="/service-logs">
+            <Link to="/full-vehicle-dashboard">
               <Button variant="ghost" size="sm" className="text-muted-foreground">
                 Full Dashboard
                 <ChevronRight className="ml-1 h-4 w-4" />
