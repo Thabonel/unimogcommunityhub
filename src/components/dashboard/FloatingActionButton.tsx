@@ -95,7 +95,7 @@ export function FloatingActionButton({
     <div
       data-fab
       className={cn(
-        'fixed bottom-6 right-6 z-50 flex flex-col-reverse items-center gap-3',
+        'fixed bottom-6 left-6 z-50 flex flex-col-reverse items-center gap-3',
         className
       )}
     >
@@ -127,17 +127,6 @@ export function FloatingActionButton({
               transitionDelay: isExpanded ? `${index * 50}ms` : '0ms',
             }}
           >
-            {/* Label tooltip */}
-            <span
-              className={cn(
-                'hidden md:block px-3 py-1.5 rounded-lg text-sm font-medium',
-                'bg-gray-900 text-white shadow-lg',
-                'whitespace-nowrap'
-              )}
-            >
-              {action.label}
-            </span>
-
             {/* Action button */}
             <button
               onClick={() => handleActionClick(action)}
@@ -152,6 +141,17 @@ export function FloatingActionButton({
             >
               {action.icon}
             </button>
+
+            {/* Label tooltip - on right side for bottom-left FAB */}
+            <span
+              className={cn(
+                'hidden md:block px-3 py-1.5 rounded-lg text-sm font-medium',
+                'bg-gray-900 text-white shadow-lg',
+                'whitespace-nowrap'
+              )}
+            >
+              {action.label}
+            </span>
           </div>
         ))}
       </div>
@@ -194,7 +194,7 @@ export function FloatingActionButton({
       {(hasPendingSync || !isOnline) && (
         <div
           className={cn(
-            'absolute -top-1 -right-1 w-5 h-5 rounded-full',
+            'absolute -top-1 -left-1 w-5 h-5 rounded-full',
             'flex items-center justify-center',
             'text-white text-xs font-bold',
             !isOnline ? 'bg-gray-500' : 'bg-orange-500 animate-pulse'
