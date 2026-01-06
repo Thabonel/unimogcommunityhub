@@ -31,12 +31,13 @@ export interface MaintenanceLogData {
 
 export interface TripLogData {
   vehicle_id: string;
-  start_date: string;
-  end_date?: string;
-  start_odometer: number;
-  end_odometer?: number;
-  title: string;
-  description?: string;
+  trip_name: string;
+  start_time: string;
+  end_time?: string;
+  distance_km?: number;
+  trip_type: 'on-road' | 'off-road' | 'mixed';
+  notes?: string;
+  tracking_method?: string;
 }
 
 export type LogData = FuelLogData | MaintenanceLogData | TripLogData;
@@ -326,9 +327,10 @@ class OfflineQueueServiceClass {
       }
       case 'trip': {
         const tripData = entry.data as TripLogData;
-        const { error } = await supabase.from('vehicle_trips').insert({
+        const { error } = await supabase.from('trip_logs').insert({
           ...tripData,
           user_id: entry.userId,
+          tracking_method: tripData.tracking_method || 'manual',
           created_at: entry.createdAt,
         });
         if (error) throw error;

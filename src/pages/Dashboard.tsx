@@ -22,6 +22,7 @@ import { VehicleStatsCard } from '@/components/dashboard/VehicleStatsCard';
 import { FloatingActionButton } from '@/components/dashboard/FloatingActionButton';
 import { QuickFuelLogModal } from '@/components/dashboard/QuickFuelLogModal';
 import { QuickMaintenanceLogModal } from '@/components/dashboard/QuickMaintenanceLogModal';
+import { QuickTripLogModal } from '@/components/dashboard/QuickTripLogModal';
 import {
   useRecentActivity,
   useUpcomingTrips,
@@ -41,6 +42,7 @@ const Dashboard = () => {
   // FAB modal states
   const [showQuickFuelModal, setShowQuickFuelModal] = useState(false);
   const [showQuickMaintenanceModal, setShowQuickMaintenanceModal] = useState(false);
+  const [showQuickTripModal, setShowQuickTripModal] = useState(false);
 
   // Get the tab from URL parameter, default to 'activity'
   const activeTab = searchParams.get('tab') || 'activity';
@@ -525,11 +527,7 @@ const Dashboard = () => {
       <FloatingActionButton
         onLogFuel={() => setShowQuickFuelModal(true)}
         onLogService={() => setShowQuickMaintenanceModal(true)}
-        onLogTrip={() => {
-          toast.info('Trip logging coming soon!', {
-            description: 'Track your Unimog adventures',
-          });
-        }}
+        onLogTrip={() => setShowQuickTripModal(true)}
       />
 
       {/* Quick logging modals */}
@@ -540,6 +538,10 @@ const Dashboard = () => {
       <QuickMaintenanceLogModal
         open={showQuickMaintenanceModal}
         onOpenChange={setShowQuickMaintenanceModal}
+      />
+      <QuickTripLogModal
+        open={showQuickTripModal}
+        onOpenChange={setShowQuickTripModal}
       />
       </Layout>
     </ErrorBoundary>
