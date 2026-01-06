@@ -158,7 +158,10 @@ export function FloatingActionButton({
 
       {/* Main FAB button */}
       <button
-        onClick={handleToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleToggle();
+        }}
         className={cn(
           'w-14 h-14 md:w-16 md:h-16 rounded-full shadow-xl',
           'flex items-center justify-center',
