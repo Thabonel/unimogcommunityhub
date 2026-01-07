@@ -1046,6 +1046,36 @@ async function searchManualChunks(supabaseAdmin: any, query: string, limit: numb
   }
 }
 
+// Look up chapter PDF URL from page number using barry_manual_navigation
+async function getChapterPdfUrl(supabaseAdmin: any, pageNumber: number): Promise<{ url: string; filename: string; pdfPage: number } | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('barry_manual_navigation')
+      .select('filename, direct_url, start_page')
+      .lte('start_page', pageNumber)
+      .gte('end_page', pageNumber)
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.warn(`[Chapter Lookup] No chapter found for page ${pageNumber}:`, error);
+      return null;
+    }
+
+    // Calculate page offset within the chapter PDF
+    const pdfPage = pageNumber - data.start_page + 1;
+
+    return {
+      url: `${data.direct_url}#page=${pdfPage}`,
+      filename: data.filename,
+      pdfPage
+    };
+  } catch (err) {
+    console.error('[Chapter Lookup] Exception:', err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -1884,20 +1914,27 @@ Always cite specific page numbers and PDF files in your response.`;
               // Filter to top 4 most relevant results
               const filtered = searchResults.slice(0, 4);
 
-              manualReferences = filtered.map((chunk: any) => ({
-                type: 'u435_content_search',
-                title: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
-                page_number: chunk.page_number || 0,
-                original_page: chunk.page_number || 0,
-                pdf_page: chunk.page_number || 0,
-                storage_url: chunk.storage_url || '',
-                system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
-                has_safety_warning: false,
-                match_type: 'content_search_fallback',
-                match_score: 0.8,
-                manual_type: 'U435',
-                content_preview: chunk.content?.substring(0, 300) || ''
-              }));
+              // Look up chapter PDF URLs for each result
+              manualReferences = await Promise.all(
+                filtered.map(async (chunk: any) => {
+                  const chapterInfo = await getChapterPdfUrl(supabaseAdmin, chunk.page_number);
+                  return {
+                    type: 'u435_content_search',
+                    title: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
+                    page_number: chunk.page_number || 0,
+                    original_page: chunk.page_number || 0,
+                    pdf_page: chapterInfo?.pdfPage || chunk.page_number || 0,
+                    storage_url: chapterInfo?.url || '',
+                    chapter_filename: chapterInfo?.filename || '',
+                    system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
+                    has_safety_warning: false,
+                    match_type: 'content_search_fallback',
+                    match_score: 0.8,
+                    manual_type: 'U435',
+                    content_preview: chunk.content?.substring(0, 300) || ''
+                  };
+                })
+              );
 
               if (rpsIllustrations.length > 0) {
                 manualReferences = [...manualReferences, ...rpsIllustrations];
@@ -1985,28 +2022,36 @@ Always cite specific page numbers and PDF files in your response.`;
             }
           }
 
-          combinedIndex.forEach((entry) => {
-            // Only match if the SPECIFIC page number was mentioned by Claude
-            if (!referencedPages.has(entry.page_number)) return;
-
-            // Avoid duplicating RPS catalog visuals; we provide dedicated rpsIllustrations already
-            if (entry.chapter_filename === 'RPS_Catalog') return;
-
-            manualReferences.push({
-              type: 'u435_agentic',
-              title: entry.term || 'Manual Entry',
-              page_number: entry.page_number || entry.pdf_page_number || 0,
-              original_page: entry.page_number || 0,
-              pdf_page: entry.pdf_page_number || 0,
-              storage_url: entry.storage_url || '',
-              system_category: entry.system_category || 'general',
-              has_safety_warning: entry.has_safety_warning || false,
-              match_type: 'claude_selected',
-              match_score: 1.0,
-              manual_type: 'U435',
-              is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
-            });
+          // Build manual references with proper PDF URLs from barry_manual_navigation
+          const workshopEntries = combinedIndex.filter((entry) => {
+            if (!referencedPages.has(entry.page_number)) return false;
+            if (entry.chapter_filename === 'RPS_Catalog') return false;
+            return true;
           });
+
+          // Look up chapter PDF URLs for each referenced page
+          const workshopRefs = await Promise.all(
+            workshopEntries.map(async (entry) => {
+              const chapterInfo = await getChapterPdfUrl(supabaseAdmin, entry.page_number);
+              return {
+                type: 'u435_agentic',
+                title: entry.term || 'Manual Entry',
+                page_number: entry.page_number || entry.pdf_page_number || 0,
+                original_page: entry.page_number || 0,
+                pdf_page: chapterInfo?.pdfPage || entry.pdf_page_number || 0,
+                storage_url: chapterInfo?.url || entry.storage_url || '',
+                chapter_filename: chapterInfo?.filename || entry.chapter_filename || '',
+                system_category: entry.system_category || 'general',
+                has_safety_warning: entry.has_safety_warning || false,
+                match_type: 'claude_selected',
+                match_score: 1.0,
+                manual_type: 'U435',
+                is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
+              };
+            })
+          );
+
+          manualReferences = [...manualReferences, ...workshopRefs];
 
           // Merge RPS illustrations into manual references (if gatherer found any)
           if (rpsIllustrations.length > 0) {
