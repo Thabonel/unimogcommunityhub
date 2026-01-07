@@ -1000,50 +1000,50 @@ function formatManualChunksForClaude(chunks: any[]): string {
   return formattedContent;
 }
 
-// Full-text search on manual_chunks content
+// Full-text search on manual_chunks content using ILIKE
 async function searchManualChunks(supabaseAdmin: any, query: string, limit: number = 20): Promise<any[]> {
   // Extract keywords from query
   const keywords = query.toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length > 2)
-    .slice(0, 8);
+    .filter(w => w.length > 2 && !['the', 'for', 'and', 'what', 'how', 'are', 'is'].includes(w))
+    .slice(0, 6);
 
   if (keywords.length === 0) {
+    console.log('[Manual Search] No valid keywords extracted');
     return [];
   }
 
-  // Build PostgreSQL full-text search query
-  const tsQuery = keywords.join(' & ');
+  console.log(`[Manual Search] Searching for keywords: ${keywords.join(', ')}`);
 
-  console.log(`[Manual Search] Searching for: "${tsQuery}"`);
-
-  // Use full-text search on content_tsv
-  const { data: results, error } = await supabaseAdmin.rpc('search_manual_chunks', {
-    search_query: tsQuery,
-    result_limit: limit
-  });
-
-  if (error) {
-    console.error('[Manual Search] RPC error, falling back to ILIKE:', error);
-
-    // Fallback to ILIKE search if RPC doesn't exist
-    const { data: ilikResults, error: ilikError } = await supabaseAdmin
+  try {
+    // Search U435 manual chunks using ILIKE on content
+    // Build filter: content must contain ALL keywords
+    let queryBuilder = supabaseAdmin
       .from('manual_chunks')
       .select('*')
-      .or(keywords.map(kw => `content.ilike.%${kw}%`).join(','))
+      .ilike('manual_title', '%U435%');
+
+    // Add ILIKE filter for each keyword
+    for (const kw of keywords) {
+      queryBuilder = queryBuilder.ilike('content', `%${kw}%`);
+    }
+
+    const { data: results, error } = await queryBuilder
+      .order('page_number', { ascending: true })
       .limit(limit);
 
-    if (ilikError) {
-      console.error('[Manual Search] ILIKE error:', ilikError);
+    if (error) {
+      console.error('[Manual Search] Query error:', error);
       return [];
     }
 
-    return ilikResults || [];
+    console.log(`[Manual Search] Found ${results?.length || 0} results`);
+    return results || [];
+  } catch (err) {
+    console.error('[Manual Search] Exception:', err);
+    return [];
   }
-
-  console.log(`[Manual Search] Found ${results?.length || 0} results`);
-  return results || [];
 }
 
 serve(async (req) => {
