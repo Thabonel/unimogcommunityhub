@@ -960,6 +960,92 @@ function formatManualIndexForClaude(indexEntries: any[]): string {
   return formattedIndex;
 }
 
+// Format manual_chunks entries for Claude's context (replaces faulty u435_manual_index)
+function formatManualChunksForClaude(chunks: any[]): string {
+  if (!chunks || chunks.length === 0) {
+    return 'No manual content available.';
+  }
+
+  let formattedContent = 'U435 UNIMOG WORKSHOP MANUAL CONTENT INDEX\n';
+  formattedContent += '==========================================\n\n';
+
+  // Group chunks by section for better organization
+  const grouped = new Map<string, any[]>();
+  chunks.forEach(chunk => {
+    const section = chunk.section_title || 'General';
+    if (!grouped.has(section)) {
+      grouped.set(section, []);
+    }
+    grouped.get(section)!.push(chunk);
+  });
+
+  let entryNum = 1;
+  grouped.forEach((sectionChunks, section) => {
+    // Get unique pages for this section
+    const pages = [...new Set(sectionChunks.map(c => c.page_number))].sort((a, b) => a - b);
+
+    formattedContent += `${entryNum}. ${section}\n`;
+    formattedContent += `   Pages: ${pages.join(', ')}\n`;
+
+    // Include brief content preview from first chunk
+    const firstChunk = sectionChunks[0];
+    if (firstChunk.content) {
+      const preview = firstChunk.content.substring(0, 150).replace(/\n/g, ' ').trim();
+      formattedContent += `   Preview: ${preview}...\n`;
+    }
+    formattedContent += '\n';
+    entryNum++;
+  });
+
+  return formattedContent;
+}
+
+// Full-text search on manual_chunks content
+async function searchManualChunks(supabaseAdmin: any, query: string, limit: number = 20): Promise<any[]> {
+  // Extract keywords from query
+  const keywords = query.toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2)
+    .slice(0, 8);
+
+  if (keywords.length === 0) {
+    return [];
+  }
+
+  // Build PostgreSQL full-text search query
+  const tsQuery = keywords.join(' & ');
+
+  console.log(`[Manual Search] Searching for: "${tsQuery}"`);
+
+  // Use full-text search on content_tsv
+  const { data: results, error } = await supabaseAdmin.rpc('search_manual_chunks', {
+    search_query: tsQuery,
+    result_limit: limit
+  });
+
+  if (error) {
+    console.error('[Manual Search] RPC error, falling back to ILIKE:', error);
+
+    // Fallback to ILIKE search if RPC doesn't exist
+    const { data: ilikResults, error: ilikError } = await supabaseAdmin
+      .from('manual_chunks')
+      .select('*')
+      .or(keywords.map(kw => `content.ilike.%${kw}%`).join(','))
+      .limit(limit);
+
+    if (ilikError) {
+      console.error('[Manual Search] ILIKE error:', ilikError);
+      return [];
+    }
+
+    return ilikResults || [];
+  }
+
+  console.log(`[Manual Search] Found ${results?.length || 0} results`);
+  return results || [];
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -1661,23 +1747,24 @@ Use this data to answer weather questions. Be specific with temperatures and con
       }
 
       try {
-        // STEP 1: Load the FULL manual index (all 696 entries)
-        console.log('Loading full u435_manual_index for Claude...');
-        const { data: fullIndex, error: indexError } = await supabaseAdmin
-          .from('u435_manual_index')
+        // STEP 1: Load manual content from manual_chunks (replaces faulty u435_manual_index)
+        console.log('Loading workshop manual content from manual_chunks...');
+        const { data: workshopChunks, error: chunksError } = await supabaseAdmin
+          .from('manual_chunks')
           .select('*')
+          .ilike('manual_title', '%U435%')
           .order('page_number', { ascending: true });
 
-        if (indexError) {
-          console.error('Failed to load manual index:', indexError);
+        if (chunksError) {
+          console.error('Failed to load manual chunks:', chunksError);
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
-        } else if (!fullIndex || fullIndex.length === 0) {
-          console.log('Manual index is empty');
+        } else if (!workshopChunks || workshopChunks.length === 0) {
+          console.log('Manual chunks are empty');
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
         } else {
-          console.log(`Loaded ${fullIndex.length} workshop manual index entries`);
+          console.log(`Loaded ${workshopChunks.length} workshop manual chunks`);
 
           // STEP 1.5: Load RPS catalog entries from manual_chunks
           console.log('Loading RPS catalog entries from manual_chunks...');
@@ -1691,7 +1778,17 @@ Use this data to answer weather questions. Be specific with temperatures and con
             console.error('Failed to load RPS catalog:', rpsError);
           }
 
-          // Convert RPS chunks to index format (compatible with formatManualIndexForClaude)
+          // Convert chunks to index format for compatibility
+          const workshopIndexEntries = workshopChunks.map(chunk => ({
+            term: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
+            page_number: chunk.page_number,
+            pdf_page_number: chunk.page_number,
+            chapter_filename: chunk.manual_title || 'U435_Workshop_Manual',
+            storage_url: chunk.storage_url || '',
+            system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
+            content_preview: chunk.content?.substring(0, 200) || ''
+          }));
+
           const rpsIndexEntries = rpsEntries?.map(chunk => ({
             term: chunk.section_title,
             page_number: chunk.page_number,
@@ -1704,12 +1801,12 @@ Use this data to answer weather questions. Be specific with temperatures and con
 
           console.log(`Loaded ${rpsIndexEntries.length} RPS catalog entries`);
 
-          // Merge workshop manual + RPS catalog indexes
-          const combinedIndex = [...fullIndex, ...rpsIndexEntries];
-          console.log(`Total combined index: ${combinedIndex.length} entries (${fullIndex.length} workshop + ${rpsIndexEntries.length} RPS)`);
+          // Merge workshop manual + RPS catalog
+          const combinedIndex = [...workshopIndexEntries, ...rpsIndexEntries];
+          console.log(`Total combined index: ${combinedIndex.length} entries (${workshopIndexEntries.length} workshop + ${rpsIndexEntries.length} RPS)`);
 
-          // Format the combined index for Claude
-          const formattedIndex = formatManualIndexForClaude(combinedIndex);
+          // Format the combined index for Claude (using actual content, not faulty index)
+          const formattedIndex = formatManualChunksForClaude([...workshopChunks, ...(rpsEntries || [])]);
           console.log(`Formatted index size: ${formattedIndex.length} characters`);
 
           // STEP 2: Give Claude the full index and let HIM decide what's relevant
@@ -1777,45 +1874,29 @@ Always cite specific page numbers and PDF files in your response.`;
             const error = await anthropicResponse.text();
             console.error('Claude API error:', error);
 
-            // Deterministic manual fallback: query u435_manual_index for likely pages
+            // Deterministic manual fallback: search manual_chunks content directly
             try {
               const q = (lastUserMessage.content || '').toLowerCase();
-              const tokens: string[] = Array.from(new Set(q.split(/[^a-z0-9]+/g).filter(Boolean)));
-              const keywords: string[] = tokens.filter((t: string) => ['portal','hub','seal','front','rear','replace','installation','removal','disassembly','assembly'].includes(t));
-              let likeClauses: string[] = [];
-              let params: any[] = [];
-              if (keywords.length === 0) {
-                keywords.push('portal','hub','seal');
-              }
-              keywords.slice(0,6).forEach((kw, i) => {
-                likeClauses.push(`LOWER(term) ILIKE '%' || $${i+1} || '%'`);
-                params.push(kw);
-              });
 
-              // Build SQL dynamically due to Deno Supabase client limitations; use PostgREST filters instead
-              // We approximate by chaining ilike on term for top 50 entries and filtering client-side
-              const { data: idx } = await supabaseAdmin
-                .from('u435_manual_index')
-                .select('*')
-                .limit(200);
+              // Search manual_chunks using content-based search
+              const searchResults = await searchManualChunks(supabaseAdmin, q, 10);
 
-              const filtered = (idx || []).filter((e: any) => {
-                const t = String(e.term || '').toLowerCase();
-                return keywords.every(kw => t.includes(kw));
-              }).slice(0, 4);
+              // Filter to top 4 most relevant results
+              const filtered = searchResults.slice(0, 4);
 
-              manualReferences = filtered.map((entry: any) => ({
-                type: 'u435_agentic',
-                title: entry.term || 'Manual Entry',
-                page_number: entry.page_number || entry.pdf_page_number || 0,
-                original_page: entry.page_number || 0,
-                pdf_page: entry.pdf_page_number || 0,
-                storage_url: entry.storage_url || '',
-                system_category: entry.system_category || 'general',
-                has_safety_warning: entry.has_safety_warning || false,
-                match_type: 'deterministic_fallback',
-                match_score: 0.7,
-                manual_type: 'U435'
+              manualReferences = filtered.map((chunk: any) => ({
+                type: 'u435_content_search',
+                title: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
+                page_number: chunk.page_number || 0,
+                original_page: chunk.page_number || 0,
+                pdf_page: chunk.page_number || 0,
+                storage_url: chunk.storage_url || '',
+                system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
+                has_safety_warning: false,
+                match_type: 'content_search_fallback',
+                match_score: 0.8,
+                manual_type: 'U435',
+                content_preview: chunk.content?.substring(0, 300) || ''
               }));
 
               if (rpsIllustrations.length > 0) {
