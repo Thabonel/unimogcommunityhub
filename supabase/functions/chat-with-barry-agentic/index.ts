@@ -1995,11 +1995,27 @@ Always cite specific page numbers and PDF files in your response.`;
 
           // STEP 5: Build manual references for the frontend
           // ONLY load the EXACT pages Barry mentioned, not everything from those PDFs!
-          // 5a) Collect any RPS_Catalog pages Claude explicitly cited and build illustrations from those
+
+          // First, identify which pages are in workshop entries (not RPS)
+          // This prevents showing RPS illustrations when workshop content is the actual source
+          const workshopPageNumbers = new Set<number>();
+          combinedIndex.forEach((entry) => {
+            if (entry.chapter_filename !== 'RPS_Catalog' && referencedPages.has(entry.page_number)) {
+              workshopPageNumbers.add(entry.page_number);
+            }
+          });
+
+          // 5a) Collect RPS_Catalog pages BUT SKIP pages that also exist in workshop
+          // This fixes the issue where page 713 exists in both workshop (torque specs) and RPS (electrical)
           const rpsPagesFromAgentic: number[] = [];
           combinedIndex.forEach((entry) => {
             if (entry.chapter_filename === 'RPS_Catalog' && referencedPages.has(entry.page_number)) {
-              rpsPagesFromAgentic.push(entry.page_number);
+              // SKIP if this page also exists in workshop - prioritize workshop content
+              if (!workshopPageNumbers.has(entry.page_number)) {
+                rpsPagesFromAgentic.push(entry.page_number);
+              } else {
+                console.log(`[Agentic] Skipping RPS page ${entry.page_number} - workshop manual takes priority`);
+              }
             }
           });
 
