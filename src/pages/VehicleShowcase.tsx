@@ -206,20 +206,21 @@ const Showroom = () => {
               <div className="flex gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={handleRandomCountry} className="flex-1">
-                      <Shuffle className="w-4 h-4 mr-2" />
-                      Random Country
+                    <Button variant="outline" onClick={handleRandomCountry} className="flex-1 min-w-0 px-2 sm:px-4 text-xs sm:text-sm">
+                      <Shuffle className="w-4 h-4 shrink-0" />
+                      <span className="truncate hidden sm:inline">Random Country</span>
+                      <span className="truncate sm:hidden">Random</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Explore vehicles from a random country</p>
                   </TooltipContent>
                 </Tooltip>
-                
+
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" onClick={handleClearFilters}>
-                      Clear All
+                    <Button variant="outline" onClick={handleClearFilters} className="min-w-0 px-2 sm:px-4 text-xs sm:text-sm shrink-0">
+                      <span className="truncate">Clear</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

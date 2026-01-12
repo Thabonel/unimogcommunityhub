@@ -239,23 +239,23 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            <Link to="/full-vehicle-dashboard">
-              <Button className="w-full flex gap-2 items-center bg-primary text-primary-foreground hover:bg-primary/90">
-                <Gauge size={16} />
-                View Full Dashboard
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+            <Link to="/full-vehicle-dashboard" className="w-full">
+              <Button className="w-full min-w-0 px-3 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90">
+                <Gauge size={16} className="shrink-0" />
+                <span className="truncate">Full Dashboard</span>
               </Button>
             </Link>
-            <Link to="/fuel-tracking">
-              <Button variant="outline" className="w-full flex gap-2 items-center">
-                <Fuel size={16} />
-                Fuel Tracking
+            <Link to="/fuel-tracking" className="w-full">
+              <Button variant="outline" className="w-full min-w-0 px-3 text-xs sm:text-sm">
+                <Fuel size={16} className="shrink-0" />
+                <span className="truncate">Fuel Tracking</span>
               </Button>
             </Link>
-            <Link to="/service-logs">
-              <Button variant="outline" className="w-full flex gap-2 items-center">
-                <FileText size={16} />
-                Service Logs
+            <Link to="/service-logs" className="w-full">
+              <Button variant="outline" className="w-full min-w-0 px-3 text-xs sm:text-sm">
+                <FileText size={16} className="shrink-0" />
+                <span className="truncate">Service Logs</span>
               </Button>
             </Link>
           </div>

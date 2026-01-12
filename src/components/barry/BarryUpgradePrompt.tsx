@@ -33,14 +33,14 @@ export const BarryUpgradePrompt = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button asChild className="flex-1">
+          <Button asChild className="flex-1 min-w-0">
             <Link to="/signup?plan=monthly">
-              Start 30-Day Free Trial
+              <span className="truncate">Start Free Trial</span>
             </Link>
           </Button>
-          <Button asChild variant="outline" className="flex-1">
+          <Button asChild variant="outline" className="flex-1 min-w-0">
             <Link to="/#pricing">
-              View Pricing
+              <span className="truncate">View Pricing</span>
             </Link>
           </Button>
         </div>
