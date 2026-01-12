@@ -214,18 +214,18 @@ const Dashboard = () => {
             {/* Showroom Feature Card */}
             <Card className="mb-6 bg-gradient-to-r from-military-green to-camo-brown text-white">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <Car className="h-6 w-6" />
+                    <Car className="h-6 w-6 shrink-0" />
                     <div>
                       <h2 className="text-lg font-bold">The Showroom</h2>
-                      <p className="text-white/90 text-sm">
+                      <p className="text-white/90 text-sm hidden sm:block">
                         Browse community trucks, see builds and modifications, admire the pride and joy of fellow Unimog owners worldwide.
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="hidden md:flex items-center gap-4 text-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <div className="hidden lg:flex items-center gap-4 text-xs">
                       <div className="flex items-center gap-1">
                         <Car className="h-3 w-3" />
                         <span>View Featured Builds</span>
@@ -239,17 +239,17 @@ const Dashboard = () => {
                         <span>Latest Additions</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Link to="/shop">
-                        <Button variant="outline" size="default" className="font-semibold whitespace-nowrap bg-red-600 hover:bg-red-700 border-red-500 text-white">
-                          <ShoppingBag className="mr-2 h-4 w-4" />
-                          Shop
+                    <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex">
+                      <Link to="/shop" className="w-full sm:w-auto">
+                        <Button variant="outline" size="default" className="w-full sm:w-auto font-semibold bg-red-600 hover:bg-red-700 border-red-500 text-white text-xs sm:text-sm px-2 sm:px-4">
+                          <ShoppingBag className="h-4 w-4 shrink-0 sm:mr-2" />
+                          <span className="truncate">Shop</span>
                         </Button>
                       </Link>
-                      <Link to="/showcase">
-                        <Button variant="secondary" size="default" className="font-semibold whitespace-nowrap">
-                          Browse Showroom
-                          <Car className="ml-2 h-4 w-4" />
+                      <Link to="/showcase" className="w-full sm:w-auto">
+                        <Button variant="secondary" size="default" className="w-full sm:w-auto font-semibold text-xs sm:text-sm px-2 sm:px-4">
+                          <span className="truncate">Showroom</span>
+                          <Car className="h-4 w-4 shrink-0 sm:ml-2" />
                         </Button>
                       </Link>
                     </div>

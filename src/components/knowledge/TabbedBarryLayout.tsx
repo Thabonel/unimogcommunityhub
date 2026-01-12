@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EnhancedBarryChat } from './EnhancedBarryChat';
 import { TabbedPdfViewer, ManualTab } from './TabbedPdfViewer';
 import { ManualReference } from '@/hooks/use-simple-barry';
 import { usePdfPreloader } from '@/hooks/use-pdf-preloader';
+import { useMobile } from '@/hooks/use-mobile';
+import { MessageSquare, FileText } from 'lucide-react';
 
 interface TabbedBarryLayoutProps {
   className?: string;
@@ -15,6 +18,8 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
   const [openPdfTabs, setOpenPdfTabs] = useState<ManualTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [latestReferences, setLatestReferences] = useState<ManualReference[]>([]);
+  const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'manual'>('chat');
+  const { isMobile } = useMobile();
 
   // Preload PDFs in background when Barry returns manual references
   usePdfPreloader(latestReferences);
@@ -28,6 +33,10 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     if (existingTab) {
       // Tab exists, just switch to it
       setActiveTabId(tabId);
+      // On mobile, switch to manual tab when citation is clicked
+      if (isMobile) {
+        setMobileActiveTab('manual');
+      }
       return;
     }
 
@@ -42,6 +51,11 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     // Add tab and switch to it
     setOpenPdfTabs(prev => [...prev, newTab]);
     setActiveTabId(tabId);
+
+    // On mobile, switch to manual tab when citation is clicked
+    if (isMobile) {
+      setMobileActiveTab('manual');
+    }
   };
 
   const handleCloseTab = (tabId: string) => {
@@ -53,6 +67,46 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     setActiveTabId(tabId);
   };
 
+  // Mobile layout - tabs for Chat and Manual
+  if (isMobile) {
+    return (
+      <div className={`h-full flex flex-col ${className || ''}`}>
+        <Tabs value={mobileActiveTab} onValueChange={(v) => setMobileActiveTab(v as 'chat' | 'manual')} className="flex flex-col h-full">
+          <TabsList className="grid grid-cols-2 mx-2 mt-2 shrink-0">
+            <TabsTrigger value="chat" className="flex items-center gap-2 text-xs sm:text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>Ask Barry</span>
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="flex items-center gap-2 text-xs sm:text-sm">
+              <FileText className="h-4 w-4" />
+              <span>Manuals {openPdfTabs.length > 0 && `(${openPdfTabs.length})`}</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chat" className="flex-1 m-0 mt-2 overflow-hidden">
+            <EnhancedBarryChat
+              location={location}
+              userModel={userModel}
+              onCitationClick={handleCitationClick}
+              onReferencesReceived={setLatestReferences}
+              className="h-full"
+            />
+          </TabsContent>
+
+          <TabsContent value="manual" className="flex-1 m-0 mt-2 overflow-hidden">
+            <TabbedPdfViewer
+              openTabs={openPdfTabs}
+              activeTabId={activeTabId}
+              onTabChange={handleTabChange}
+              onCloseTab={handleCloseTab}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
+  // Desktop layout - resizable panels
   return (
     <div className={`h-full ${className || ''}`}>
       <ResizablePanelGroup direction="horizontal" className="h-full">
