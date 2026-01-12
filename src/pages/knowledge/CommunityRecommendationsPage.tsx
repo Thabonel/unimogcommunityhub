@@ -28,17 +28,20 @@ export default function CommunityRecommendationsPage() {
         Back
       </Button>
       
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Community Recommendations</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Community Recommendations</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
             Discover tips, guides, and recommendations from the Unimog community
           </p>
         </div>
         {user && (
-          <Button onClick={() => setIsSubmitDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Submit Recommendation
+          <Button
+            onClick={() => setIsSubmitDialogOpen(true)}
+            className="w-full sm:w-auto min-w-0 shrink-0"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            <span className="truncate">Submit</span>
           </Button>
         )}
       </div>

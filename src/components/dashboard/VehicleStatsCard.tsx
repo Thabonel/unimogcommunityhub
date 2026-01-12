@@ -273,26 +273,26 @@ export function VehicleStatsCard() {
           </div>
 
           {/* Quick Add Buttons */}
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-full min-w-0 px-2 sm:px-4 text-xs sm:text-sm"
               onClick={() => setShowFuelModal(true)}
             >
-              <Fuel className="mr-2 h-4 w-4" />
-              + Log Fuel
+              <Fuel className="h-4 w-4 shrink-0" />
+              <span className="truncate">Log Fuel</span>
             </Button>
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-full min-w-0 px-2 sm:px-4 text-xs sm:text-sm"
               onClick={() => setShowMaintenanceModal(true)}
             >
-              <Wrench className="mr-2 h-4 w-4" />
-              + Log Service
+              <Wrench className="h-4 w-4 shrink-0" />
+              <span className="truncate">Log Service</span>
             </Button>
-            <Link to="/fuel-tracking" className="flex-1">
-              <Button variant="ghost" className="w-full">
-                View History
+            <Link to="/fuel-tracking" className="w-full min-w-0">
+              <Button variant="ghost" className="w-full min-w-0 px-2 sm:px-4 text-xs sm:text-sm">
+                <span className="truncate">History</span>
               </Button>
             </Link>
           </div>

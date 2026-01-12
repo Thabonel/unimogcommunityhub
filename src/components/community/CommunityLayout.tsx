@@ -36,13 +36,13 @@ const CommunityLayout = ({ children }: CommunityLayoutProps) => {
         
         {/* Mobile sidebar controls */}
         {isMobile && (
-          <div className="flex gap-2 mb-4">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             {/* Groups Sheet */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <Users size={16} className="mr-2" />
-                  {t('layout.groups')}
+                <Button variant="outline" size="sm" className="w-full min-w-0 px-2 text-xs">
+                  <Users size={16} className="shrink-0" />
+                  <span className="truncate">{t('layout.groups')}</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] sm:w-[400px] p-4">
@@ -58,9 +58,9 @@ const CommunityLayout = ({ children }: CommunityLayoutProps) => {
             {/* Member Finder Sheet */}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1">
-                  <UserPlus size={16} className="mr-2" />
-                  {t('layout.find_members')}
+                <Button variant="outline" size="sm" className="w-full min-w-0 px-2 text-xs">
+                  <UserPlus size={16} className="shrink-0" />
+                  <span className="truncate">{t('layout.find_members')}</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px] p-4">
