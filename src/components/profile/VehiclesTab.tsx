@@ -151,10 +151,10 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                       <img
                         src={vehicle.photos[0]}
                         alt={vehicle.name}
-                        className="w-32 h-32 object-cover rounded-lg"
+                        className="w-48 aspect-video object-cover rounded-lg"
                       />
                     ) : (
-                      <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <div className="w-48 aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
                         <span className="text-gray-400 text-sm">No photo</span>
                       </div>
                     )}
