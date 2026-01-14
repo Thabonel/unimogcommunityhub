@@ -2110,9 +2110,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       </div>
       )}
 
-      {/* Desktop Control Panel - z-10 to allow autocomplete suggestions to appear above */}
-      <div className="hidden md:block absolute top-48 left-4 z-10">
-        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72 overflow-hidden">
+      {/* Desktop Control Panel - positioned below the Mapbox Directions AB panel */}
+      <div className="hidden md:block absolute top-[400px] left-4 z-10">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72">
 
           {/* Waypoint Controls */}
           <div className="border-t pt-3">
