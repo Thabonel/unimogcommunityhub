@@ -146,15 +146,15 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
               {vehicles.map((vehicle) => (
                 <div key={vehicle.id} className="border rounded-lg p-4 hover:border-military-green/50 transition-colors">
                   <div className="flex gap-4">
-                    {/* Vehicle Photo */}
+                    {/* Vehicle Photo - displays in natural aspect ratio */}
                     {vehicle.photos && vehicle.photos.length > 0 ? (
                       <img
                         src={vehicle.photos[0]}
                         alt={vehicle.name}
-                        className="w-48 aspect-video object-cover rounded-lg"
+                        className="max-w-48 max-h-40 w-auto h-auto object-contain rounded-lg"
                       />
                     ) : (
-                      <div className="w-48 aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
+                      <div className="w-32 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
                         <span className="text-gray-400 text-sm">No photo</span>
                       </div>
                     )}
