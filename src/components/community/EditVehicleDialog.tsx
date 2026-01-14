@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
@@ -276,6 +276,15 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     });
   };
 
+  const handleSetPrimaryPhoto = (photoUrl: string) => {
+    const newPhotos = [photoUrl, ...photos.filter(p => p !== photoUrl)];
+    setPhotos(newPhotos);
+    toast({
+      title: 'Primary photo changed',
+      description: 'This photo will be shown as the main image.',
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -299,17 +308,31 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
                     <img
                       src={photo}
                       alt={`Photo ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className={`w-full h-32 object-cover rounded-lg ${index === 0 ? 'ring-2 ring-military-green' : ''}`}
                     />
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePhoto(photo)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={16} />
-                    </button>
+                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {index !== 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetPrimaryPhoto(photo)}
+                          className="p-1 bg-military-green text-white rounded-full"
+                          title="Set as primary"
+                        >
+                          <Star size={16} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(photo)}
+                        className="p-1 bg-red-500 text-white rounded-full"
+                        title="Remove photo"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                     {index === 0 && (
-                      <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-black/70 text-white text-xs rounded">
+                      <div className="absolute bottom-1 left-1 px-2 py-0.5 bg-military-green text-white text-xs rounded flex items-center gap-1">
+                        <Star size={12} className="fill-white" />
                         Primary
                       </div>
                     )}
