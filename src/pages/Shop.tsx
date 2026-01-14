@@ -76,26 +76,39 @@ const Shop = () => {
   });
 
   const handleProductClick = async (product: AffiliateProduct) => {
+    // Get user's country code for regional routing
+    const userCountryCode = location?.countryCode || 'US';
+
+    // Build regional affiliate URL for Amazon products
+    // Uses regional_asins if configured, falls back to US ASIN
+    const regionalURL = product.affiliate_provider === 'amazon'
+      ? getRegionalAffiliateURLWithASINs(
+          product.affiliate_url,
+          userCountryCode,
+          product.regional_asins,
+          product.regional_urls
+        )
+      : product.affiliate_url;
+
+    const amazonRegion = product.affiliate_provider === 'amazon'
+      ? getAmazonRegion(userCountryCode)
+      : null;
+
+    // IMPORTANT: Open window IMMEDIATELY before any async calls
+    // Browsers block window.open() if not directly triggered by user action
+    // Async awaits break the user action chain and cause popup blockers
+    window.open(regionalURL, '_blank', 'noopener,noreferrer');
+
+    // Show regional routing feedback
+    if (product.affiliate_provider === 'amazon' && amazonRegion) {
+      toast({
+        title: `Opening Amazon ${getRegionDisplayName(amazonRegion)}`,
+        description: `Redirecting to ${getAmazonDomain(amazonRegion)}`,
+      });
+    }
+
+    // Track the click asynchronously (fire and forget - user already redirected)
     try {
-      // Get user's country code for regional routing
-      const userCountryCode = location?.countryCode || 'US';
-
-      // Build regional affiliate URL for Amazon products
-      // Uses regional_asins if configured, falls back to US ASIN
-      const regionalURL = product.affiliate_provider === 'amazon'
-        ? getRegionalAffiliateURLWithASINs(
-            product.affiliate_url,
-            userCountryCode,
-            product.regional_asins,
-            product.regional_urls
-          )
-        : product.affiliate_url;
-
-      const amazonRegion = product.affiliate_provider === 'amazon'
-        ? getAmazonRegion(userCountryCode)
-        : null;
-
-      // Track the click with regional metadata
       await supabase.from('affiliate_product_clicks').insert([
         {
           product_id: product.id,
@@ -112,21 +125,8 @@ const Shop = () => {
 
       // Increment click count
       await supabase.rpc('increment_product_clicks', { product_uuid: product.id });
-
-      // Show regional routing feedback
-      if (product.affiliate_provider === 'amazon' && amazonRegion) {
-        toast({
-          title: `Opening Amazon ${getRegionDisplayName(amazonRegion)}`,
-          description: `Redirecting to ${getAmazonDomain(amazonRegion)}`,
-        });
-      }
-
-      // Open regional affiliate link in new tab
-      window.open(regionalURL, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error tracking click:', error);
-      // Still open the link even if tracking fails
-      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
     }
   };
 
