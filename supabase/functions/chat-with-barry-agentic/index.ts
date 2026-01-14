@@ -1915,17 +1915,22 @@ Always cite specific page numbers and PDF files in your response.`;
               const filtered = searchResults.slice(0, 4);
 
               // Look up chapter PDF URLs for each result
-              manualReferences = await Promise.all(
+              const allReferences = await Promise.all(
                 filtered.map(async (chunk: any) => {
                   const chapterInfo = await getChapterPdfUrl(supabaseAdmin, chunk.page_number);
+                  // Skip pages without valid chapter mapping (e.g., pages 615-650 have no Part 21 PDF)
+                  if (!chapterInfo) {
+                    console.log(`[Content Search] Skipping page ${chunk.page_number} - no chapter PDF mapping`);
+                    return null;
+                  }
                   return {
                     type: 'u435_content_search',
                     title: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
                     page_number: chunk.page_number || 0,
                     original_page: chunk.page_number || 0,
-                    pdf_page: chapterInfo?.pdfPage || chunk.page_number || 0,
-                    storage_url: chapterInfo?.url || '',
-                    chapter_filename: chapterInfo?.filename || '',
+                    pdf_page: chapterInfo.pdfPage,
+                    storage_url: chapterInfo.url,
+                    chapter_filename: chapterInfo.filename,
                     system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
                     has_safety_warning: false,
                     match_type: 'content_search_fallback',
@@ -1935,6 +1940,8 @@ Always cite specific page numbers and PDF files in your response.`;
                   };
                 })
               );
+              // Filter out null references (pages without chapter mapping)
+              manualReferences = allReferences.filter((ref): ref is NonNullable<typeof ref> => ref !== null);
 
               if (rpsIllustrations.length > 0) {
                 manualReferences = [...manualReferences, ...rpsIllustrations];
@@ -2046,17 +2053,22 @@ Always cite specific page numbers and PDF files in your response.`;
           });
 
           // Look up chapter PDF URLs for each referenced page
-          const workshopRefs = await Promise.all(
+          const allWorkshopRefs = await Promise.all(
             workshopEntries.map(async (entry) => {
               const chapterInfo = await getChapterPdfUrl(supabaseAdmin, entry.page_number);
+              // Skip pages without valid chapter mapping (e.g., pages 615-650 have no Part 21 PDF)
+              if (!chapterInfo) {
+                console.log(`[Agentic Mode] Skipping page ${entry.page_number} - no chapter PDF mapping`);
+                return null;
+              }
               return {
                 type: 'u435_agentic',
                 title: entry.term || 'Manual Entry',
                 page_number: entry.page_number || entry.pdf_page_number || 0,
                 original_page: entry.page_number || 0,
-                pdf_page: chapterInfo?.pdfPage || entry.pdf_page_number || 0,
-                storage_url: chapterInfo?.url || entry.storage_url || '',
-                chapter_filename: chapterInfo?.filename || entry.chapter_filename || '',
+                pdf_page: chapterInfo.pdfPage,
+                storage_url: chapterInfo.url,
+                chapter_filename: chapterInfo.filename,
                 system_category: entry.system_category || 'general',
                 has_safety_warning: entry.has_safety_warning || false,
                 match_type: 'claude_selected',
@@ -2066,6 +2078,8 @@ Always cite specific page numbers and PDF files in your response.`;
               };
             })
           );
+          // Filter out null references (pages without chapter mapping)
+          const workshopRefs = allWorkshopRefs.filter((ref): ref is NonNullable<typeof ref> => ref !== null);
 
           manualReferences = [...manualReferences, ...workshopRefs];
 
