@@ -560,7 +560,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             profile: directions.options.profile
           });
 
-          // Check if the DOM element was created
+          // Check if the DOM element was created and add Go button
           setTimeout(() => {
             const directionsElement = document.querySelector('.mapbox-directions-component');
             const inputsElement = document.querySelector('.mapbox-directions-inputs');
@@ -570,7 +570,86 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               directionsDisplay: directionsElement ? getComputedStyle(directionsElement).display : 'N/A',
               inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
             });
+
+            // Add "Go" button next to swap button
+            const reverseButton = document.querySelector('.mapbox-directions-reverse');
+            if (reverseButton && !document.querySelector('.directions-go-button')) {
+              const goButton = document.createElement('button');
+              goButton.className = 'directions-go-button';
+              goButton.innerHTML = 'Go';
+              goButton.title = 'Calculate route';
+              goButton.style.cssText = `
+                background: #4a7c59;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                margin-left: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+              `;
+              goButton.onmouseover = () => { goButton.style.background = '#3d6b4a'; };
+              goButton.onmouseout = () => { goButton.style.background = '#4a7c59'; };
+
+              goButton.onclick = async () => {
+                const originInput = document.querySelector('.mapbox-directions-origin input') as HTMLInputElement;
+                const destInput = document.querySelector('.mapbox-directions-destination input') as HTMLInputElement;
+
+                if (!originInput?.value || !destInput?.value) {
+                  toast.warn('Please enter both start (A) and destination (B)');
+                  return;
+                }
+
+                goButton.innerHTML = '...';
+                goButton.disabled = true;
+
+                try {
+                  const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
+                  // Geocode origin if it's text (not already coordinates)
+                  const originCoords = await geocodeAddress(originInput.value, mapboxToken);
+                  const destCoords = await geocodeAddress(destInput.value, mapboxToken);
+
+                  if (originCoords && destCoords && directionsRef.current) {
+                    directionsRef.current.setOrigin(originCoords);
+                    directionsRef.current.setDestination(destCoords);
+                    console.log('🚀 Route triggered via Go button');
+                  } else {
+                    toast.error('Could not find one or both addresses');
+                  }
+                } catch (err) {
+                  console.error('Go button error:', err);
+                  toast.error('Failed to calculate route');
+                } finally {
+                  goButton.innerHTML = 'Go';
+                  goButton.disabled = false;
+                }
+              };
+
+              reverseButton.parentNode?.insertBefore(goButton, reverseButton.nextSibling);
+              console.log('✅ Go button added');
+            }
           }, 1000);
+
+          // Helper function to geocode an address
+          async function geocodeAddress(address: string, token: string): Promise<[number, number] | null> {
+            // Check if already coordinates
+            const coordMatch = address.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+            if (coordMatch) {
+              return [parseFloat(coordMatch[2]), parseFloat(coordMatch[1])];
+            }
+
+            const response = await fetch(
+              `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${token}&limit=1`
+            );
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+              return data.features[0].center as [number, number];
+            }
+            return null;
+          }
 
         } catch (controlError) {
           console.error('❌ Failed to add directions plugin:', controlError);
