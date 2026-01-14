@@ -5,12 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Rotate user agents to avoid detection
+// Rotate user agents (10+ options) to mimic diverse traffic
 const USER_AGENTS = [
+  // Chrome variants
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  // Firefox variants
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0',
+  'Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0',
+  // Safari
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+  // Edge
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+  // Mobile (occasional)
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+  'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
 ];
 
 interface PriceResult {
@@ -115,8 +127,10 @@ async function scrapeAmazonPrice(url: string): Promise<{ price: number | null; c
   }
 }
 
-// Process in batches to avoid Edge Function timeout (max ~60s)
-const BATCH_SIZE = 20;
+// Conservative scraping: mimic human browsing patterns
+// 8 products × 6s avg delay = ~48s (under 60s timeout)
+// 119 products ÷ 8 = 15 batches → run 4x/day → 4-day cycle
+const BATCH_SIZE = 8;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -226,9 +240,9 @@ Deno.serve(async (req) => {
 
       results.push(result);
 
-      // Delay between requests (1-2 seconds) to avoid rate limiting
+      // Human-like delays: 4-8 seconds random between requests
       if (i < products.length - 1) {
-        const delay = 1000 + Math.random() * 1000;
+        const delay = 4000 + Math.random() * 4000;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
