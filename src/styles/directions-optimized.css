@@ -165,16 +165,18 @@ canvas.mapboxgl-canvas {
   position: relative !important;
 }
 
-/* GEOCODER SUGGESTIONS - Ensure autocomplete dropdown is visible */
+/* GEOCODER SUGGESTIONS - Ensure autocomplete dropdown is visible above ALL overlays */
 .mapbox-directions-component .suggestions,
 .mapbox-directions-component ul.suggestions,
 .mapboxgl-ctrl-geocoder .suggestions,
 .mapboxgl-ctrl-geocoder--suggestion,
-.suggestions-wrapper {
+.suggestions-wrapper,
+.mapbox-directions-origin .suggestions,
+.mapbox-directions-destination .suggestions {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  z-index: 10000 !important;
+  z-index: 9999999 !important;
   position: absolute !important;
   background: white !important;
   border: 1px solid #e5e7eb !important;
@@ -182,6 +184,10 @@ canvas.mapboxgl-canvas {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
   max-height: 300px !important;
   overflow-y: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 100% !important;
+  margin-top: 4px !important;
 }
 
 .mapbox-directions-component .suggestions li,
@@ -189,6 +195,7 @@ canvas.mapboxgl-canvas {
   padding: 10px 12px !important;
   cursor: pointer !important;
   border-bottom: 1px solid #f3f4f6 !important;
+  background: white !important;
 }
 
 .mapbox-directions-component .suggestions li:hover,
@@ -199,6 +206,26 @@ canvas.mapboxgl-canvas {
 /* Ensure geocoder input container doesn't clip suggestions */
 .mapbox-directions-origin-input,
 .mapbox-directions-destination-input,
+.mapbox-directions-origin,
+.mapbox-directions-destination,
 .mapboxgl-ctrl-geocoder {
   overflow: visible !important;
+  position: relative !important;
+}
+
+/* Ensure the entire directions inputs container allows overflow */
+.mapbox-directions-inputs {
+  overflow: visible !important;
+}
+
+/* Go button styling - position inline with swap button */
+.directions-go-button {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Swap button container - make it flex to align Go button */
+.mapbox-directions-reverse {
+  display: inline-block !important;
+  vertical-align: middle !important;
 }

@@ -571,9 +571,19 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
             });
 
-            // Add "Go" button next to swap button
-            const reverseButton = document.querySelector('.mapbox-directions-reverse');
+            // Add "Go" button next to swap button - wrap both in a flex container
+            const reverseButton = document.querySelector('.mapbox-directions-reverse') as HTMLElement;
             if (reverseButton && !document.querySelector('.directions-go-button')) {
+              // Create wrapper to hold both buttons side by side
+              const wrapper = document.createElement('div');
+              wrapper.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                margin: 8px 0;
+              `;
+
               const goButton = document.createElement('button');
               goButton.className = 'directions-go-button';
               goButton.innerHTML = 'Go';
@@ -583,11 +593,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 color: white;
                 border: none;
                 border-radius: 4px;
-                padding: 6px 12px;
-                margin-left: 8px;
+                padding: 8px 16px;
                 cursor: pointer;
                 font-size: 14px;
-                font-weight: 500;
+                font-weight: 600;
               `;
               goButton.onmouseover = () => { goButton.style.background = '#3d6b4a'; };
               goButton.onmouseout = () => { goButton.style.background = '#4a7c59'; };
@@ -597,7 +606,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 const destInput = document.querySelector('.mapbox-directions-destination input') as HTMLInputElement;
 
                 if (!originInput?.value || !destInput?.value) {
-                  toast.warn('Please enter both start (A) and destination (B)');
+                  toast.info('Please enter both start (A) and destination (B)');
                   return;
                 }
 
@@ -627,8 +636,11 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 }
               };
 
-              reverseButton.parentNode?.insertBefore(goButton, reverseButton.nextSibling);
-              console.log('✅ Go button added');
+              // Insert wrapper where reverse button was, move reverse button into wrapper
+              reverseButton.parentNode?.insertBefore(wrapper, reverseButton);
+              wrapper.appendChild(reverseButton);
+              wrapper.appendChild(goButton);
+              console.log('✅ Go button added next to swap button');
             }
           }, 1000);
 
