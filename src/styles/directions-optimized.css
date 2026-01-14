@@ -185,24 +185,40 @@ canvas.mapboxgl-canvas {
 .mapbox-directions-origin ul,
 .mapbox-directions-destination .suggestions,
 .mapbox-directions-destination ul {
-  z-index: 9999999 !important;
+  z-index: 99999 !important;
   position: absolute !important;
   background: white !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid #ccc !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
   max-height: 300px !important;
   overflow-y: auto !important;
   left: 0 !important;
   right: 0 !important;
   top: 100% !important;
   margin-top: 4px !important;
+  width: calc(100% - 40px) !important;
+  margin-left: 40px !important;
 }
 
-/* Ensure the control container doesn't clip suggestions */
-.mapboxgl-ctrl-top-left,
+/* Force the entire top-left control area to have highest z-index for suggestions */
+.mapboxgl-ctrl-top-left {
+  z-index: 100 !important;
+  overflow: visible !important;
+}
+
+/* The directions component needs high z-index */
 .mapbox-directions-component {
   overflow: visible !important;
+  position: relative !important;
+  z-index: 100 !important;
+}
+
+/* Origin and destination containers must allow overflow */
+.mapbox-directions-origin,
+.mapbox-directions-destination {
+  position: relative !important;
+  z-index: 100 !important;
 }
 
 .mapbox-directions-component .suggestions li,
