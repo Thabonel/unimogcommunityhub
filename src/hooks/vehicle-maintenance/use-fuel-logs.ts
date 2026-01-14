@@ -43,29 +43,45 @@ export const useFuelLogs = (vehicleId?: string) => {
   // Add a new fuel log
   const addFuelLog = useCallback(async (fuelLog: Omit<FuelLog, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
     if (!user) return { success: false, error: 'Not authenticated' };
-    
+
     try {
       const newLog = {
         ...fuelLog,
         user_id: user.id
       };
-      
+
       const { data, error: insertError } = await supabase
         .from('fuel_logs')
         .insert(newLog)
         .select()
         .single();
-      
+
       if (insertError) throw new Error(insertError.message);
-      
+
+      // Auto-update vehicle's current_odometer if this reading is higher
+      if (fuelLog.vehicle_id && fuelLog.odometer) {
+        const { data: vehicle } = await supabase
+          .from('vehicles')
+          .select('current_odometer')
+          .eq('id', fuelLog.vehicle_id)
+          .single();
+
+        if (vehicle && fuelLog.odometer > (vehicle.current_odometer || 0)) {
+          await supabase
+            .from('vehicles')
+            .update({ current_odometer: fuelLog.odometer })
+            .eq('id', fuelLog.vehicle_id);
+        }
+      }
+
       setFuelLogs(prev => [data as FuelLog, ...prev]);
       return { success: true, data };
     } catch (err) {
       console.error('Error adding fuel log:', err);
       toast.error('Failed to add fuel log');
-      return { 
-        success: false, 
-        error: err instanceof Error ? err.message : 'Failed to add fuel log' 
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Failed to add fuel log'
       };
     }
   }, [user]);

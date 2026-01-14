@@ -24,6 +24,7 @@ interface Vehicle {
   city?: string;
   is_showcase: boolean;
   photos: string[];
+  purchase_odometer?: number;
   current_odometer?: number;
   odometer_unit?: string;
   created_at: string;
@@ -170,6 +171,11 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
                             <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
                               <Gauge size={14} />
                               {vehicle.current_odometer.toLocaleString()} {vehicle.odometer_unit || 'km'}
+                              {vehicle.purchase_odometer !== undefined && vehicle.purchase_odometer > 0 && (
+                                <span className="ml-2 text-xs text-military-green">
+                                  (+{(vehicle.current_odometer - vehicle.purchase_odometer).toLocaleString()} since purchase)
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
