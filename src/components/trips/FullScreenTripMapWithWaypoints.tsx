@@ -571,32 +571,33 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
             });
 
-            // Add "Go" button next to swap button - wrap both in a flex container
-            const reverseButton = document.querySelector('.mapbox-directions-reverse') as HTMLElement;
-            if (reverseButton && !document.querySelector('.directions-go-button')) {
-              // Create wrapper to hold both buttons side by side
-              const wrapper = document.createElement('div');
-              wrapper.style.cssText = `
+            // Add "Go" button below the inputs container
+            const inputsContainer = document.querySelector('.mapbox-directions-inputs') as HTMLElement;
+            if (inputsContainer && !document.querySelector('.directions-go-button')) {
+              // Create a container for the Go button
+              const goButtonContainer = document.createElement('div');
+              goButtonContainer.style.cssText = `
                 display: flex;
-                align-items: center;
                 justify-content: center;
-                gap: 8px;
-                margin: 8px 0;
+                padding: 8px 12px;
+                background: rgba(255, 255, 255, 0.95);
+                border-top: 1px solid #e5e7eb;
               `;
 
               const goButton = document.createElement('button');
               goButton.className = 'directions-go-button';
-              goButton.innerHTML = 'Go';
-              goButton.title = 'Calculate route';
+              goButton.innerHTML = 'Calculate Route';
+              goButton.title = 'Calculate route between A and B';
               goButton.style.cssText = `
                 background: #4a7c59;
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
+                border-radius: 6px;
+                padding: 10px 24px;
                 cursor: pointer;
                 font-size: 14px;
                 font-weight: 600;
+                width: 100%;
               `;
               goButton.onmouseover = () => { goButton.style.background = '#3d6b4a'; };
               goButton.onmouseout = () => { goButton.style.background = '#4a7c59'; };
@@ -610,8 +611,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   return;
                 }
 
-                goButton.innerHTML = '...';
+                goButton.innerHTML = 'Calculating...';
                 goButton.disabled = true;
+                goButton.style.opacity = '0.7';
 
                 try {
                   const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -623,24 +625,24 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   if (originCoords && destCoords && directionsRef.current) {
                     directionsRef.current.setOrigin(originCoords);
                     directionsRef.current.setDestination(destCoords);
-                    console.log('🚀 Route triggered via Go button');
+                    console.log('Route triggered via Calculate Route button');
                   } else {
                     toast.error('Could not find one or both addresses');
                   }
                 } catch (err) {
-                  console.error('Go button error:', err);
+                  console.error('Calculate route error:', err);
                   toast.error('Failed to calculate route');
                 } finally {
-                  goButton.innerHTML = 'Go';
+                  goButton.innerHTML = 'Calculate Route';
                   goButton.disabled = false;
+                  goButton.style.opacity = '1';
                 }
               };
 
-              // Insert wrapper where reverse button was, move reverse button into wrapper
-              reverseButton.parentNode?.insertBefore(wrapper, reverseButton);
-              wrapper.appendChild(reverseButton);
-              wrapper.appendChild(goButton);
-              console.log('✅ Go button added next to swap button');
+              // Add the button container after the inputs
+              goButtonContainer.appendChild(goButton);
+              inputsContainer.appendChild(goButtonContainer);
+              console.log('Calculate Route button added to directions panel');
             }
           }, 1000);
 

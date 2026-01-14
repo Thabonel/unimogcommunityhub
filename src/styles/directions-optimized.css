@@ -169,13 +169,13 @@ canvas.mapboxgl-canvas {
 .mapbox-directions-component .suggestions,
 .mapbox-directions-component ul.suggestions,
 .mapboxgl-ctrl-geocoder .suggestions,
+.mapboxgl-ctrl-geocoder ul,
 .mapboxgl-ctrl-geocoder--suggestion,
 .suggestions-wrapper,
 .mapbox-directions-origin .suggestions,
-.mapbox-directions-destination .suggestions {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+.mapbox-directions-origin ul,
+.mapbox-directions-destination .suggestions,
+.mapbox-directions-destination ul {
   z-index: 9999999 !important;
   position: absolute !important;
   background: white !important;
@@ -190,15 +190,28 @@ canvas.mapboxgl-canvas {
   margin-top: 4px !important;
 }
 
+/* Ensure the control container doesn't clip suggestions */
+.mapboxgl-ctrl-top-left,
+.mapbox-directions-component {
+  overflow: visible !important;
+}
+
 .mapbox-directions-component .suggestions li,
+.mapbox-directions-component ul li,
+.mapboxgl-ctrl-geocoder ul > li,
+.mapboxgl-ctrl-geocoder ul > li > a,
 .mapboxgl-ctrl-geocoder--suggestion {
   padding: 10px 12px !important;
   cursor: pointer !important;
   border-bottom: 1px solid #f3f4f6 !important;
   background: white !important;
+  display: block !important;
 }
 
 .mapbox-directions-component .suggestions li:hover,
+.mapbox-directions-component ul li:hover,
+.mapboxgl-ctrl-geocoder ul > li:hover,
+.mapboxgl-ctrl-geocoder ul > li > a:hover,
 .mapboxgl-ctrl-geocoder--suggestion:hover {
   background-color: #f3f4f6 !important;
 }
@@ -218,14 +231,14 @@ canvas.mapboxgl-canvas {
   overflow: visible !important;
 }
 
-/* Go button styling - position inline with swap button */
+/* Go button styling */
 .directions-go-button {
-  display: inline-block !important;
-  vertical-align: middle !important;
+  display: block !important;
+  width: 100% !important;
+  transition: background-color 0.2s ease !important;
 }
 
-/* Swap button container - make it flex to align Go button */
-.mapbox-directions-reverse {
-  display: inline-block !important;
-  vertical-align: middle !important;
+/* Ensure swap button remains visible */
+.directions-reverse {
+  z-index: 10 !important;
 }
