@@ -571,17 +571,22 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
               inputsDisplay: inputsElement ? getComputedStyle(inputsElement).display : 'N/A'
             });
 
-            // Add "Go" button below the inputs container
+            // Add "Go" button BELOW the inputs container (as sibling, not child)
+            // This ensures autocomplete dropdowns are not blocked
             const inputsContainer = document.querySelector('.mapbox-directions-inputs') as HTMLElement;
-            if (inputsContainer && !document.querySelector('.directions-go-button')) {
+            const directionsComponent = document.querySelector('.mapbox-directions-component') as HTMLElement;
+            if (inputsContainer && directionsComponent && !document.querySelector('.directions-go-button')) {
               // Create a container for the Go button
               const goButtonContainer = document.createElement('div');
+              goButtonContainer.className = 'directions-go-button-container';
               goButtonContainer.style.cssText = `
                 display: flex;
                 justify-content: center;
-                padding: 8px 12px;
+                padding: 8px;
+                margin: 8px;
                 background: rgba(255, 255, 255, 0.95);
-                border-top: 1px solid #e5e7eb;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
               `;
 
               const goButton = document.createElement('button');
@@ -639,10 +644,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 }
               };
 
-              // Add the button container after the inputs
+              // Add button container AFTER inputs container (as sibling)
               goButtonContainer.appendChild(goButton);
-              inputsContainer.appendChild(goButtonContainer);
-              console.log('Calculate Route button added to directions panel');
+              directionsComponent.appendChild(goButtonContainer);
+              console.log('Calculate Route button added below directions inputs');
             }
           }, 1000);
 
