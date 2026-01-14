@@ -25,6 +25,7 @@ interface Vehicle {
   city?: string;
   is_showcase: boolean;
   photos: string[];
+  purchase_odometer?: number;
   current_odometer?: number;
   odometer_unit?: string;
 }
@@ -56,6 +57,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     region: vehicle.region || '',
     city: vehicle.city || '',
     is_showcase: vehicle.is_showcase ?? true,
+    purchase_odometer: vehicle.purchase_odometer || 0,
     current_odometer: vehicle.current_odometer || 0,
     odometer_unit: vehicle.odometer_unit || 'km',
   });
@@ -86,6 +88,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
       modifications: vehicle.modifications || '',
       ...locationData,
       is_showcase: vehicle.is_showcase ?? true,
+      purchase_odometer: vehicle.purchase_odometer || 0,
       current_odometer: vehicle.current_odometer || 0,
       odometer_unit: vehicle.odometer_unit || 'km',
     });
@@ -131,6 +134,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
           region: formData.region,
           city: formData.city,
           is_showcase: formData.is_showcase,
+          purchase_odometer: formData.purchase_odometer,
           current_odometer: formData.current_odometer,
           odometer_unit: formData.odometer_unit,
           photos: photos,
@@ -396,30 +400,45 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
             />
           </div>
 
-          {/* Odometer */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="odometer">Current Odometer</Label>
-              <Input
-                id="odometer"
-                type="number"
-                min="0"
-                value={formData.current_odometer}
-                onChange={(e) => setFormData({ ...formData, current_odometer: Number(e.target.value) })}
-                placeholder="0"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="odometer_unit">Unit</Label>
-              <select
-                id="odometer_unit"
-                value={formData.odometer_unit}
-                onChange={(e) => setFormData({ ...formData, odometer_unit: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="km">Kilometers</option>
-                <option value="mi">Miles</option>
-              </select>
+          {/* Odometer Readings */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="purchase_odometer">Purchase Reading</Label>
+                <Input
+                  id="purchase_odometer"
+                  type="number"
+                  min="0"
+                  value={formData.purchase_odometer}
+                  onChange={(e) => setFormData({ ...formData, purchase_odometer: Number(e.target.value) })}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">Odometer when purchased</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current_odometer">Current Reading</Label>
+                <Input
+                  id="current_odometer"
+                  type="number"
+                  min="0"
+                  value={formData.current_odometer}
+                  onChange={(e) => setFormData({ ...formData, current_odometer: Number(e.target.value) })}
+                  placeholder="0"
+                />
+                <p className="text-xs text-muted-foreground">Auto-updates from logs</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="odometer_unit">Unit</Label>
+                <select
+                  id="odometer_unit"
+                  value={formData.odometer_unit}
+                  onChange={(e) => setFormData({ ...formData, odometer_unit: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="km">Kilometers</option>
+                  <option value="mi">Miles</option>
+                </select>
+              </div>
             </div>
           </div>
 

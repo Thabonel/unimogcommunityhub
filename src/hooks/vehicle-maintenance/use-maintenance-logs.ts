@@ -36,12 +36,28 @@ export const useMaintenanceLogs = () => {
         .select();
 
       if (addLogError) throw addLogError;
-      
+
+      // Auto-update vehicle's current_odometer if this reading is higher
+      if (log.vehicle_id && log.odometer) {
+        const { data: vehicle } = await supabase
+          .from('vehicles')
+          .select('current_odometer')
+          .eq('id', log.vehicle_id)
+          .single();
+
+        if (vehicle && log.odometer > (vehicle.current_odometer || 0)) {
+          await supabase
+            .from('vehicles')
+            .update({ current_odometer: log.odometer })
+            .eq('id', log.vehicle_id);
+        }
+      }
+
       toast({
         title: 'Maintenance log added',
         description: `A new maintenance record has been saved`
       });
-      
+
       return data[0] as MaintenanceLog;
     } catch (err) {
       handleError(err, {
