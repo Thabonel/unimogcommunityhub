@@ -115,6 +115,9 @@ async function scrapeAmazonPrice(url: string): Promise<{ price: number | null; c
   }
 }
 
+// Process in batches to avoid Edge Function timeout (max ~60s)
+const BATCH_SIZE = 20;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -126,18 +129,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('[Price Scraper] Starting daily price scrape...');
+    console.log('[Price Scraper] Starting batch price scrape...');
 
-    // Get all active Amazon products
+    // Get oldest-checked products first (batch processing)
+    // Products not yet checked (null) come first, then oldest checked
     const { data: products, error } = await supabaseAdmin
       .from('affiliate_products')
-      .select('id, title, affiliate_url, price, currency')
+      .select('id, title, affiliate_url, price, currency, api_error_count')
       .eq('is_active', true)
-      .eq('affiliate_provider', 'amazon');
+      .eq('affiliate_provider', 'amazon')
+      .order('last_price_check', { ascending: true, nullsFirst: true })
+      .limit(BATCH_SIZE);
 
     if (error) throw error;
 
-    console.log(`[Price Scraper] Found ${products.length} products to check`);
+    console.log(`[Price Scraper] Processing batch of ${products.length} products`);
 
     const results: PriceResult[] = [];
     let updated = 0;
@@ -220,19 +226,27 @@ Deno.serve(async (req) => {
 
       results.push(result);
 
-      // Delay between requests (2-4 seconds random) to avoid rate limiting
+      // Delay between requests (1-2 seconds) to avoid rate limiting
       if (i < products.length - 1) {
-        const delay = 2000 + Math.random() * 2000;
+        const delay = 1000 + Math.random() * 1000;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
-    console.log(`[Price Scraper] Complete. Updated: ${updated}, Unchanged: ${unchanged}, Failed: ${failed}`);
+    // Count total products for progress tracking
+    const { count: totalProducts } = await supabaseAdmin
+      .from('affiliate_products')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .eq('affiliate_provider', 'amazon');
+
+    console.log(`[Price Scraper] Batch complete. Updated: ${updated}, Unchanged: ${unchanged}, Failed: ${failed}. Total products: ${totalProducts}`);
 
     return new Response(
       JSON.stringify({
         status: 'success',
-        total: products.length,
+        batch_size: products.length,
+        total_products: totalProducts,
         updated,
         unchanged,
         failed,
