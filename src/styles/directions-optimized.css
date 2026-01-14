@@ -47,7 +47,16 @@
   border: 1px solid #e5e7eb !important;
   margin: 8px !important;
   padding: 12px !important;
+  padding-bottom: 60px !important; /* Extra space for Calculate Route button */
   z-index: 1000 !important;
+  overflow: visible !important;
+}
+
+/* Ensure the directions control container can expand */
+.mapboxgl-ctrl-directions {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
 }
 
 /* Style the profile switcher if it appears */
