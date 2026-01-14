@@ -34,9 +34,9 @@ Deno.serve(async (req) => {
 
     const { data: products, error } = await supabaseAdmin
       .from('affiliate_products')
-      .select('id, title, affiliate_url, region, current_price, api_error_count')
-      .eq('active', true)
-      .eq('provider', 'amazon')
+      .select('id, title, affiliate_url, asin, current_price, api_error_count')
+      .eq('is_active', true)
+      .eq('affiliate_provider', 'amazon')
       .or('availability_status.is.null,availability_status.neq.unavailable');
 
     if (error) throw error;
@@ -53,14 +53,25 @@ Deno.serve(async (req) => {
 
       for (const product of batch) {
         try {
-          const asinMatch = product.affiliate_url.match(/\/dp\/([A-Z0-9]{10})/);
-          if (!asinMatch) {
-            console.warn(`[Price Check] Could not extract ASIN from: ${product.affiliate_url}`);
-            continue;
+          // Use stored ASIN or extract from URL
+          let asin = product.asin;
+          if (!asin) {
+            const asinMatch = product.affiliate_url.match(/\/dp\/([A-Z0-9]{10})/i);
+            if (!asinMatch) {
+              console.warn(`[Price Check] Could not extract ASIN from: ${product.affiliate_url}`);
+              continue;
+            }
+            asin = asinMatch[1];
           }
 
-          const asin = asinMatch[1];
-          const region = product.region || 'US';
+          // Detect region from URL domain
+          const urlLower = product.affiliate_url.toLowerCase();
+          let region: 'US' | 'AU' | 'DE' | 'FR' | 'IT' | 'ES' = 'US';
+          if (urlLower.includes('amazon.com.au')) region = 'AU';
+          else if (urlLower.includes('amazon.de')) region = 'DE';
+          else if (urlLower.includes('amazon.fr')) region = 'FR';
+          else if (urlLower.includes('amazon.it')) region = 'IT';
+          else if (urlLower.includes('amazon.es')) region = 'ES';
 
           const client = new AmazonPAAPIClient(region);
           const result = await client.checkProduct(asin);
