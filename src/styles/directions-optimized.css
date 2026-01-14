@@ -36,6 +36,7 @@
 }
 
 /* Style the route inputs container - ENSURE VISIBILITY */
+/* NOTE: Do NOT set z-index here - it creates a stacking context that traps autocomplete dropdowns */
 .mapbox-directions-inputs {
   display: block !important;
   visibility: visible !important;
@@ -47,8 +48,8 @@
   border: 1px solid #e5e7eb !important;
   margin: 8px !important;
   padding: 12px !important;
-  z-index: 1000 !important;
   overflow: visible !important;
+  position: relative !important;
 }
 
 /* Ensure the directions control container can expand */
@@ -202,7 +203,7 @@ canvas.mapboxgl-canvas {
 
 /* Force the entire top-left control area to have highest z-index for suggestions */
 .mapboxgl-ctrl-top-left {
-  z-index: 100 !important;
+  z-index: 9999 !important;
   overflow: visible !important;
 }
 
@@ -210,14 +211,20 @@ canvas.mapboxgl-canvas {
 .mapbox-directions-component {
   overflow: visible !important;
   position: relative !important;
-  z-index: 100 !important;
+  z-index: 9999 !important;
 }
 
-/* Origin and destination containers must allow overflow */
+/* Origin and destination containers must allow overflow for dropdown */
 .mapbox-directions-origin,
 .mapbox-directions-destination {
   position: relative !important;
-  z-index: 100 !important;
+  overflow: visible !important;
+}
+
+/* The geocoder containers need overflow visible */
+.mapboxgl-ctrl-geocoder {
+  overflow: visible !important;
+  position: relative !important;
 }
 
 .mapbox-directions-component .suggestions li,
