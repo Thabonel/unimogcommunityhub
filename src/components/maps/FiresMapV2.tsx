@@ -515,11 +515,11 @@ const FiresMapV2 = ({
         
         {/* Center on location button */}
         {isMapReady && (
-          <Button 
-            variant="secondary" 
-            size="sm" 
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={getUserLocation}
-            className="absolute top-14 right-3 z-10 flex items-center gap-1 shadow-md"
+            className="absolute top-3 left-3 z-10 flex items-center gap-1 shadow-md"
           >
             <Locate className="h-3 w-3" />
             My Location
