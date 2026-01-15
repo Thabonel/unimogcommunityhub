@@ -22,7 +22,6 @@ import {
   Map,
   CheckCircle,
   Flame,
-  Cloud,
   Wifi,
   Trees,
   MapPin,
@@ -47,7 +46,6 @@ export default function MapOptionsDropdown({
   const [overlays, setOverlays] = useState({
     traffic: false,
     fires: false,
-    smoke: false,
     phoneCoverage: false,
     nationalParks: false,
     stateForests: false
@@ -1094,7 +1092,6 @@ export default function MapOptionsDropdown({
     setOverlays({
       traffic: false,
       fires: false,
-      smoke: false,
       phoneCoverage: false,
       nationalParks: false,
       stateForests: false
