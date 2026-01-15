@@ -1451,7 +1451,31 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         setPluginInitialized(true);
         setPluginError(null);
 
-        console.log('✅ Directions plugin recreated successfully');
+        // Re-attach event listeners to new plugin (critical for routing to work after style change)
+        newDirections.on('route', (e: any) => {
+          console.log('✅ Route calculated (after style change):', e.route[0]);
+          const route = e.route[0];
+          if (route) {
+            setCurrentRoute({
+              distance: route.distance,
+              duration: route.duration,
+              geometry: route.geometry
+            });
+            toast.success(`Route found: ${(route.distance / 1000).toFixed(1)}km`);
+          }
+        });
+
+        newDirections.on('clear', () => {
+          console.log('🧹 Route cleared (after style change)');
+          setCurrentRoute(null);
+          setWaypoints([]);
+        });
+
+        newDirections.on('error', (e: any) => {
+          console.error('🚨 Routing error (after style change):', e.error);
+        });
+
+        console.log('✅ Directions plugin recreated with event listeners');
 
         // Restore NavigationControl and GeolocateControl (removed by setStyle)
         mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
@@ -1481,9 +1505,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
         console.log('✅ Controls restored after style change');
 
-        // Restore route data if we had one
+        // Restore route data if we had one - wait for map to be fully idle (especially important for satellite)
         if (routeData && (routeData.origin || routeData.destination)) {
-          setTimeout(() => {
+          const restoreRoutes = () => {
             try {
               if (routeData.origin && directionsRef.current) {
                 console.log('📍 Restoring origin:', routeData.origin);
@@ -1497,7 +1521,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             } catch (error) {
               console.error('❌ Error restoring route data:', error);
             }
-          }, 300); // Slightly longer delay for plugin to be fully ready
+          };
+
+          // Use idle event to ensure map is fully rendered (critical for satellite style)
+          if (mapRef.current?.isStyleLoaded()) {
+            mapRef.current.once('idle', restoreRoutes);
+          } else {
+            // Fallback with longer timeout for satellite styles
+            setTimeout(restoreRoutes, 800);
+          }
         }
 
       } catch (error) {
