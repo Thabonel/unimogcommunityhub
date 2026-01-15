@@ -33,6 +33,8 @@ import { SendToButton } from '../navigation/SendToButton';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
 import { MobileNavigationSheet } from './mobile/MobileNavigationSheet';
+import { LocationSearchCard } from './LocationSearchCard';
+import { GeocodingSuggestion } from '@/services/mapboxGeocoding';
 
 // Map styles configuration - Off-road focused styles compatible with Directions plugin
 const MAP_STYLES = {
@@ -118,6 +120,10 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [elevationData, setElevationData] = useState<any[]>([]);
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
+
+  // Custom location search state (replaces plugin's broken autocomplete)
+  const [selectedOrigin, setSelectedOrigin] = useState<GeocodingSuggestion | null>(null);
+  const [selectedDestination, setSelectedDestination] = useState<GeocodingSuggestion | null>(null);
 
   // Plugin health check and recovery
   const checkPluginHealth = useCallback(() => {
@@ -1276,9 +1282,47 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       toast.info(`Route profile changed to ${profile}`);
     } catch (error) {
       console.error('❌ Error updating plugin profile:', error);
-      toast.warn(`Profile set to ${profile} (plugin update failed)`);
+      toast.info(`Profile set to ${profile}`);
     }
   };
+
+  // Handle origin selection from custom LocationSearchCard
+  const handleOriginSelect = useCallback((suggestion: GeocodingSuggestion) => {
+    setSelectedOrigin(suggestion);
+    if (directionsRef.current && pluginInitialized) {
+      directionsRef.current.setOrigin(suggestion.center);
+      console.log('Origin set:', suggestion.place_name);
+    }
+  }, [pluginInitialized]);
+
+  // Handle destination selection from custom LocationSearchCard
+  const handleDestinationSelect = useCallback((suggestion: GeocodingSuggestion) => {
+    setSelectedDestination(suggestion);
+    if (directionsRef.current && pluginInitialized) {
+      directionsRef.current.setDestination(suggestion.center);
+      console.log('Destination set:', suggestion.place_name);
+    }
+  }, [pluginInitialized]);
+
+  // Handle calculate route from custom LocationSearchCard
+  const handleCalculateRoute = useCallback(() => {
+    if (!selectedOrigin || !selectedDestination) {
+      toast.info('Please select both origin and destination');
+      return;
+    }
+
+    if (!directionsRef.current || !pluginInitialized) {
+      toast.error('Route planner not ready. Please wait.');
+      return;
+    }
+
+    // The plugin auto-calculates when both origin and destination are set
+    // Just ensure they're set
+    directionsRef.current.setOrigin(selectedOrigin.center);
+    directionsRef.current.setDestination(selectedDestination.center);
+
+    toast.success('Calculating route...');
+  }, [selectedOrigin, selectedDestination, pluginInitialized]);
 
   // Handle map style change - Complete plugin reinitialization approach (Mapbox community solution)
   const handleStyleChange = useCallback((style: string) => {
@@ -2048,6 +2092,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           />
         </div>
 
+      {/* Custom Location Search Card - Replaces plugin's broken autocomplete */}
+      {pluginInitialized && (
+        <div className="absolute top-4 left-4 right-4 md:right-auto md:w-80 z-50">
+          <LocationSearchCard
+            onOriginSelect={handleOriginSelect}
+            onDestinationSelect={handleDestinationSelect}
+            onCalculateRoute={handleCalculateRoute}
+            userLocation={location}
+          />
+        </div>
+      )}
+
       {/* Desktop Search Bar - Hide when plugin is active and on mobile */}
       {!pluginInitialized && (
       <div className="hidden md:block absolute top-16 left-4 right-4 z-50">
@@ -2116,7 +2172,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
       )}
 
       {/* Desktop Control Panel - positioned below the Mapbox Directions AB panel */}
-      <div className="hidden md:block absolute top-[340px] left-4 z-10">
+      <div className="hidden md:block absolute top-[320px] left-4 z-10">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 space-y-4 w-72">
 
           {/* Waypoint Controls */}

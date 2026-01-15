@@ -1,18 +1,20 @@
 /* ===========================================
    MAPBOX DIRECTIONS PLUGIN STYLES
-   Clean, consolidated CSS - no duplicates
+   Custom location search card replaces plugin inputs
    =========================================== */
 
-/* --- COMPONENT VISIBILITY --- */
-.mapbox-directions-component {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  overflow: visible !important;
-  position: relative !important;
+/* --- HIDE PLUGIN'S BUILT-IN INPUTS --- */
+/* We use our own LocationSearchCard component instead */
+.mapbox-directions-inputs,
+.mapbox-directions-origin,
+.mapbox-directions-destination,
+.mapboxgl-ctrl-geocoder,
+.directions-go-button-container,
+.mapbox-directions-profile {
+  display: none !important;
 }
 
-/* --- HIDE INSTRUCTIONS --- */
+/* --- HIDE INSTRUCTIONS & LOADING --- */
 .mapbox-directions-instructions,
 .directions-control-instructions,
 .mapbox-directions-route-summary,
@@ -21,79 +23,12 @@
   display: none !important;
 }
 
-/* --- INPUT CONTAINER --- */
-.mapbox-directions-inputs {
+/* --- KEEP PLUGIN CONTAINER FOR ROUTE RENDERING --- */
+.mapbox-directions-component {
   display: block !important;
   visibility: visible !important;
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(4px) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid #e5e7eb !important;
-  margin: 8px !important;
-  padding: 12px !important;
-  overflow: visible !important;
-}
-
-/* --- INPUT FIELDS --- */
-.mapbox-directions-component input[type="text"] {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
-  padding: 8px 12px !important;
-}
-
-/* --- GEOCODER & ORIGIN/DEST CONTAINERS --- */
-.mapboxgl-ctrl-geocoder,
-.mapbox-directions-origin,
-.mapbox-directions-destination {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-/* --- AUTOCOMPLETE SUGGESTIONS (CRITICAL FIX) --- */
-/* The suggestions are in a SIBLING wrapper, not inside geocoder */
-.suggestions-wrapper {
   position: absolute !important;
-  z-index: 999999 !important;
-  width: 100% !important;
-  left: 0 !important;
-  top: 100% !important;
-}
-
-ul.suggestions {
-  display: block !important;
-  visibility: visible !important;
-  position: relative !important;
-  z-index: 999999 !important;
-  background: white !important;
-  border: 1px solid #ccc !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  max-height: 300px !important;
-  overflow-y: auto !important;
-  margin: 4px 0 0 0 !important;
-  padding: 0 !important;
-  list-style: none !important;
-}
-
-ul.suggestions li {
-  padding: 10px 12px !important;
-  cursor: pointer !important;
-  border-bottom: 1px solid #f3f4f6 !important;
-  background: white !important;
-}
-
-ul.suggestions li:hover,
-ul.suggestions li.active {
-  background-color: #f3f4f6 !important;
-}
-
-ul.suggestions li a {
-  display: block !important;
-  color: inherit !important;
-  text-decoration: none !important;
+  pointer-events: none !important;
 }
 
 /* --- ROUTE VISUALIZATION --- */
@@ -108,24 +43,6 @@ ul.suggestions li a {
   opacity: 0.6 !important;
 }
 
-/* --- BUTTONS --- */
-.mapbox-directions-inputs button {
-  background-color: #f3f4f6 !important;
-  border: 1px solid #d1d5db !important;
-  border-radius: 4px !important;
-  color: #374151 !important;
-}
-
-.mapbox-directions-inputs button:hover {
-  background-color: #e5e7eb !important;
-}
-
-/* --- GO BUTTON --- */
-.directions-go-button {
-  display: block !important;
-  width: 100% !important;
-}
-
 /* --- TOP-LEFT CONTROL AREA --- */
 .mapboxgl-ctrl-top-left {
   overflow: visible !important;
@@ -133,14 +50,5 @@ ul.suggestions li a {
 
 .mapboxgl-ctrl-directions {
   overflow: visible !important;
-  height: auto !important;
-  max-height: none !important;
-}
-
-/* --- PROFILE SWITCHER --- */
-.mapbox-directions-profile {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
-  margin-top: 8px !important;
+  pointer-events: none !important;
 }
