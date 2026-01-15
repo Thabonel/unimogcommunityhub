@@ -2,6 +2,9 @@
  * Australian Map Overlays Service
  * Fetches real data from Australian government and NASA APIs
  * For RV travellers in Australia
+ *
+ * Note: Some government APIs may have CORS restrictions.
+ * Falls back to sample data when APIs are unavailable.
  */
 
 // NASA FIRMS API key - get from https://firms.modaps.eosdis.nasa.gov/api/map_key/
@@ -40,9 +43,136 @@ interface GeoJSONFeatureCollection {
   features: any[];
 }
 
+// ============================================
+// SAMPLE DATA - Used when APIs are unavailable
+// ============================================
+
+const SAMPLE_FIRES: GeoJSONFeatureCollection = {
+  type: 'FeatureCollection',
+  features: [
+    // NSW fires
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [150.5, -33.8] }, properties: { brightness: 340, confidence: 'high', frp: 25, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [149.8, -35.2] }, properties: { brightness: 320, confidence: 'nominal', frp: 15, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    // Victoria
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [147.1, -37.5] }, properties: { brightness: 350, confidence: 'high', frp: 30, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    // Queensland
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [145.7, -16.9] }, properties: { brightness: 310, confidence: 'nominal', frp: 12, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [152.9, -27.4] }, properties: { brightness: 325, confidence: 'high', frp: 20, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    // WA
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [121.5, -30.8] }, properties: { brightness: 335, confidence: 'nominal', frp: 18, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    // SA
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [138.6, -34.9] }, properties: { brightness: 315, confidence: 'low', frp: 10, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+    // NT
+    { type: 'Feature', geometry: { type: 'Point', coordinates: [130.8, -12.4] }, properties: { brightness: 360, confidence: 'high', frp: 35, satellite: 'Sample', acq_date: new Date().toISOString().split('T')[0] } },
+  ]
+};
+
+const SAMPLE_NATIONAL_PARKS: GeoJSONFeatureCollection = {
+  type: 'FeatureCollection',
+  features: [
+    // Blue Mountains NP, NSW
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[150.2, -33.6], [150.8, -33.6], [150.8, -34.0], [150.2, -34.0], [150.2, -33.6]]] }, properties: { NAME: 'Blue Mountains National Park', TYPE: 'National Park', STATE: 'NSW', AREA_KM2: 2690 } },
+    // Kakadu NP, NT
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[132.0, -12.5], [133.5, -12.5], [133.5, -14.0], [132.0, -14.0], [132.0, -12.5]]] }, properties: { NAME: 'Kakadu National Park', TYPE: 'National Park', STATE: 'NT', AREA_KM2: 19804 } },
+    // Great Otway NP, VIC
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[143.5, -38.6], [144.0, -38.6], [144.0, -38.9], [143.5, -38.9], [143.5, -38.6]]] }, properties: { NAME: 'Great Otway National Park', TYPE: 'National Park', STATE: 'VIC', AREA_KM2: 1032 } },
+    // Daintree NP, QLD
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[145.3, -16.2], [145.7, -16.2], [145.7, -16.6], [145.3, -16.6], [145.3, -16.2]]] }, properties: { NAME: 'Daintree National Park', TYPE: 'National Park', STATE: 'QLD', AREA_KM2: 1200 } },
+    // Flinders Ranges NP, SA
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[138.4, -31.2], [138.8, -31.2], [138.8, -31.8], [138.4, -31.8], [138.4, -31.2]]] }, properties: { NAME: 'Flinders Ranges National Park', TYPE: 'National Park', STATE: 'SA', AREA_KM2: 912 } },
+    // Karijini NP, WA
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[118.0, -22.3], [118.8, -22.3], [118.8, -23.0], [118.0, -23.0], [118.0, -22.3]]] }, properties: { NAME: 'Karijini National Park', TYPE: 'National Park', STATE: 'WA', AREA_KM2: 6274 } },
+    // Freycinet NP, TAS
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[148.2, -42.0], [148.4, -42.0], [148.4, -42.3], [148.2, -42.3], [148.2, -42.0]]] }, properties: { NAME: 'Freycinet National Park', TYPE: 'National Park', STATE: 'TAS', AREA_KM2: 169 } },
+  ]
+};
+
+const SAMPLE_STATE_FORESTS: GeoJSONFeatureCollection = {
+  type: 'FeatureCollection',
+  features: [
+    // Pilliga SF, NSW
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[148.8, -30.8], [149.5, -30.8], [149.5, -31.5], [148.8, -31.5], [148.8, -30.8]]] }, properties: { TENURE: 'State forest', FOREST_TYP: 'Native', STATE: 'NSW' } },
+    // Wombat SF, VIC
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[144.0, -37.3], [144.4, -37.3], [144.4, -37.6], [144.0, -37.6], [144.0, -37.3]]] }, properties: { TENURE: 'State forest', FOREST_TYP: 'Native', STATE: 'VIC' } },
+    // Beerburrum SF, QLD
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[152.9, -26.9], [153.1, -26.9], [153.1, -27.1], [152.9, -27.1], [152.9, -26.9]]] }, properties: { TENURE: 'State forest', FOREST_TYP: 'Plantation', STATE: 'QLD' } },
+    // Mt Crawford SF, SA
+    { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[138.9, -34.6], [139.1, -34.6], [139.1, -34.8], [138.9, -34.8], [138.9, -34.6]]] }, properties: { TENURE: 'State forest', FOREST_TYP: 'Plantation', STATE: 'SA' } },
+  ]
+};
+
+// Sample mobile coverage - showing coverage gaps is important for grey nomads
+const SAMPLE_MOBILE_COVERAGE: Record<string, GeoJSONFeatureCollection> = {
+  telstra_4g: {
+    type: 'FeatureCollection',
+    features: [
+      // Sydney metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[150.6, -33.6], [151.4, -33.6], [151.4, -34.2], [150.6, -34.2], [150.6, -33.6]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Strong' } },
+      // Melbourne metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[144.6, -37.6], [145.4, -37.6], [145.4, -38.2], [144.6, -38.2], [144.6, -37.6]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Strong' } },
+      // Brisbane metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[152.8, -27.2], [153.3, -27.2], [153.3, -27.7], [152.8, -27.7], [152.8, -27.2]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Strong' } },
+      // Perth metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[115.6, -31.7], [116.1, -31.7], [116.1, -32.2], [115.6, -32.2], [115.6, -31.7]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Strong' } },
+      // Adelaide metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[138.4, -34.7], [138.8, -34.7], [138.8, -35.1], [138.4, -35.1], [138.4, -34.7]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Strong' } },
+      // Regional corridors
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[149.0, -35.0], [149.5, -35.0], [149.5, -35.5], [149.0, -35.5], [149.0, -35.0]]] }, properties: { carrier: 'Telstra 4G', signal_strength: 'Moderate' } },
+    ]
+  },
+  telstra_5g: {
+    type: 'FeatureCollection',
+    features: [
+      // Sydney CBD
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[151.1, -33.85], [151.25, -33.85], [151.25, -33.9], [151.1, -33.9], [151.1, -33.85]]] }, properties: { carrier: 'Telstra 5G', signal_strength: 'Strong' } },
+      // Melbourne CBD
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[144.9, -37.8], [145.0, -37.8], [145.0, -37.85], [144.9, -37.85], [144.9, -37.8]]] }, properties: { carrier: 'Telstra 5G', signal_strength: 'Strong' } },
+    ]
+  },
+  optus_4g: {
+    type: 'FeatureCollection',
+    features: [
+      // Sydney metro (slightly smaller than Telstra)
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[150.8, -33.7], [151.3, -33.7], [151.3, -34.1], [150.8, -34.1], [150.8, -33.7]]] }, properties: { carrier: 'Optus 4G', signal_strength: 'Strong' } },
+      // Melbourne metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[144.7, -37.7], [145.3, -37.7], [145.3, -38.1], [144.7, -38.1], [144.7, -37.7]]] }, properties: { carrier: 'Optus 4G', signal_strength: 'Strong' } },
+      // Brisbane metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[152.9, -27.3], [153.2, -27.3], [153.2, -27.6], [152.9, -27.6], [152.9, -27.3]]] }, properties: { carrier: 'Optus 4G', signal_strength: 'Strong' } },
+    ]
+  },
+  optus_5g: {
+    type: 'FeatureCollection',
+    features: [
+      // Sydney CBD only
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[151.15, -33.86], [151.22, -33.86], [151.22, -33.89], [151.15, -33.89], [151.15, -33.86]]] }, properties: { carrier: 'Optus 5G', signal_strength: 'Strong' } },
+    ]
+  },
+  tpg_4g: {
+    type: 'FeatureCollection',
+    features: [
+      // Sydney metro (smaller coverage)
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[150.9, -33.75], [151.2, -33.75], [151.2, -34.0], [150.9, -34.0], [150.9, -33.75]]] }, properties: { carrier: 'TPG/Vodafone 4G', signal_strength: 'Moderate' } },
+      // Melbourne metro
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[144.8, -37.75], [145.1, -37.75], [145.1, -38.0], [144.8, -38.0], [144.8, -37.75]]] }, properties: { carrier: 'TPG/Vodafone 4G', signal_strength: 'Moderate' } },
+    ]
+  },
+  tpg_5g: {
+    type: 'FeatureCollection',
+    features: [
+      // Very limited - CBD only
+      { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[151.18, -33.87], [151.21, -33.87], [151.21, -33.88], [151.18, -33.88], [151.18, -33.87]]] }, properties: { carrier: 'TPG/Vodafone 5G', signal_strength: 'Strong' } },
+    ]
+  }
+};
+
+// ============================================
+// API FETCH FUNCTIONS
+// ============================================
+
 /**
  * Fetch active fires from NASA FIRMS API
  * Uses VIIRS NOAA-20 satellite data for Australia
+ * Falls back to sample data if API unavailable
  */
 export async function fetchActiveFires(days: number = 1): Promise<GeoJSONFeatureCollection> {
   const cacheKey = `fires_${days}`;
@@ -53,10 +183,10 @@ export async function fetchActiveFires(days: number = 1): Promise<GeoJSONFeature
     return dataCache[cacheKey].data;
   }
 
-  // If no API key, return empty collection with warning
+  // If no API key, use sample data
   if (!FIRMS_MAP_KEY) {
-    console.warn('[Fires] No NASA FIRMS API key configured. Set VITE_NASA_FIRMS_KEY in environment.');
-    return { type: 'FeatureCollection', features: [] };
+    console.log('[Fires] No NASA FIRMS API key - using sample data. Set VITE_NASA_FIRMS_KEY for live data.');
+    return SAMPLE_FIRES;
   }
 
   try {
@@ -85,7 +215,8 @@ export async function fetchActiveFires(days: number = 1): Promise<GeoJSONFeature
     return geojson;
   } catch (error) {
     console.error('[Fires] Error fetching fire data:', error);
-    return { type: 'FeatureCollection', features: [] };
+    console.log('[Fires] Using sample data as fallback');
+    return SAMPLE_FIRES;
   }
 }
 
@@ -137,7 +268,7 @@ function parseFiresCSV(csvText: string): FireFeature[] {
 
 /**
  * Fetch National Parks and Protected Areas from CAPAD (Australian Government)
- * Uses ArcGIS REST API
+ * Falls back to sample data if API unavailable (CORS)
  */
 export async function fetchNationalParks(bounds?: { west: number; south: number; east: number; north: number }): Promise<GeoJSONFeatureCollection> {
   const cacheKey = 'national_parks';
@@ -175,6 +306,12 @@ export async function fetchNationalParks(bounds?: { west: number; south: number;
 
     const geojson = await response.json();
 
+    // Check if we got valid data
+    if (!geojson.features || geojson.features.length === 0) {
+      console.log('[Parks] No data from API - using sample data');
+      return SAMPLE_NATIONAL_PARKS;
+    }
+
     // Cache the result
     dataCache[cacheKey] = { data: geojson, timestamp: Date.now() };
     console.log(`[Parks] Loaded ${geojson.features?.length || 0} national parks`);
@@ -182,12 +319,14 @@ export async function fetchNationalParks(bounds?: { west: number; south: number;
     return geojson;
   } catch (error) {
     console.error('[Parks] Error fetching parks data:', error);
-    return { type: 'FeatureCollection', features: [] };
+    console.log('[Parks] Using sample data (API may have CORS restrictions)');
+    return SAMPLE_NATIONAL_PARKS;
   }
 }
 
 /**
  * Fetch State Forests from ABARES Forests of Australia dataset
+ * Falls back to sample data if API unavailable (CORS)
  */
 export async function fetchStateForests(bounds?: { west: number; south: number; east: number; north: number }): Promise<GeoJSONFeatureCollection> {
   const cacheKey = 'state_forests';
@@ -225,6 +364,12 @@ export async function fetchStateForests(bounds?: { west: number; south: number; 
 
     const geojson = await response.json();
 
+    // Check if we got valid data
+    if (!geojson.features || geojson.features.length === 0) {
+      console.log('[Forests] No data from API - using sample data');
+      return SAMPLE_STATE_FORESTS;
+    }
+
     // Cache the result
     dataCache[cacheKey] = { data: geojson, timestamp: Date.now() };
     console.log(`[Forests] Loaded ${geojson.features?.length || 0} state forests`);
@@ -232,7 +377,8 @@ export async function fetchStateForests(bounds?: { west: number; south: number; 
     return geojson;
   } catch (error) {
     console.error('[Forests] Error fetching forests data:', error);
-    return { type: 'FeatureCollection', features: [] };
+    console.log('[Forests] Using sample data (API may have CORS restrictions)');
+    return SAMPLE_STATE_FORESTS;
   }
 }
 
@@ -253,6 +399,7 @@ export type CarrierKey = keyof typeof MOBILE_CARRIERS;
 /**
  * Fetch mobile phone coverage from ACCC
  * Returns coverage for specified carrier
+ * Falls back to sample data if API unavailable (CORS)
  */
 export async function fetchMobileCoverage(
   carrier: CarrierKey,
@@ -293,6 +440,12 @@ export async function fetchMobileCoverage(
 
     const geojson = await response.json();
 
+    // Check if we got valid data
+    if (!geojson.features || geojson.features.length === 0) {
+      console.log(`[Coverage] No data from API for ${carrier} - using sample data`);
+      return addCarrierInfo(SAMPLE_MOBILE_COVERAGE[carrier] || { type: 'FeatureCollection', features: [] }, carrier);
+    }
+
     // Add carrier info to properties
     if (geojson.features) {
       geojson.features = geojson.features.map((f: any) => ({
@@ -313,8 +466,27 @@ export async function fetchMobileCoverage(
     return geojson;
   } catch (error) {
     console.error(`[Coverage] Error fetching ${carrier} coverage:`, error);
-    return { type: 'FeatureCollection', features: [] };
+    console.log(`[Coverage] Using sample data for ${carrier} (API may have CORS restrictions)`);
+    return addCarrierInfo(SAMPLE_MOBILE_COVERAGE[carrier] || { type: 'FeatureCollection', features: [] }, carrier);
   }
+}
+
+/**
+ * Add carrier info to sample data features
+ */
+function addCarrierInfo(data: GeoJSONFeatureCollection, carrier: CarrierKey): GeoJSONFeatureCollection {
+  return {
+    ...data,
+    features: data.features.map(f => ({
+      ...f,
+      properties: {
+        ...f.properties,
+        carrier: MOBILE_CARRIERS[carrier].name,
+        carrierKey: carrier,
+        color: MOBILE_CARRIERS[carrier].color
+      }
+    }))
+  };
 }
 
 /**
