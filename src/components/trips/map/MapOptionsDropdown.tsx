@@ -31,7 +31,6 @@ import {
   Flame,
   Trees,
   MapPin,
-  Users,
   Car,
   X,
   Info,
@@ -1804,57 +1803,8 @@ export default function MapOptionsDropdown({
           />
         </div>
 
-        <DropdownMenuSeparator />
-
-        {/* Social Layers Section */}
-        <DropdownMenuLabel className="flex items-center gap-2">
-          <Users className="w-4 h-4" />
-          Social Layers
-        </DropdownMenuLabel>
-        
-        <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
-          onClick={() => toggleSocialLayer('friends')}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">👥</span>
-            <div>
-              <Label className="text-sm font-medium cursor-pointer">
-                Friends
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Track friends on trips
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={socialLayers.friends}
-            onCheckedChange={() => toggleSocialLayer('friends')}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-        
-        <div
-          className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
-          onClick={() => toggleSocialLayer('community')}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">🏕️</span>
-            <div>
-              <Label className="text-sm font-medium cursor-pointer">
-                Community
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Events & workshops
-              </p>
-            </div>
-          </div>
-          <Switch
-            checked={socialLayers.community}
-            onCheckedChange={() => toggleSocialLayer('community')}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        {/* Social Layers Section - Hidden until real data integration */}
+        {/* TODO: Re-enable when friend tracking and community features are implemented */}
       </DropdownMenuContent>
     </DropdownMenu>
   );
