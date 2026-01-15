@@ -160,6 +160,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Clean up existing plugin
     if (directionsRef.current) {
       try {
+        // Clean up event listeners before removing (prevents ghost callbacks)
+        try {
+          directionsRef.current.off('route');
+          directionsRef.current.off('clear');
+          directionsRef.current.off('error');
+          directionsRef.current.off('origin');
+          directionsRef.current.off('destination');
+        } catch (e) { /* ignore if listeners weren't attached */ }
+
         mapRef.current.removeControl(directionsRef.current);
       } catch (error) {
         console.log('⚠️ Error removing old plugin during recovery:', error);
@@ -818,6 +827,14 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         // Try to clean up if initialization partially succeeded
         try {
           if (directionsRef.current && map) {
+            // Clean up event listeners first
+            try {
+              directionsRef.current.off('route');
+              directionsRef.current.off('clear');
+              directionsRef.current.off('error');
+              directionsRef.current.off('origin');
+              directionsRef.current.off('destination');
+            } catch (e) { /* ignore if listeners weren't attached */ }
             map.removeControl(directionsRef.current);
           }
         } catch (cleanupError) {
@@ -861,6 +878,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     // Clean up existing plugin first
     if (directionsRef.current) {
       try {
+        // Clean up event listeners before removing
+        directionsRef.current.off('route');
+        directionsRef.current.off('clear');
+        directionsRef.current.off('error');
+        directionsRef.current.off('origin');
+        directionsRef.current.off('destination');
+
         mapRef.current.removeControl(directionsRef.current);
         console.log('🗑️ Removed old plugin successfully');
       } catch (error) {
@@ -1357,6 +1381,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
           waypointCount: routeData.waypoints.length
         });
 
+        // Clean up event listeners before removing plugin (prevents ghost callbacks)
+        directionsRef.current.off('route');
+        directionsRef.current.off('clear');
+        directionsRef.current.off('error');
+        directionsRef.current.off('origin');
+        directionsRef.current.off('destination');
+
         // Completely remove the directions plugin
         mapRef.current.removeControl(directionsRef.current);
         directionsRef.current = null;
@@ -1367,6 +1398,13 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
         // Still remove plugin if it exists
         if (directionsRef.current) {
           try {
+            // Clean up event listeners first
+            directionsRef.current.off('route');
+            directionsRef.current.off('clear');
+            directionsRef.current.off('error');
+            directionsRef.current.off('origin');
+            directionsRef.current.off('destination');
+
             mapRef.current.removeControl(directionsRef.current);
             directionsRef.current = null;
             setPluginInitialized(false);
