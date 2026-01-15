@@ -1,46 +1,30 @@
-/* Optimized Mapbox GL Directions Plugin Styles */
-/* Keeps route visualization while hiding turn-by-turn instructions */
+/* ===========================================
+   MAPBOX DIRECTIONS PLUGIN STYLES
+   Clean, consolidated CSS - no duplicates
+   =========================================== */
 
-/* ENSURE DIRECTIONS COMPONENT IS VISIBLE */
-/* NOTE: No z-index here - it creates a stacking context that traps autocomplete dropdowns */
+/* --- COMPONENT VISIBILITY --- */
 .mapbox-directions-component {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  overflow: visible !important;
+  position: relative !important;
 }
 
-/* Hide turn-by-turn instructions panel completely */
-.mapbox-directions-instructions {
-  display: none !important;
-}
-
-/* Hide instructions in any form */
+/* --- HIDE INSTRUCTIONS --- */
+.mapbox-directions-instructions,
 .directions-control-instructions,
-.mapbox-directions-component .mapbox-directions-instructions {
+.mapbox-directions-route-summary,
+.mapbox-directions-loading,
+.mapbox-directions-component .mapbox-popup {
   display: none !important;
 }
 
-/* Hide step-by-step instructions */
-.mapbox-directions-route-summary {
-  display: none !important;
-}
-
-/* Customize input styling to match your interface */
-.mapbox-directions-component input[type="text"] {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
-  padding: 8px 12px !important;
-  backdrop-filter: blur(4px) !important;
-}
-
-/* Style the route inputs container - ENSURE VISIBILITY */
-/* NOTE: Do NOT set z-index here - it creates a stacking context that traps autocomplete dropdowns */
+/* --- INPUT CONTAINER --- */
 .mapbox-directions-inputs {
   display: block !important;
   visibility: visible !important;
-  opacity: 1 !important;
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(4px) !important;
   border-radius: 12px !important;
@@ -49,50 +33,82 @@
   margin: 8px !important;
   padding: 12px !important;
   overflow: visible !important;
+}
+
+/* --- INPUT FIELDS --- */
+.mapbox-directions-component input[type="text"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+/* --- GEOCODER & ORIGIN/DEST CONTAINERS --- */
+.mapboxgl-ctrl-geocoder,
+.mapbox-directions-origin,
+.mapbox-directions-destination {
+  overflow: visible !important;
   position: relative !important;
 }
 
-/* Ensure the directions control container can expand */
-.mapboxgl-ctrl-directions {
-  overflow: visible !important;
-  height: auto !important;
-  max-height: none !important;
+/* --- AUTOCOMPLETE SUGGESTIONS (CRITICAL FIX) --- */
+/* The suggestions are in a SIBLING wrapper, not inside geocoder */
+.suggestions-wrapper {
+  position: absolute !important;
+  z-index: 999999 !important;
+  width: 100% !important;
+  left: 0 !important;
+  top: 100% !important;
 }
 
-/* Style the profile switcher if it appears */
-.mapbox-directions-profile {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
-  margin-top: 8px !important;
-}
-
-/* Keep route line visible and styled */
-.mapbox-directions-route,
-.mapbox-directions-route-line,
-.mapboxgl-route {
-  visibility: visible !important;
+ul.suggestions {
   display: block !important;
+  visibility: visible !important;
+  position: relative !important;
+  z-index: 999999 !important;
+  background: white !important;
+  border: 1px solid #ccc !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  margin: 4px 0 0 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+ul.suggestions li {
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  background: white !important;
+}
+
+ul.suggestions li:hover,
+ul.suggestions li.active {
+  background-color: #f3f4f6 !important;
+}
+
+ul.suggestions li a {
+  display: block !important;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+/* --- ROUTE VISUALIZATION --- */
+.mapbox-directions-route,
+.mapbox-directions-route-line {
+  visibility: visible !important;
   opacity: 1 !important;
 }
 
-/* Style route waypoint markers */
-.mapbox-directions-origin,
-.mapbox-directions-destination {
+.mapbox-directions-route.mapbox-directions-route-alternative {
   visibility: visible !important;
+  opacity: 0.6 !important;
 }
 
-/* Hide any popup/tooltip instructions */
-.mapbox-directions-component .mapbox-popup {
-  display: none !important;
-}
-
-/* Ensure draggable route remains functional */
-.mapbox-directions-route-line:hover {
-  cursor: pointer !important;
-}
-
-/* Style the close/clear buttons */
+/* --- BUTTONS --- */
 .mapbox-directions-inputs button {
   background-color: #f3f4f6 !important;
   border: 1px solid #d1d5db !important;
@@ -104,175 +120,27 @@
   background-color: #e5e7eb !important;
 }
 
-/* Hide loading indicators in instructions area */
-.mapbox-directions-loading {
-  display: none !important;
-}
-
-/* Ensure route alternatives are visible if enabled */
-.mapbox-directions-route.mapbox-directions-route-alternative {
-  visibility: visible !important;
-  opacity: 0.6 !important;
-}
-
-/* Active route styling */
-.mapbox-directions-route.mapbox-directions-route-active {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* SATELLITE MAP SPECIFIC FIXES - Higher z-index for route elements over satellite imagery */
-/* Force route elements above satellite layers with maximum z-index */
-.mapbox-directions-route-line {
-  z-index: 999999 !important;
-  position: relative !important;
-}
-
-/* Force origin and destination markers above satellite imagery */
-.mapbox-directions-origin,
-.mapbox-directions-destination {
-  z-index: 999998 !important;
-  position: relative !important;
-}
-
-/* Ensure all mapbox markers (including directions plugin markers) are visible */
-.mapboxgl-marker {
-  z-index: 999997 !important;
-  position: relative !important;
-}
-
-/* Force route geometry/path above satellite layers */
-.mapbox-directions-route {
-  z-index: 999996 !important;
-  position: relative !important;
-}
-
-/* Alternative route lines should also be visible */
-.mapbox-directions-route.mapbox-directions-route-alternative {
-  z-index: 999995 !important;
-  position: relative !important;
-  visibility: visible !important;
-  opacity: 0.6 !important;
-}
-
-/* Additional satellite-specific overrides */
-svg.mapbox-directions-origin,
-svg.mapbox-directions-destination {
-  z-index: 999999 !important;
-  position: relative !important;
-}
-
-/* Canvas route rendering fixes for satellite maps */
-canvas.mapboxgl-canvas {
-  position: relative !important;
-}
-
-/* Force any route-related SVG elements to be on top */
-.mapboxgl-map svg[class*="direction"],
-.mapboxgl-map svg[class*="route"] {
-  z-index: 999999 !important;
-  position: relative !important;
-}
-
-/* GEOCODER SUGGESTIONS - Ensure autocomplete dropdown is visible above ALL overlays */
-/* CRITICAL: Override plugin's overflow:hidden with explicit overflow settings */
-.mapbox-directions-component .suggestions,
-.mapbox-directions-component ul.suggestions,
-.mapboxgl-ctrl-geocoder .suggestions,
-.mapboxgl-ctrl-geocoder ul,
-.mapboxgl-ctrl-geocoder--suggestion,
-.suggestions-wrapper,
-.mapbox-directions-origin .suggestions,
-.mapbox-directions-origin ul,
-.mapbox-directions-destination .suggestions,
-.mapbox-directions-destination ul {
-  z-index: 999999 !important;
-  position: absolute !important;
-  display: block !important;
-  visibility: visible !important;
-  background: white !important;
-  border: 1px solid #ccc !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  max-height: 300px !important;
-  overflow: visible !important;
-  overflow-y: auto !important;
-  left: 0 !important;
-  right: 0 !important;
-  top: 100% !important;
-  margin-top: 4px !important;
-  width: calc(100% - 40px) !important;
-  margin-left: 40px !important;
-}
-
-/* Force the entire top-left control area to have highest z-index for suggestions */
-.mapboxgl-ctrl-top-left {
-  z-index: 9999 !important;
-  overflow: visible !important;
-}
-
-/* The directions component - no z-index to avoid stacking context trap */
-.mapbox-directions-component {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-/* Origin and destination containers must allow overflow for dropdown */
-.mapbox-directions-origin,
-.mapbox-directions-destination {
-  position: relative !important;
-  overflow: visible !important;
-}
-
-/* The geocoder containers need overflow visible */
-.mapboxgl-ctrl-geocoder {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-.mapbox-directions-component .suggestions li,
-.mapbox-directions-component ul li,
-.mapboxgl-ctrl-geocoder ul > li,
-.mapboxgl-ctrl-geocoder ul > li > a,
-.mapboxgl-ctrl-geocoder--suggestion {
-  padding: 10px 12px !important;
-  cursor: pointer !important;
-  border-bottom: 1px solid #f3f4f6 !important;
-  background: white !important;
-  display: block !important;
-}
-
-.mapbox-directions-component .suggestions li:hover,
-.mapbox-directions-component ul li:hover,
-.mapboxgl-ctrl-geocoder ul > li:hover,
-.mapboxgl-ctrl-geocoder ul > li > a:hover,
-.mapboxgl-ctrl-geocoder--suggestion:hover {
-  background-color: #f3f4f6 !important;
-}
-
-/* Ensure geocoder input container doesn't clip suggestions */
-.mapbox-directions-origin-input,
-.mapbox-directions-destination-input,
-.mapbox-directions-origin,
-.mapbox-directions-destination,
-.mapboxgl-ctrl-geocoder {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-/* Ensure the entire directions inputs container allows overflow */
-.mapbox-directions-inputs {
-  overflow: visible !important;
-}
-
-/* Go button styling */
+/* --- GO BUTTON --- */
 .directions-go-button {
   display: block !important;
   width: 100% !important;
-  transition: background-color 0.2s ease !important;
 }
 
-/* Ensure swap button remains visible */
-.directions-reverse {
-  z-index: 10 !important;
+/* --- TOP-LEFT CONTROL AREA --- */
+.mapboxgl-ctrl-top-left {
+  overflow: visible !important;
+}
+
+.mapboxgl-ctrl-directions {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* --- PROFILE SWITCHER --- */
+.mapbox-directions-profile {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  margin-top: 8px !important;
 }
