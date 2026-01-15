@@ -25,7 +25,7 @@ export function useServiceWorker(options: UseServiceWorkerOptions = {}) {
 
     const registerServiceWorker = async () => {
       try {
-        const reg = await navigator.serviceWorker.register('/service-worker.js', {
+        const reg = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
         });
 
@@ -46,6 +46,9 @@ export function useServiceWorker(options: UseServiceWorkerOptions = {}) {
               if (navigator.serviceWorker.controller) {
                 // New update available
                 setIsUpdateAvailable(true);
+                // Dispatch event for UpdateNotification component
+                window.dispatchEvent(new CustomEvent('app-update-available'));
+                console.log('[Service Worker] Update available, dispatched app-update-available event');
                 if (onUpdate) onUpdate(reg);
               } else {
                 // First install
