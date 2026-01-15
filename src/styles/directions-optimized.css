@@ -2,11 +2,11 @@
 /* Keeps route visualization while hiding turn-by-turn instructions */
 
 /* ENSURE DIRECTIONS COMPONENT IS VISIBLE */
+/* NOTE: No z-index here - it creates a stacking context that traps autocomplete dropdowns */
 .mapbox-directions-component {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  z-index: 1000 !important;
 }
 
 /* Hide turn-by-turn instructions panel completely */
@@ -175,6 +175,7 @@ canvas.mapboxgl-canvas {
 }
 
 /* GEOCODER SUGGESTIONS - Ensure autocomplete dropdown is visible above ALL overlays */
+/* CRITICAL: Override plugin's overflow:hidden with explicit overflow settings */
 .mapbox-directions-component .suggestions,
 .mapbox-directions-component ul.suggestions,
 .mapboxgl-ctrl-geocoder .suggestions,
@@ -185,13 +186,16 @@ canvas.mapboxgl-canvas {
 .mapbox-directions-origin ul,
 .mapbox-directions-destination .suggestions,
 .mapbox-directions-destination ul {
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   position: absolute !important;
+  display: block !important;
+  visibility: visible !important;
   background: white !important;
   border: 1px solid #ccc !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
   max-height: 300px !important;
+  overflow: visible !important;
   overflow-y: auto !important;
   left: 0 !important;
   right: 0 !important;
@@ -207,11 +211,10 @@ canvas.mapboxgl-canvas {
   overflow: visible !important;
 }
 
-/* The directions component needs high z-index */
+/* The directions component - no z-index to avoid stacking context trap */
 .mapbox-directions-component {
   overflow: visible !important;
   position: relative !important;
-  z-index: 9999 !important;
 }
 
 /* Origin and destination containers must allow overflow for dropdown */
