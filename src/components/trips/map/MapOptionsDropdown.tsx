@@ -14,21 +14,29 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { searchPOIsByCategory, convertPOIsToGeoJSON, getFallbackPOIData, SearchBounds } from '@/services/mapboxSearchService';
 import {
+  fetchActiveFires,
+  fetchNationalParks,
+  fetchStateForests,
+  fetchMobileCoverage,
+  MOBILE_CARRIERS,
+  CarrierKey
+} from '@/services/australianOverlaysService';
+import {
   Layers,
-  Navigation,
   Mountain,
   Globe,
   Satellite,
   Map,
   CheckCircle,
   Flame,
-  Wifi,
   Trees,
   MapPin,
   Users,
   Car,
   X,
-  Info
+  Info,
+  Loader2,
+  Signal
 } from 'lucide-react';
 
 interface MapOptionsDropdownProps {
@@ -49,6 +57,24 @@ export default function MapOptionsDropdown({
     phoneCoverage: false,
     nationalParks: false,
     stateForests: false
+  });
+
+  // State for loading indicators
+  const [loading, setLoading] = useState({
+    fires: false,
+    nationalParks: false,
+    stateForests: false,
+    phoneCoverage: false
+  });
+
+  // State for individual mobile carrier toggles
+  const [carrierToggles, setCarrierToggles] = useState<Record<CarrierKey, boolean>>({
+    telstra_4g: false,
+    telstra_5g: false,
+    optus_4g: false,
+    optus_5g: false,
+    tpg_4g: false,
+    tpg_5g: false
   });
 
   // State for POI filters
@@ -172,44 +198,20 @@ export default function MapOptionsDropdown({
 
         case 'fires':
           if (newState) {
-            // Fetch fire data from NASA FIRMS (using MODIS/VIIRS data)
+            // Fetch real fire data from NASA FIRMS API
+            setLoading(prev => ({ ...prev, fires: true }));
             try {
-              // Using a CORS-friendly endpoint or mock data for now
-              const mockFireData = {
-                type: 'FeatureCollection',
-                features: [
-                  // Mock fire points for testing - replace with real API
-                  {
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point',
-                      coordinates: [-120.5, 38.5]
-                    },
-                    properties: {
-                      brightness: 320,
-                      confidence: 'high',
-                      date: new Date().toISOString()
-                    }
-                  },
-                  {
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point', 
-                      coordinates: [-121.0, 39.0]
-                    },
-                    properties: {
-                      brightness: 350,
-                      confidence: 'high',
-                      date: new Date().toISOString()
-                    }
-                  }
-                ]
-              };
+              const fireData = await fetchActiveFires(2); // Last 2 days
 
-              if (!map.current.getSource('fires')) {
+              if (!map.current) return;
+
+              if (map.current.getSource('fires')) {
+                // Update existing source
+                (map.current.getSource('fires') as mapboxgl.GeoJSONSource).setData(fireData as any);
+              } else {
                 map.current.addSource('fires', {
                   type: 'geojson',
-                  data: mockFireData as any
+                  data: fireData as any
                 });
 
                 // Add heatmap layer for fire intensity
@@ -222,7 +224,7 @@ export default function MapOptionsDropdown({
                       'interpolate',
                       ['linear'],
                       ['get', 'brightness'],
-                      0, 0,
+                      250, 0,
                       400, 1
                     ],
                     'heatmap-intensity': 1,
@@ -237,7 +239,7 @@ export default function MapOptionsDropdown({
                       0.8, 'rgba(255, 50, 0, 0.8)',
                       1, 'rgba(255, 0, 0, 1)'
                     ],
-                    'heatmap-radius': 30,
+                    'heatmap-radius': 25,
                     'heatmap-opacity': 0.7
                   }
                 });
@@ -248,25 +250,68 @@ export default function MapOptionsDropdown({
                   type: 'circle',
                   source: 'fires',
                   paint: {
-                    'circle-radius': 6,
-                    'circle-color': '#ff4444',
+                    'circle-radius': [
+                      'interpolate',
+                      ['linear'],
+                      ['get', 'frp'],
+                      0, 4,
+                      50, 8,
+                      100, 12
+                    ],
+                    'circle-color': [
+                      'case',
+                      ['==', ['get', 'confidence'], 'high'], '#ff0000',
+                      ['==', ['get', 'confidence'], 'nominal'], '#ff6600',
+                      '#ffaa00'
+                    ],
                     'circle-stroke-color': '#ffffff',
                     'circle-stroke-width': 2,
-                    'circle-opacity': 0.8
+                    'circle-opacity': 0.9
                   }
                 });
+
+                // Add popup on click
+                map.current.on('click', 'fire-points', (e) => {
+                  if (!e.features || !e.features[0]) return;
+                  const props = e.features[0].properties;
+                  const coords = (e.features[0].geometry as any).coordinates;
+
+                  new mapboxgl.Popup()
+                    .setLngLat(coords)
+                    .setHTML(`
+                      <div class="p-2">
+                        <strong class="text-red-600">Active Fire</strong><br/>
+                        <span>Brightness: ${props?.brightness || 'N/A'}</span><br/>
+                        <span>Confidence: ${props?.confidence || 'N/A'}</span><br/>
+                        <span>Date: ${props?.acq_date || 'N/A'}</span><br/>
+                        <span>Satellite: ${props?.satellite || 'VIIRS'}</span>
+                      </div>
+                    `)
+                    .addTo(map.current!);
+                });
+
+                map.current.on('mouseenter', 'fire-points', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+                });
+                map.current.on('mouseleave', 'fire-points', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = '';
+                });
               }
+
+              console.log(`[Fires] Displayed ${fireData.features.length} active fires`);
             } catch (error) {
               console.error('Error loading fire data:', error);
+            } finally {
+              setLoading(prev => ({ ...prev, fires: false }));
             }
           } else {
             // Remove fire layers
             ['fire-heat', 'fire-points'].forEach(layerId => {
-              if (map.current.getLayer(layerId)) {
+              if (map.current?.getLayer(layerId)) {
                 map.current.removeLayer(layerId);
               }
             });
-            if (map.current.getSource('fires')) {
+            if (map.current?.getSource('fires')) {
               map.current.removeSource('fires');
             }
           }
@@ -274,100 +319,100 @@ export default function MapOptionsDropdown({
 
         case 'nationalParks':
           if (newState) {
-            // Mock national parks data - replace with real GeoJSON from NPS
-            const mockParksData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                      [-119.5, 37.5],
-                      [-119.5, 38.0],
-                      [-119.0, 38.0],
-                      [-119.0, 37.5],
-                      [-119.5, 37.5]
-                    ]]
-                  },
-                  properties: {
-                    name: 'Yosemite National Park',
-                    type: 'National Park'
+            // Fetch real data from CAPAD (Australian Protected Areas)
+            setLoading(prev => ({ ...prev, nationalParks: true }));
+            try {
+              const parksData = await fetchNationalParks();
+
+              if (!map.current) return;
+
+              if (map.current.getSource('national-parks')) {
+                (map.current.getSource('national-parks') as mapboxgl.GeoJSONSource).setData(parksData as any);
+              } else {
+                map.current.addSource('national-parks', {
+                  type: 'geojson',
+                  data: parksData as any
+                });
+
+                // Fill layer for park areas
+                map.current.addLayer({
+                  id: 'parks-fill',
+                  type: 'fill',
+                  source: 'national-parks',
+                  paint: {
+                    'fill-color': '#22c55e',
+                    'fill-opacity': 0.15
                   }
-                },
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                      [-118.5, 36.0],
-                      [-118.5, 36.5],
-                      [-118.0, 36.5],
-                      [-118.0, 36.0],
-                      [-118.5, 36.0]
-                    ]]
-                  },
-                  properties: {
-                    name: 'Sequoia National Park',
-                    type: 'National Park'
+                });
+
+                // Outline layer for park boundaries
+                map.current.addLayer({
+                  id: 'parks-outline',
+                  type: 'line',
+                  source: 'national-parks',
+                  paint: {
+                    'line-color': '#16a34a',
+                    'line-width': 2
                   }
-                }
-              ]
-            };
+                });
 
-            if (!map.current.getSource('national-parks')) {
-              map.current.addSource('national-parks', {
-                type: 'geojson',
-                data: mockParksData as any
-              });
+                // Label layer for park names
+                map.current.addLayer({
+                  id: 'parks-labels',
+                  type: 'symbol',
+                  source: 'national-parks',
+                  layout: {
+                    'text-field': ['get', 'NAME'],
+                    'text-size': 12,
+                    'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold']
+                  },
+                  paint: {
+                    'text-color': '#0f766e',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1
+                  }
+                });
 
-              // Fill layer for park areas
-              map.current.addLayer({
-                id: 'parks-fill',
-                type: 'fill',
-                source: 'national-parks',
-                paint: {
-                  'fill-color': '#22c55e',
-                  'fill-opacity': 0.15
-                }
-              });
+                // Add popup on click
+                map.current.on('click', 'parks-fill', (e) => {
+                  if (!e.features || !e.features[0]) return;
+                  const props = e.features[0].properties;
 
-              // Outline layer for park boundaries
-              map.current.addLayer({
-                id: 'parks-outline',
-                type: 'line',
-                source: 'national-parks',
-                paint: {
-                  'line-color': '#16a34a',
-                  'line-width': 2
-                }
-              });
+                  new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                      <div class="p-2">
+                        <strong class="text-green-700">${props?.NAME || 'Protected Area'}</strong><br/>
+                        <span>Type: ${props?.TYPE || 'N/A'}</span><br/>
+                        <span>State: ${props?.STATE || 'N/A'}</span><br/>
+                        ${props?.AREA_KM2 ? `<span>Area: ${Math.round(props.AREA_KM2)} km²</span>` : ''}
+                      </div>
+                    `)
+                    .addTo(map.current!);
+                });
 
-              // Label layer for park names
-              map.current.addLayer({
-                id: 'parks-labels',
-                type: 'symbol',
-                source: 'national-parks',
-                layout: {
-                  'text-field': ['get', 'name'],
-                  'text-size': 12,
-                  'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold']
-                },
-                paint: {
-                  'text-color': '#0f766e',
-                  'text-halo-color': '#ffffff',
-                  'text-halo-width': 1
-                }
-              });
+                map.current.on('mouseenter', 'parks-fill', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+                });
+                map.current.on('mouseleave', 'parks-fill', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = '';
+                });
+              }
+
+              console.log(`[Parks] Displayed ${parksData.features?.length || 0} national parks`);
+            } catch (error) {
+              console.error('Error loading parks data:', error);
+            } finally {
+              setLoading(prev => ({ ...prev, nationalParks: false }));
             }
           } else {
             // Remove park layers
             ['parks-fill', 'parks-outline', 'parks-labels'].forEach(layerId => {
-              if (map.current.getLayer(layerId)) {
+              if (map.current?.getLayer(layerId)) {
                 map.current.removeLayer(layerId);
               }
             });
-            if (map.current.getSource('national-parks')) {
+            if (map.current?.getSource('national-parks')) {
               map.current.removeSource('national-parks');
             }
           }
@@ -375,84 +420,100 @@ export default function MapOptionsDropdown({
 
         case 'stateForests':
           if (newState) {
-            // Mock state forests data
-            const mockForestsData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                      [-120.5, 39.0],
-                      [-120.5, 39.5],
-                      [-120.0, 39.5],
-                      [-120.0, 39.0],
-                      [-120.5, 39.0]
-                    ]]
-                  },
-                  properties: {
-                    name: 'Tahoe National Forest',
-                    type: 'State Forest'
+            // Fetch real data from ABARES Forests of Australia
+            setLoading(prev => ({ ...prev, stateForests: true }));
+            try {
+              const forestsData = await fetchStateForests();
+
+              if (!map.current) return;
+
+              if (map.current.getSource('state-forests')) {
+                (map.current.getSource('state-forests') as mapboxgl.GeoJSONSource).setData(forestsData as any);
+              } else {
+                map.current.addSource('state-forests', {
+                  type: 'geojson',
+                  data: forestsData as any
+                });
+
+                // Fill layer for forest areas (darker green)
+                map.current.addLayer({
+                  id: 'forests-fill',
+                  type: 'fill',
+                  source: 'state-forests',
+                  paint: {
+                    'fill-color': '#059669',
+                    'fill-opacity': 0.12
                   }
-                }
-              ]
-            };
+                });
 
-            if (!map.current.getSource('state-forests')) {
-              map.current.addSource('state-forests', {
-                type: 'geojson',
-                data: mockForestsData as any
-              });
+                // Outline layer for forest boundaries
+                map.current.addLayer({
+                  id: 'forests-outline',
+                  type: 'line',
+                  source: 'state-forests',
+                  paint: {
+                    'line-color': '#047857',
+                    'line-width': 1.5,
+                    'line-dasharray': [3, 2]
+                  }
+                });
 
-              // Fill layer for forest areas (darker green)
-              map.current.addLayer({
-                id: 'forests-fill',
-                type: 'fill',
-                source: 'state-forests',
-                paint: {
-                  'fill-color': '#059669',
-                  'fill-opacity': 0.12
-                }
-              });
+                // Label layer for forest names
+                map.current.addLayer({
+                  id: 'forests-labels',
+                  type: 'symbol',
+                  source: 'state-forests',
+                  layout: {
+                    'text-field': ['get', 'TENURE'],
+                    'text-size': 11,
+                    'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular']
+                  },
+                  paint: {
+                    'text-color': '#065f46',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1
+                  }
+                });
 
-              // Outline layer for forest boundaries
-              map.current.addLayer({
-                id: 'forests-outline',
-                type: 'line',
-                source: 'state-forests',
-                paint: {
-                  'line-color': '#047857',
-                  'line-width': 1.5,
-                  'line-dasharray': [3, 2]
-                }
-              });
+                // Add popup on click
+                map.current.on('click', 'forests-fill', (e) => {
+                  if (!e.features || !e.features[0]) return;
+                  const props = e.features[0].properties;
 
-              // Label layer for forest names
-              map.current.addLayer({
-                id: 'forests-labels',
-                type: 'symbol',
-                source: 'state-forests',
-                layout: {
-                  'text-field': ['get', 'name'],
-                  'text-size': 11,
-                  'text-font': ['Open Sans Semibold', 'Arial Unicode MS Regular']
-                },
-                paint: {
-                  'text-color': '#065f46',
-                  'text-halo-color': '#ffffff',
-                  'text-halo-width': 1
-                }
-              });
+                  new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                      <div class="p-2">
+                        <strong class="text-emerald-700">${props?.TENURE || 'State Forest'}</strong><br/>
+                        <span>Type: ${props?.FOREST_TYP || 'N/A'}</span><br/>
+                        <span>State: ${props?.STATE || 'N/A'}</span>
+                      </div>
+                    `)
+                    .addTo(map.current!);
+                });
+
+                map.current.on('mouseenter', 'forests-fill', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+                });
+                map.current.on('mouseleave', 'forests-fill', () => {
+                  if (map.current) map.current.getCanvas().style.cursor = '';
+                });
+              }
+
+              console.log(`[Forests] Displayed ${forestsData.features?.length || 0} state forests`);
+            } catch (error) {
+              console.error('Error loading forests data:', error);
+            } finally {
+              setLoading(prev => ({ ...prev, stateForests: false }));
             }
           } else {
             // Remove forest layers
             ['forests-fill', 'forests-outline', 'forests-labels'].forEach(layerId => {
-              if (map.current.getLayer(layerId)) {
+              if (map.current?.getLayer(layerId)) {
                 map.current.removeLayer(layerId);
               }
             });
-            if (map.current.getSource('state-forests')) {
+            if (map.current?.getSource('state-forests')) {
               map.current.removeSource('state-forests');
             }
           }
@@ -460,67 +521,142 @@ export default function MapOptionsDropdown({
 
         case 'phoneCoverage':
           if (newState) {
-            // Mock phone coverage data for testing
-            const mockCoverageData = {
-              type: 'FeatureCollection',
-              features: [
-                {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Polygon',
-                    coordinates: [[
-                      [-122.5, 37.5],
-                      [-122.5, 38.5],
-                      [-121.5, 38.5],
-                      [-121.5, 37.5],
-                      [-122.5, 37.5]
-                    ]]
-                  },
-                  properties: {
-                    coverage: 'good',
-                    provider: 'Multiple'
-                  }
-                }
-              ]
-            };
+            // Fetch real mobile coverage data from ACCC API for Australian carriers
+            setLoading(prev => ({ ...prev, phoneCoverage: true }));
 
-            if (!map.current.getSource('phone-coverage')) {
-              map.current.addSource('phone-coverage', {
-                type: 'geojson',
-                data: mockCoverageData as any
-              });
+            try {
+              // Load all enabled carriers (or default to Telstra 4G if none selected)
+              const activeCarriers = Object.entries(carrierToggles)
+                .filter(([_, enabled]) => enabled)
+                .map(([key]) => key as CarrierKey);
 
-              map.current.addLayer({
-                id: 'phone-coverage-fill',
-                type: 'fill',
-                source: 'phone-coverage',
-                paint: {
-                  'fill-color': '#22c55e',
-                  'fill-opacity': 0.2
-                }
-              });
+              // If no carriers selected, enable Telstra 4G by default
+              const carriersToLoad = activeCarriers.length > 0
+                ? activeCarriers
+                : ['telstra_4g' as CarrierKey];
 
-              map.current.addLayer({
-                id: 'phone-coverage-outline',
-                type: 'line',
-                source: 'phone-coverage',
-                paint: {
-                  'line-color': '#16a34a',
-                  'line-width': 2,
-                  'line-dasharray': [2, 2]
+              if (activeCarriers.length === 0) {
+                setCarrierToggles(prev => ({ ...prev, telstra_4g: true }));
+              }
+
+              // Get current map bounds for Australia-focused query
+              const bounds = map.current.getBounds();
+              const queryBounds = {
+                west: Math.max(bounds.getWest(), 110),
+                south: Math.max(bounds.getSouth(), -45),
+                east: Math.min(bounds.getEast(), 155),
+                north: Math.min(bounds.getNorth(), -10)
+              };
+
+              // Load coverage for each carrier
+              for (const carrier of carriersToLoad) {
+                const carrierInfo = MOBILE_CARRIERS[carrier];
+                const sourceId = `coverage-${carrier}`;
+                const fillLayerId = `coverage-${carrier}-fill`;
+                const outlineLayerId = `coverage-${carrier}-outline`;
+
+                // Remove existing layers if present
+                [fillLayerId, outlineLayerId].forEach(id => {
+                  if (map.current?.getLayer(id)) map.current.removeLayer(id);
+                });
+                if (map.current?.getSource(sourceId)) map.current.removeSource(sourceId);
+
+                // Fetch data from ACCC API
+                const coverageData = await fetchMobileCoverage(carrier, queryBounds);
+
+                if (coverageData.features && coverageData.features.length > 0) {
+                  map.current.addSource(sourceId, {
+                    type: 'geojson',
+                    data: coverageData as any
+                  });
+
+                  // Fill layer with carrier-specific color
+                  map.current.addLayer({
+                    id: fillLayerId,
+                    type: 'fill',
+                    source: sourceId,
+                    paint: {
+                      'fill-color': carrierInfo.color,
+                      'fill-opacity': 0.25
+                    }
+                  });
+
+                  // Outline layer
+                  map.current.addLayer({
+                    id: outlineLayerId,
+                    type: 'line',
+                    source: sourceId,
+                    paint: {
+                      'line-color': carrierInfo.color,
+                      'line-width': 1.5
+                    }
+                  });
+
+                  // Popup on click
+                  map.current.on('click', fillLayerId, (e: any) => {
+                    if (!e.features || e.features.length === 0) return;
+
+                    const feature = e.features[0];
+                    const props = feature.properties || {};
+
+                    new mapboxgl.Popup({ closeButton: true, maxWidth: '300px' })
+                      .setLngLat(e.lngLat)
+                      .setHTML(`
+                        <div class="p-2">
+                          <div class="font-bold text-sm" style="color: ${carrierInfo.color}">${carrierInfo.name}</div>
+                          <div class="text-xs text-gray-600 mt-1">Mobile Coverage Area</div>
+                          ${props.signal_strength ? `<div class="text-xs mt-1">Signal: ${props.signal_strength}</div>` : ''}
+                        </div>
+                      `)
+                      .addTo(map.current!);
+                  });
+
+                  // Cursor on hover
+                  map.current.on('mouseenter', fillLayerId, () => {
+                    if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+                  });
+
+                  map.current.on('mouseleave', fillLayerId, () => {
+                    if (map.current) map.current.getCanvas().style.cursor = '';
+                  });
+
+                  console.log(`[Coverage] Loaded ${coverageData.features.length} areas for ${carrierInfo.name}`);
+                } else {
+                  console.log(`[Coverage] No coverage data available for ${carrierInfo.name}`);
                 }
-              });
+              }
+            } catch (error) {
+              console.error('Error loading coverage data:', error);
+            } finally {
+              setLoading(prev => ({ ...prev, phoneCoverage: false }));
             }
           } else {
-            // Remove coverage layers
-            ['phone-coverage-fill', 'phone-coverage-outline'].forEach(layerId => {
-              if (map.current.getLayer(layerId)) {
-                map.current.removeLayer(layerId);
+            // Remove ALL carrier coverage layers
+            Object.keys(MOBILE_CARRIERS).forEach(carrier => {
+              const sourceId = `coverage-${carrier}`;
+              const fillLayerId = `coverage-${carrier}-fill`;
+              const outlineLayerId = `coverage-${carrier}-outline`;
+
+              [fillLayerId, outlineLayerId].forEach(id => {
+                if (map.current?.getLayer(id)) {
+                  map.current.removeLayer(id);
+                }
+              });
+
+              if (map.current?.getSource(sourceId)) {
+                map.current.removeSource(sourceId);
               }
             });
-            if (map.current.getSource('phone-coverage')) {
-              map.current.removeSource('phone-coverage');
-            }
+
+            // Reset carrier toggles
+            setCarrierToggles({
+              telstra_4g: false,
+              telstra_5g: false,
+              optus_4g: false,
+              optus_5g: false,
+              tpg_4g: false,
+              tpg_5g: false
+            });
           }
           break;
 
@@ -532,7 +668,102 @@ export default function MapOptionsDropdown({
       console.error(`Error toggling ${overlayKey}:`, error);
       setOverlays(prev => ({ ...prev, [overlayKey]: false }));
     }
-  }, [map, overlays]);
+  }, [map, overlays, carrierToggles]);
+
+  // Toggle individual carrier coverage
+  const toggleCarrier = useCallback(async (carrier: CarrierKey) => {
+    if (!map.current) return;
+
+    const newState = !carrierToggles[carrier];
+    setCarrierToggles(prev => ({ ...prev, [carrier]: newState }));
+
+    const carrierInfo = MOBILE_CARRIERS[carrier];
+    const sourceId = `coverage-${carrier}`;
+    const fillLayerId = `coverage-${carrier}-fill`;
+    const outlineLayerId = `coverage-${carrier}-outline`;
+
+    if (newState) {
+      // Add this carrier's coverage
+      try {
+        const bounds = map.current.getBounds();
+        const queryBounds = {
+          west: Math.max(bounds.getWest(), 110),
+          south: Math.max(bounds.getSouth(), -45),
+          east: Math.min(bounds.getEast(), 155),
+          north: Math.min(bounds.getNorth(), -10)
+        };
+
+        const coverageData = await fetchMobileCoverage(carrier, queryBounds);
+
+        if (coverageData.features && coverageData.features.length > 0) {
+          // Remove existing if present
+          [fillLayerId, outlineLayerId].forEach(id => {
+            if (map.current?.getLayer(id)) map.current.removeLayer(id);
+          });
+          if (map.current?.getSource(sourceId)) map.current.removeSource(sourceId);
+
+          map.current.addSource(sourceId, {
+            type: 'geojson',
+            data: coverageData as any
+          });
+
+          map.current.addLayer({
+            id: fillLayerId,
+            type: 'fill',
+            source: sourceId,
+            paint: {
+              'fill-color': carrierInfo.color,
+              'fill-opacity': 0.25
+            }
+          });
+
+          map.current.addLayer({
+            id: outlineLayerId,
+            type: 'line',
+            source: sourceId,
+            paint: {
+              'line-color': carrierInfo.color,
+              'line-width': 1.5
+            }
+          });
+
+          map.current.on('click', fillLayerId, (e: any) => {
+            if (!e.features || e.features.length === 0) return;
+
+            new mapboxgl.Popup({ closeButton: true, maxWidth: '300px' })
+              .setLngLat(e.lngLat)
+              .setHTML(`
+                <div class="p-2">
+                  <div class="font-bold text-sm" style="color: ${carrierInfo.color}">${carrierInfo.name}</div>
+                  <div class="text-xs text-gray-600 mt-1">Mobile Coverage Area</div>
+                </div>
+              `)
+              .addTo(map.current!);
+          });
+
+          map.current.on('mouseenter', fillLayerId, () => {
+            if (map.current) map.current.getCanvas().style.cursor = 'pointer';
+          });
+
+          map.current.on('mouseleave', fillLayerId, () => {
+            if (map.current) map.current.getCanvas().style.cursor = '';
+          });
+
+          console.log(`[Coverage] Toggled ON: ${carrierInfo.name}`);
+        }
+      } catch (error) {
+        console.error(`Error loading ${carrier} coverage:`, error);
+        setCarrierToggles(prev => ({ ...prev, [carrier]: false }));
+      }
+    } else {
+      // Remove this carrier's coverage
+      [fillLayerId, outlineLayerId].forEach(id => {
+        if (map.current?.getLayer(id)) map.current.removeLayer(id);
+      });
+      if (map.current?.getSource(sourceId)) map.current.removeSource(sourceId);
+      console.log(`[Coverage] Toggled OFF: ${carrierInfo.name}`);
+    }
+  }, [map, carrierToggles]);
 
   // Toggle POI filter
   const togglePOIFilter = useCallback(async (poiKey: keyof typeof poiFilters) => {
@@ -740,18 +971,13 @@ export default function MapOptionsDropdown({
       } else {
         // Remove POI layers
         const layersToRemove = [layerId, `${layerId}-labels`];
-        
+
         layersToRemove.forEach(id => {
           if (map.current?.getLayer(id)) {
-            // Remove click handlers
-            map.current.off('click', id);
-            map.current.off('mouseenter', id);
-            map.current.off('mouseleave', id);
-            // Remove layer
             map.current.removeLayer(id);
           }
         });
-        
+
         // Remove source
         if (map.current?.getSource(sourceId)) {
           map.current.removeSource(sourceId);
@@ -1045,16 +1271,13 @@ export default function MapOptionsDropdown({
           `${layerId}-labels`,
           layerId
         ];
-        
+
         layersToRemove.forEach(id => {
           if (map.current?.getLayer(id)) {
-            map.current.off('click', id);
-            map.current.off('mouseenter', id);
-            map.current.off('mouseleave', id);
             map.current.removeLayer(id);
           }
         });
-        
+
         if (map.current?.getSource(sourceId)) {
           map.current.removeSource(sourceId);
         }
@@ -1108,6 +1331,16 @@ export default function MapOptionsDropdown({
     setSocialLayers({
       friends: false,
       community: false
+    });
+
+    // Reset carrier toggles
+    setCarrierToggles({
+      telstra_4g: false,
+      telstra_5g: false,
+      optus_4g: false,
+      optus_5g: false,
+      tpg_4g: false,
+      tpg_5g: false
     });
   }, [overlays, poiFilters, socialLayers]);
   
@@ -1270,10 +1503,10 @@ export default function MapOptionsDropdown({
             <Flame className="w-4 h-4 text-orange-500" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
-                Active Fires
+                Active Fires {loading.fires && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Wildfire hotspots
+                NASA FIRMS satellite data
               </p>
             </div>
           </div>
@@ -1290,13 +1523,13 @@ export default function MapOptionsDropdown({
           onClick={() => toggleOverlay('phoneCoverage')}
         >
           <div className="flex items-center gap-3">
-            <Wifi className="w-4 h-4 text-green-600" />
+            <Signal className="w-4 h-4 text-green-600" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
-                Phone Coverage
+                Phone Coverage {loading.phoneCoverage && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Cell signal areas
+                Australian mobile coverage (ACCC)
               </p>
             </div>
           </div>
@@ -1307,6 +1540,101 @@ export default function MapOptionsDropdown({
           />
         </div>
 
+        {/* Carrier Toggles - shown when phone coverage is enabled */}
+        {overlays.phoneCoverage && (
+          <div className="ml-6 pl-3 border-l-2 border-gray-200 space-y-1 py-1">
+            <p className="text-xs text-muted-foreground px-2 mb-2">Select carriers to display:</p>
+
+            {/* Telstra */}
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.telstra_4g.color }} />
+                  <span className="text-xs font-medium">Telstra 4G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.telstra_4g}
+                  onCheckedChange={() => toggleCarrier('telstra_4g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.telstra_5g.color }} />
+                  <span className="text-xs font-medium">Telstra 5G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.telstra_5g}
+                  onCheckedChange={() => toggleCarrier('telstra_5g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+
+            {/* Optus */}
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.optus_4g.color }} />
+                  <span className="text-xs font-medium">Optus 4G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.optus_4g}
+                  onCheckedChange={() => toggleCarrier('optus_4g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.optus_5g.color }} />
+                  <span className="text-xs font-medium">Optus 5G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.optus_5g}
+                  onCheckedChange={() => toggleCarrier('optus_5g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+
+            {/* TPG/Vodafone */}
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.tpg_4g.color }} />
+                  <span className="text-xs font-medium">TPG/Vodafone 4G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.tpg_4g}
+                  onCheckedChange={() => toggleCarrier('tpg_4g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+            <div className="px-2 py-1.5 hover:bg-accent rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: MOBILE_CARRIERS.tpg_5g.color }} />
+                  <span className="text-xs font-medium">TPG/Vodafone 5G</span>
+                </div>
+                <Switch
+                  checked={carrierToggles.tpg_5g}
+                  onCheckedChange={() => toggleCarrier('tpg_5g')}
+                  className="scale-75"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-400 px-2 pt-1 italic">
+              Areas without coverage shown as gaps
+            </p>
+          </div>
+        )}
+
         {/* National Parks */}
         <div
           className="flex items-center justify-between px-3 py-2 hover:bg-accent cursor-pointer rounded"
@@ -1316,10 +1644,10 @@ export default function MapOptionsDropdown({
             <Trees className="w-4 h-4 text-green-700" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
-                National Parks
+                National Parks {loading.nationalParks && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Park boundaries
+                Australian CAPAD data
               </p>
             </div>
           </div>
@@ -1339,10 +1667,10 @@ export default function MapOptionsDropdown({
             <Trees className="w-4 h-4 text-emerald-700" />
             <div>
               <Label className="text-sm font-medium cursor-pointer">
-                State Forests
+                State Forests {loading.stateForests && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}
               </Label>
               <p className="text-xs text-muted-foreground">
-                Forest boundaries
+                ABARES forest data
               </p>
             </div>
           </div>
