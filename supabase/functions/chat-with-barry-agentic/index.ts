@@ -1000,8 +1000,129 @@ function formatManualChunksForClaude(chunks: any[]): string {
   return formattedContent;
 }
 
-// Full-text search on manual_chunks content using ILIKE
-async function searchManualChunks(supabaseAdmin: any, query: string, limit: number = 20): Promise<any[]> {
+// OpenAI embedding configuration
+const OPENAI_API_KEY = <OPENAI_API_KEY>
+const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+// Generate embedding for a query using OpenAI
+async function generateQueryEmbedding(query: string): Promise<number[] | null> {
+  if (!OPENAI_API_KEY) {
+    console.warn('[Vector Search] No OPENAI_API_KEY configured');
+    return null;
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        input: query,
+        model: OPENAI_EMBEDDING_MODEL,
+        encoding_format: 'float'
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Vector Search] OpenAI embedding error:', response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    const embedding = data.data?.[0]?.embedding;
+
+    if (!embedding || !Array.isArray(embedding)) {
+      console.error('[Vector Search] Invalid embedding response');
+      return null;
+    }
+
+    console.log(`[Vector Search] Generated embedding with ${embedding.length} dimensions`);
+    return embedding;
+  } catch (err) {
+    console.error('[Vector Search] Embedding generation error:', err);
+    return null;
+  }
+}
+
+// Vector-based semantic search on manual_chunks using pgvector
+async function searchManualChunksVector(supabaseAdmin: any, query: string, limit: number = 15): Promise<any[]> {
+  console.log(`[Vector Search] Starting semantic search for: "${query}"`);
+
+  // Generate embedding for the query
+  const queryEmbedding = await generateQueryEmbedding(query);
+
+  if (!queryEmbedding) {
+    console.log('[Vector Search] Embedding generation failed, falling back to keyword search');
+    return searchManualChunksKeyword(supabaseAdmin, query, limit);
+  }
+
+  try {
+    // Use the hybrid search RPC function that combines vector similarity with full-text search
+    // Note: The RPC function accepts text and casts to vector internally
+    const embeddingString = `[${queryEmbedding.join(',')}]`;
+
+    const { data: results, error } = await supabaseAdmin.rpc('search_manual_chunks_hybrid', {
+      query_text: query,
+      query_embedding: embeddingString,
+      user_model: 'U435',
+      similarity_threshold: 0.4, // Lower threshold for better recall
+      max_results: limit
+    });
+
+    if (error) {
+      console.error('[Vector Search] Hybrid search RPC error:', error);
+      // Fall back to pure semantic search
+      const { data: semanticResults, error: semanticError } = await supabaseAdmin.rpc('search_manual_chunks_semantic', {
+        query_embedding: embeddingString,
+        user_model: 'U435',
+        similarity_threshold: 0.4,
+        max_results: limit
+      });
+
+      if (semanticError) {
+        console.error('[Vector Search] Semantic search RPC error:', semanticError);
+        return searchManualChunksKeyword(supabaseAdmin, query, limit);
+      }
+
+      console.log(`[Vector Search] Semantic search found ${semanticResults?.length || 0} results`);
+
+      // Transform semantic results
+      return (semanticResults || []).map((r: any) => ({
+        id: r.chunk_id,
+        manual_title: r.manual_title,
+        section_title: r.section_title,
+        page_number: r.page_number,
+        content: r.content,
+        page_image_url: r.page_image_url,
+        has_visual_elements: r.has_visual_elements,
+        similarity_score: r.similarity_score
+      }));
+    }
+
+    console.log(`[Vector Search] Hybrid search found ${results?.length || 0} results`);
+
+    // Transform results to match expected format
+    return (results || []).map((r: any) => ({
+      id: r.chunk_id,
+      manual_title: r.manual_title,
+      section_title: r.section_title,
+      page_number: r.page_number,
+      content: r.content,
+      page_image_url: r.page_image_url,
+      has_visual_elements: r.has_visual_elements,
+      similarity_score: r.combined_score || r.similarity_score
+    }));
+  } catch (err) {
+    console.error('[Vector Search] Exception:', err);
+    return searchManualChunksKeyword(supabaseAdmin, query, limit);
+  }
+}
+
+// Fallback: Keyword-based search on manual_chunks content using ILIKE
+async function searchManualChunksKeyword(supabaseAdmin: any, query: string, limit: number = 20): Promise<any[]> {
   // Extract keywords from query
   const keywords = query.toLowerCase()
     .replace(/[^\w\s]/g, ' ')
@@ -1010,11 +1131,11 @@ async function searchManualChunks(supabaseAdmin: any, query: string, limit: numb
     .slice(0, 6);
 
   if (keywords.length === 0) {
-    console.log('[Manual Search] No valid keywords extracted');
+    console.log('[Keyword Search] No valid keywords extracted');
     return [];
   }
 
-  console.log(`[Manual Search] Searching for keywords: ${keywords.join(', ')}`);
+  console.log(`[Keyword Search] Searching for keywords: ${keywords.join(', ')}`);
 
   try {
     // Search U435 manual chunks using ILIKE on content
@@ -1034,16 +1155,30 @@ async function searchManualChunks(supabaseAdmin: any, query: string, limit: numb
       .limit(limit);
 
     if (error) {
-      console.error('[Manual Search] Query error:', error);
+      console.error('[Keyword Search] Query error:', error);
       return [];
     }
 
-    console.log(`[Manual Search] Found ${results?.length || 0} results`);
+    console.log(`[Keyword Search] Found ${results?.length || 0} results`);
     return results || [];
   } catch (err) {
-    console.error('[Manual Search] Exception:', err);
+    console.error('[Keyword Search] Exception:', err);
     return [];
   }
+}
+
+// Main search function - uses vector search with keyword fallback
+async function searchManualChunks(supabaseAdmin: any, query: string, limit: number = 20): Promise<any[]> {
+  // Try vector search first (more accurate semantic matching)
+  const vectorResults = await searchManualChunksVector(supabaseAdmin, query, limit);
+
+  if (vectorResults.length > 0) {
+    return vectorResults;
+  }
+
+  // Fall back to keyword search if vector search returns nothing
+  console.log('[Manual Search] Vector search returned no results, trying keyword fallback');
+  return searchManualChunksKeyword(supabaseAdmin, query, limit);
 }
 
 // Look up chapter PDF URL from page number using barry_manual_navigation

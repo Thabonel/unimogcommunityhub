@@ -1,7 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// Use Deno's native npm compatibility - import from legacy build for better compatibility
-import { getDocument } from 'npm:pdfjs-dist@3.11.174/legacy/build/pdf.mjs'
+import { encodeBase64 } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +10,7 @@ const corsHeaders = {
 
 const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
 // Configuration for chunking
 const CHUNK_SIZE = 1500
@@ -53,68 +53,122 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   return chunks.filter(chunk => chunk.trim().length > 50)
 }
 
-// Extract text from PDF using PDF.js
-async function extractTextFromPDF(buffer: Uint8Array) {
-  // Note: Worker configuration not needed in Deno server environment
-  const pdf = await getDocument({ data: buffer }).promise
-  const docs = []
+// PDF text extraction using Claude Vision API
+async function extractTextFromPDF(buffer: Uint8Array, filename: string) {
+  console.log('Extracting text from PDF using Claude Vision API...')
 
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum)
-    const textContent = await page.getTextContent()
+  // Count pages from PDF structure
+  const rawText = new TextDecoder('latin1').decode(buffer)
+  const pageMatches = rawText.match(/\/Type\s*\/Page[^s]/g) || []
+  const numPages = Math.max(1, pageMatches.length)
+  console.log(`PDF has approximately ${numPages} pages`)
 
-    let pageText = ''
-    let lastY: number | null = null
-    let lastX = 0
+  // Convert buffer to base64 using Deno standard library
+  const base64 = encodeBase64(buffer)
 
-    for (const item of textContent.items) {
-      const textItem = item as any
+  const docs: Array<{ pageContent: string; metadata: { page: number; textLength: number } }> = []
 
-      if ('str' in textItem) {
-        const { str, transform } = textItem
-        const x = transform[4]
-        const y = transform[5]
+  // Process pages in batches to avoid timeout (process first 20 pages max for now)
+  const maxPages = Math.min(numPages, 20)
+  const batchSize = 5
 
-        // Detect new lines based on Y position changes
-        if (lastY !== null && Math.abs(y - lastY) > 5) {
-          pageText += '\n'
-          lastX = 0
-        }
+  for (let batchStart = 0; batchStart < maxPages; batchStart += batchSize) {
+    const batchEnd = Math.min(batchStart + batchSize, maxPages)
+    console.log(`Processing pages ${batchStart + 1} to ${batchEnd}...`)
 
-        // Add spacing for significant X position jumps (tables/columns)
-        if (lastY === y && x > lastX + 50) {
-          pageText += '\t'
-        }
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 8000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: base64
+                }
+              },
+              {
+                type: 'text',
+                text: `Extract the text content from pages ${batchStart + 1} to ${batchEnd} of this PDF document.
+For each page, output in this exact format:
+---PAGE X---
+[page content here]
+---END PAGE X---
 
-        pageText += str + ' '
-        lastY = y
-        lastX = x
-      }
-    }
-
-    // Clean up the extracted text
-    pageText = pageText
-      .replace(/\s+/g, ' ')
-      .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])/g, '$1$2$3')
-      .replace(/(\d)\s+(\d)/g, '$1$2')
-      .replace(/([a-z])\s+([A-Z])/g, '$1 $2')
-      .replace(/\.\s+([A-Z])/g, '.\n\n$1')
-      .replace(/\n\s+/g, '\n')
-      .trim()
-
-    // Only include pages with substantial content
-    if (pageText.trim().length > 50) {
-      docs.push({
-        pageContent: pageText,
-        metadata: {
-          page: pageNum,
-          textLength: pageText.length
-        }
+Where X is the page number. Extract ALL text including headings, paragraphs, tables, specifications, and technical data.
+Focus on accurate extraction of technical terms, part numbers, and specifications.`
+              }
+            ]
+          }]
+        })
       })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error(`Claude API error: ${response.status} - ${errorText}`)
+        continue
+      }
+
+      const result = await response.json()
+      const textContent = result.content?.[0]?.text || ''
+
+      // Parse the extracted pages
+      const pageRegex = /---PAGE (\d+)---([\s\S]*?)---END PAGE \d+---/g
+      let pageMatch
+
+      while ((pageMatch = pageRegex.exec(textContent)) !== null) {
+        const pageNum = parseInt(pageMatch[1], 10)
+        const pageText = cleanText(pageMatch[2])
+
+        if (pageText.trim().length > 50) {
+          docs.push({
+            pageContent: pageText,
+            metadata: { page: pageNum, textLength: pageText.length }
+          })
+        }
+      }
+
+      // If no structured pages found, treat entire response as content
+      if (docs.length === 0 && textContent.length > 100) {
+        const cleanedText = cleanText(textContent)
+        if (cleanedText.length > 50) {
+          docs.push({
+            pageContent: cleanedText,
+            metadata: { page: batchStart + 1, textLength: cleanedText.length }
+          })
+        }
+      }
+
+    } catch (error) {
+      console.error(`Error processing pages ${batchStart + 1}-${batchEnd}:`, error)
     }
   }
 
+  console.log(`Extracted ${docs.length} pages from PDF using Claude Vision`)
   return docs
+}
+
+// Clean extracted text
+function cleanText(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])/g, '$1$2$3')
+    .replace(/(\d)\s+(\d)/g, '$1$2')
+    .replace(/([a-z])\s+([A-Z])/g, '$1 $2')
+    .replace(/\.\s+([A-Z])/g, '.\n\n$1')
+    .replace(/\n\s+/g, '\n')
+    .trim()
 }
 
 serve(async (req) => {
@@ -143,27 +197,36 @@ serve(async (req) => {
       )
     }
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '', // Use service role for admin operations
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    )
+    // Create Supabase client with service role key
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-    // Verify the user is authenticated and is admin
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+    const supabaseClient = createClient(supabaseUrl, serviceRoleKey)
+
+    // Check if the auth header contains the service role key (for admin scripts)
+    // or verify the user is authenticated
+    const token = authHeader.replace('Bearer ', '')
+    const isServiceRole = token === serviceRoleKey
+
+    let userId: string
+
+    if (isServiceRole) {
+      // Service role key is authorized for admin operations
+      userId = 'service-role'
+      console.log('Using service role key authorization')
+    } else {
+      // Verify the user is authenticated
+      const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        )
+      }
+      userId = user.id
     }
 
     // Get request body and store filename
@@ -204,7 +267,7 @@ serve(async (req) => {
 
     // Extract text from PDF
     console.log('Extracting text from PDF...')
-    const docs = await extractTextFromPDF(buffer)
+    const docs = await extractTextFromPDF(buffer, filename)
     const extractionMethod = 'direct'
     console.log(`Extraction successful: ${docs.length} pages`)
 
@@ -269,7 +332,7 @@ serve(async (req) => {
           category,
           page_count: docs.length,
           file_size: buffer.length,
-          uploaded_by: user.id
+          uploaded_by: userId === 'service-role' ? null : userId
         })
         .select()
         .single()
