@@ -56,9 +56,9 @@ export function MarketplaceListingsPage() {
       )}
       
       {(isLoading || isLoadingAmazon) ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-pulse">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 animate-pulse">
           {Array(8).fill(0).map((_, i) => (
-            <div key={i} className="bg-muted rounded-lg h-72"></div>
+            <div key={i} className="bg-muted rounded-lg h-48 sm:h-72"></div>
           ))}
         </div>
       ) : (listings?.length === 0 && amazonProducts.length === 0) ? (
@@ -80,7 +80,7 @@ export function MarketplaceListingsPage() {
                 <h2 className="text-xl font-semibold">Amazon Products</h2>
                 <span className="text-sm text-muted-foreground">({amazonProducts.length})</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-6">
                 {amazonProducts.map((product) => (
                   <div key={product.id} className="h-full">
                     <AmazonProductCard product={product} />
@@ -100,7 +100,7 @@ export function MarketplaceListingsPage() {
                 <h2 className="text-xl font-semibold">Community Listings</h2>
                 <span className="text-sm text-muted-foreground">({listings.length})</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-6">
                 {listings.map((listing) => (
                   <div key={listing.id} className="h-full">
                     <MarketplaceListingCard listing={listing} />

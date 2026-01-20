@@ -93,8 +93,8 @@ export function MarketplaceListingCard({ listing }: ListingCardProps) {
               />
               {/* Multiple photos indicator */}
               {listing.photos.length > 1 && (
-                <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                  <Camera className="h-3 w-3" />
+                <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-black/60 text-white px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs flex items-center gap-0.5 sm:gap-1">
+                  <Camera className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                   <span>{listing.photos.length}</span>
                 </div>
               )}
@@ -107,9 +107,9 @@ export function MarketplaceListingCard({ listing }: ListingCardProps) {
         </div>
         
         {/* Content */}
-        <div className="p-3">
+        <div className="p-1.5 sm:p-3">
           {/* Price */}
-          <div className="font-semibold text-base">
+          <div className="font-semibold text-xs sm:text-base">
             {isConverting ? (
               <span className="text-gray-400">{t('listing_card.loading_price')}</span>
             ) : (
@@ -130,13 +130,13 @@ export function MarketplaceListingCard({ listing }: ListingCardProps) {
           </div>
           
           {/* Title */}
-          <div className="text-sm text-gray-900 line-clamp-2 mt-1">
+          <div className="text-xs sm:text-sm text-gray-900 line-clamp-2 mt-0.5 sm:mt-1">
             {listing.title}
           </div>
-          
+
           {/* Location */}
           {listing.location && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-[10px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 truncate">
               {listing.location}
             </div>
           )}
