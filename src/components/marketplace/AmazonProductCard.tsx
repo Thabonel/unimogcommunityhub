@@ -93,32 +93,33 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
           </div>
         )}
 
-        <Badge className="absolute top-2 left-2 bg-[#FF9900] hover:bg-[#FF9900]/90 text-white">
+        <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-[#FF9900] hover:bg-[#FF9900]/90 text-white text-[10px] sm:text-xs px-1.5 sm:px-2">
           Amazon
         </Badge>
 
         {product.availability_status === 'available' && (
-          <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+          <Badge className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-green-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 hidden sm:inline-flex">
             In Stock
           </Badge>
         )}
 
         {product.availability_status === 'out_of_stock' && (
-          <Badge className="absolute top-2 right-2 bg-orange-500 text-white">
-            Limited Stock
+          <Badge className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-orange-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 hidden sm:inline-flex">
+            Limited
           </Badge>
         )}
 
         {isPriceRecentlyChanged() && (
-          <Badge className="absolute bottom-2 left-2 bg-blue-500 text-white flex items-center gap-1">
-            <TrendingDown className="h-3 w-3" />
-            Price Drop
+          <Badge className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-blue-500 text-white flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs px-1.5 sm:px-2">
+            <TrendingDown className="h-2 w-2 sm:h-3 sm:w-3" />
+            <span className="hidden sm:inline">Price Drop</span>
+            <span className="sm:hidden">Sale</span>
           </Badge>
         )}
       </div>
 
-      <div className="p-3">
-        <div className="font-semibold text-base">
+      <div className="p-1.5 sm:p-3">
+        <div className="font-semibold text-xs sm:text-base">
           {isConverting ? (
             <span className="text-gray-400">{t('listing_card.loading_price')}</span>
           ) : (
@@ -137,12 +138,12 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
           )}
         </div>
 
-        <div className="text-sm text-gray-900 line-clamp-2 mt-1">
+        <div className="text-xs sm:text-sm text-gray-900 line-clamp-2 mt-0.5 sm:mt-1">
           {product.title}
         </div>
 
         {product.description && (
-          <div className="text-xs text-gray-600 line-clamp-2 mt-1">
+          <div className="text-[10px] sm:text-xs text-gray-600 line-clamp-1 sm:line-clamp-2 mt-0.5 sm:mt-1 hidden sm:block">
             {product.description}
           </div>
         )}
@@ -151,11 +152,12 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
           href={affiliateLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 w-full inline-flex items-center justify-center gap-2 bg-[#FF9900] hover:bg-[#FF9900]/90 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          className="mt-2 sm:mt-3 w-full inline-flex items-center justify-center gap-1 sm:gap-2 bg-[#FF9900] hover:bg-[#FF9900]/90 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
-          <span>View on Amazon</span>
-          <ExternalLink className="h-4 w-4" />
+          <span className="hidden sm:inline">View on Amazon</span>
+          <span className="sm:hidden">Amazon</span>
+          <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
         </a>
       </div>
     </div>
