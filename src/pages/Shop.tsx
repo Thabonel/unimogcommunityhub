@@ -217,7 +217,7 @@ const Shop = () => {
                 <Star className="h-5 w-5 text-yellow-500" />
                 <h2 className="text-2xl font-bold">Featured Products</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6">
                 {featuredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -236,7 +236,7 @@ const Shop = () => {
               {featuredProducts.length > 0 && (
                 <h2 className="text-2xl font-bold">All Products</h2>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6">
                 {regularProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -339,84 +339,70 @@ function ProductCard({ product, onProductClick, userCountryCode }: ProductCardPr
           />
         </div>
       )}
-      <CardHeader>
-        <div className="space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-lg line-clamp-2">{product.title}</CardTitle>
+      <CardHeader className="p-2 sm:p-6">
+        <div className="space-y-1 sm:space-y-2">
+          <div className="flex items-start justify-between gap-1 sm:gap-2">
+            <CardTitle className="text-xs sm:text-lg line-clamp-2">{product.title}</CardTitle>
             {product.is_featured && (
-              <Star className="h-5 w-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+              <Star className="h-3 w-3 sm:h-5 sm:w-5 text-yellow-500 fill-yellow-500 flex-shrink-0" />
             )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1 sm:px-2">
               {categoryLabel}
             </Badge>
-            <Badge variant="outline" className="text-xs capitalize">
+            <Badge variant="outline" className="text-[10px] sm:text-xs capitalize px-1 sm:px-2 hidden sm:inline-flex">
               {product.affiliate_provider}
             </Badge>
             {amazonRegion && regionalDomain && (
-              <Badge variant="default" className="text-xs bg-amazon-orange hover:bg-amazon-orange/90">
-                <Globe className="h-3 w-3 mr-1" />
-                Amazon {amazonRegion}
+              <Badge variant="default" className="text-[10px] sm:text-xs bg-amazon-orange hover:bg-amazon-orange/90 px-1 sm:px-2 hidden sm:inline-flex">
+                <Globe className="h-2 w-2 sm:h-3 sm:w-3 mr-0.5 sm:mr-1" />
+                {amazonRegion}
               </Badge>
             )}
           </div>
         </div>
         {product.short_description && (
-          <CardDescription className="line-clamp-2">
+          <CardDescription className="line-clamp-1 sm:line-clamp-2 text-[10px] sm:text-sm hidden sm:block">
             {product.short_description}
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-2 sm:p-6 pt-0 sm:pt-0">
         {product.price && (
-          <div className="space-y-1">
-            <div className="text-2xl font-bold">
+          <div className="space-y-0.5 sm:space-y-1">
+            <div className="text-sm sm:text-2xl font-bold">
               {regionalPrice ? (
-                // Show regional price if available (no conversion needed)
                 <>
                   {getCurrencySymbol(regionalPrice.currency)}
                   {regionalPrice.amount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                   })}
-                  <span className="text-xs text-green-600 ml-2">
-                    Regional Price
-                  </span>
                 </>
               ) : isConverting ? (
-                <span className="text-gray-400">Loading...</span>
+                <span className="text-gray-400">...</span>
               ) : (
-                // Fallback to converted price
                 <>
                   {getCurrencySymbol(viewerCurrency)}
                   {convertedPrice?.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
                   })}
-                  {product.currency !== viewerCurrency && (
-                    <span className="text-sm text-gray-500 ml-2">
-                      ({getCurrencySymbol(product.currency)}{product.price.toFixed(2)})
-                    </span>
-                  )}
                 </>
               )}
             </div>
-            {product.affiliate_provider === 'amazon' && !regionalPrice && (
-              <p className="text-xs text-muted-foreground">
-                Estimated from US price • See {amazonRegion} Amazon for local pricing
-              </p>
-            )}
           </div>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="p-2 sm:p-6 pt-0 sm:pt-0">
         <Button
-          className="w-full"
+          className="w-full text-xs sm:text-sm py-1.5 sm:py-2"
           onClick={() => onProductClick(product)}
         >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          View Product
+          <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <span className="hidden sm:inline">View Product</span>
+          <span className="sm:hidden">View</span>
         </Button>
       </CardFooter>
     </Card>
