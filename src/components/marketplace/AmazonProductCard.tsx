@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { getCurrencySymbol } from '@/utils/currencyUtils';
 import { convertCurrency } from '@/services/exchangeRateService';
-import { buildAmazonAffiliateLink, AmazonProduct } from '@/utils/amazonAffiliate';
+import { AmazonProduct } from '@/utils/amazonAffiliate';
+import { buildAmazonURL, getAmazonRegion } from '@/services/amazonAffiliateService';
 import { Badge } from '@/components/ui/badge';
 
 interface AmazonProductCardProps {
@@ -16,35 +17,53 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
   const { t } = useTranslation('marketplace');
   const { user } = useAuth();
   const [viewerCurrency, setViewerCurrency] = useState<string>('USD');
+  const [userCountryCode, setUserCountryCode] = useState<string>('US');
   const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
   const [isConverting, setIsConverting] = useState(false);
 
   useEffect(() => {
-    const fetchViewerCurrency = async () => {
+    const fetchViewerPreferences = async () => {
       if (!user) {
         const locale = navigator.language;
-        if (locale.includes('AU')) setViewerCurrency('AUD');
-        else if (locale.includes('GB')) setViewerCurrency('GBP');
-        else if (locale.includes('EU') || locale.includes('DE') || locale.includes('FR')) setViewerCurrency('EUR');
+        if (locale.includes('AU')) {
+          setViewerCurrency('AUD');
+          setUserCountryCode('AU');
+        } else if (locale.includes('GB')) {
+          setViewerCurrency('GBP');
+          setUserCountryCode('GB');
+        } else if (locale.includes('DE')) {
+          setViewerCurrency('EUR');
+          setUserCountryCode('DE');
+        } else if (locale.includes('FR')) {
+          setViewerCurrency('EUR');
+          setUserCountryCode('FR');
+        } else if (locale.includes('IT')) {
+          setViewerCurrency('EUR');
+          setUserCountryCode('IT');
+        } else if (locale.includes('ES')) {
+          setViewerCurrency('EUR');
+          setUserCountryCode('ES');
+        }
         return;
       }
 
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('currency')
+          .select('currency, country')
           .eq('id', user.id)
           .single();
 
-        if (!error && data?.currency) {
-          setViewerCurrency(data.currency);
+        if (!error && data) {
+          if (data.currency) setViewerCurrency(data.currency);
+          if (data.country) setUserCountryCode(data.country);
         }
       } catch (error) {
-        console.error('Error fetching viewer currency:', error);
+        console.error('Error fetching viewer preferences:', error);
       }
     };
 
-    fetchViewerCurrency();
+    fetchViewerPreferences();
   }, [user]);
 
   useEffect(() => {
@@ -69,7 +88,8 @@ export function AmazonProductCard({ product }: AmazonProductCardProps) {
     performConversion();
   }, [product.price, product.currency, viewerCurrency]);
 
-  const affiliateLink = buildAmazonAffiliateLink(product.asin);
+  const amazonRegion = getAmazonRegion(userCountryCode);
+  const affiliateLink = buildAmazonURL(product.asin, amazonRegion);
 
   const isPriceRecentlyChanged = () => {
     if (!product.last_price_check) return false;

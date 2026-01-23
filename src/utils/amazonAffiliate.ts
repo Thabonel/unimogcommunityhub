@@ -1,4 +1,5 @@
-export const AMAZON_ASSOCIATES_ID = 'unimogcommuni-22';
+export const AMAZON_ASSOCIATES_ID_AU = 'unimogcommuni-22';
+export const AMAZON_ASSOCIATES_ID_US = 'wheelsandwins-20';
 
 export interface AmazonProduct {
   id: string;
@@ -20,13 +21,21 @@ export interface AmazonProduct {
   current_price?: number;
 }
 
+/**
+ * @deprecated Use buildAmazonURL from amazonAffiliateService.ts for proper regional routing
+ * This function defaults to US Amazon with US tag
+ */
 export function buildAmazonAffiliateLink(asin: string): string {
-  return `https://www.amazon.com/dp/${asin}?tag=${AMAZON_ASSOCIATES_ID}`;
+  return `https://www.amazon.com/dp/${asin}?tag=${AMAZON_ASSOCIATES_ID_US}`;
 }
 
+/**
+ * @deprecated Use getRegionalAffiliateURL from amazonAffiliateService.ts for proper regional routing
+ * This function defaults to US tag
+ */
 export function buildAmazonAffiliateLinkFromUrl(productUrl: string): string {
   const url = new URL(productUrl);
-  url.searchParams.set('tag', AMAZON_ASSOCIATES_ID);
+  url.searchParams.set('tag', AMAZON_ASSOCIATES_ID_US);
   return url.toString();
 }
 
