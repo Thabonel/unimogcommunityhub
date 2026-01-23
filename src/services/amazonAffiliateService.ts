@@ -15,7 +15,7 @@ interface AmazonRegion {
  * Amazon Associates Store IDs by Region
  */
 export const AMAZON_REGIONS: Record<string, AmazonRegion> = {
-  AU: { domain: 'amazon.com.au', tag: 'unimogcommuni-22', currency: 'AUD' },
+  AU: { domain: 'amazon.com.au', tag: 'wheelsandwins-22', currency: 'AUD' },
   DE: { domain: 'amazon.de', tag: 'unimogcommu06-21', currency: 'EUR' },
   FR: { domain: 'amazon.fr', tag: 'unimogcommu03-21', currency: 'EUR' },
   IT: { domain: 'amazon.it', tag: 'unimogcommu09-21', currency: 'EUR' },
