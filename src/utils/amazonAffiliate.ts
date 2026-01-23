@@ -1,4 +1,4 @@
-export const AMAZON_ASSOCIATES_ID_AU = 'unimogcommuni-22';
+export const AMAZON_ASSOCIATES_ID_AU = 'wheelsandwins-22';
 export const AMAZON_ASSOCIATES_ID_US = 'wheelsandwins-20';
 
 export interface AmazonProduct {

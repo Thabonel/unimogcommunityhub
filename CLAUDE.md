@@ -375,6 +375,46 @@ git push origin main
 **Status**: Available via `npm run knip` commands
 **Note**: When doing cleanup, delete maximum 5 files per batch, test thoroughly, and monitor production for 24h after each deploy.
 
+### Code Simplifier Agent
+**Status**: Available via `code-simplifier` subagent
+**Location**: `.claude/agents/code-simplifier.md`
+
+**What It Does**:
+- Transforms complex code into clean, readable, maintainable solutions
+- Reduces cyclomatic complexity (target: <5 per function)
+- Enforces single responsibility principle
+- Converts nested conditionals to guard clauses
+- Extracts monolithic functions into focused helpers
+
+**MANDATORY: Run Regularly**
+Claude MUST run the code-simplifier agent in these situations:
+
+1. **After Major Feature Implementation** - Run on new files before committing
+2. **Weekly Maintenance** - Run on recently modified files (check git log)
+3. **Before Production Deploy** - Quick scan of critical paths
+4. **When Complexity Noticed** - Any function >20 lines or >2 nesting levels
+
+**How to Invoke**:
+```
+Use Task tool with subagent_type="code-simplifier"
+Focus on: [specific file or directory]
+```
+
+**Target Metrics**:
+| Metric | Target |
+|--------|--------|
+| Cyclomatic Complexity | < 5 per function |
+| Cognitive Complexity | < 7 per function |
+| Lines per Function | < 20 lines |
+| Nesting Depth | Maximum 2 levels |
+| Parameters | Maximum 3 (use objects for more) |
+
+**Do NOT Simplify**:
+- Working code without complexity issues
+- External library integrations (may need verbosity)
+- Performance-critical hot paths (measure first)
+- PDF viewer code (see Critical Lessons section)
+
 ## Project Structure
 ```
 src/
