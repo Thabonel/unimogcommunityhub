@@ -22,9 +22,10 @@ import ExploreRoutes from '@/pages/ExploreRoutes';
 import ExploreMap from '@/pages/ExploreMap';
 import SiteQALog from '@/pages/SiteQALog';
 import SiteQALogSupabase from '@/pages/SiteQALogSupabase';
-import Workshop from '@/pages/Workshop';
-import BarryWorkshop from '@/pages/BarryWorkshop';
-import PartsCatalog from '@/pages/workshop/PartsCatalog';
+// COMMENTED OUT: Workshop Hub - incomplete feature with dead links
+// import Workshop from '@/pages/Workshop';
+// import BarryWorkshop from '@/pages/BarryWorkshop';
+// import PartsCatalog from '@/pages/workshop/PartsCatalog';
 import VerifyOwnership from '@/pages/VerifyOwnership';
 import SubscriptionGuard from '@/components/SubscriptionGuard';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -116,30 +117,35 @@ export const router = createBrowserRouter([
         path: '/profile/verify-ownership',
         element: <VerifyOwnership />
       },
-      {
-        path: '/workshop',
-        element: (
-          <SubscriptionGuard requireVerification={true}>
-            <Workshop />
-          </SubscriptionGuard>
-        )
-      },
-      {
-        path: '/workshop/barry',
-        element: (
-          <SubscriptionGuard requireVerification={true}>
-            <BarryWorkshop />
-          </SubscriptionGuard>
-        )
-      },
-      {
-        path: '/workshop/parts-catalog',
-        element: (
-          <SubscriptionGuard requireVerification={true}>
-            <PartsCatalog />
-          </SubscriptionGuard>
-        )
-      },
+      // COMMENTED OUT: Workshop Hub - incomplete feature with dead links
+      // The Workshop landing page links to /workshop/manuals, /workshop/community-repairs,
+      // /workshop/history, /workshop/saved - none of which exist.
+      // Stats like "500+ repairs" and "2000+ photos" are fake.
+      // Barry and Parts Catalog work but are accessible elsewhere.
+      // {
+      //   path: '/workshop',
+      //   element: (
+      //     <SubscriptionGuard requireVerification={true}>
+      //       <Workshop />
+      //     </SubscriptionGuard>
+      //   )
+      // },
+      // {
+      //   path: '/workshop/barry',
+      //   element: (
+      //     <SubscriptionGuard requireVerification={true}>
+      //       <BarryWorkshop />
+      //     </SubscriptionGuard>
+      //   )
+      // },
+      // {
+      //   path: '/workshop/parts-catalog',
+      //   element: (
+      //     <SubscriptionGuard requireVerification={true}>
+      //       <PartsCatalog />
+      //     </SubscriptionGuard>
+      //   )
+      // },
       {
         path: '/explore-routes',
         element: <ExploreRoutes />
