@@ -421,9 +421,45 @@ async function searchRPSByComponentName(
   componentName: string
 ): Promise<{ found: boolean; group: any; parts: any[] }> {
   try {
-    console.log(`🔍 Searching RPS by component name: "${componentName}"`);
+    console.log(`[RPS Search] Searching by component name: "${componentName}"`);
 
-    // Map common component terms to RPS group names
+    // Step 1: Check database synonyms table first (most accurate)
+    const normalizedTerm = componentName.toLowerCase().trim();
+    const { data: synonymMatch, error: synonymError } = await supabaseClient
+      .from('rps_component_synonyms')
+      .select('group_code, confidence')
+      .ilike('user_term', `%${normalizedTerm}%`)
+      .order('confidence', { ascending: false })
+      .limit(1);
+
+    if (!synonymError && synonymMatch && synonymMatch.length > 0) {
+      const groupCode = synonymMatch[0].group_code;
+      console.log(`[RPS Search] Synonym match found: ${normalizedTerm} -> ${groupCode} (confidence: ${synonymMatch[0].confidence})`);
+
+      // Get the group by code
+      const { data: groups } = await supabaseClient
+        .from('rps_groups')
+        .select('*')
+        .eq('group_code', groupCode)
+        .limit(1);
+
+      if (groups && groups.length > 0) {
+        const group = groups[0];
+        console.log(`[RPS Search] Found group via synonym: ${group.group_code} - ${group.group_name}`);
+
+        // Get parts for this group
+        const { data: parts } = await supabaseClient
+          .from('rps_parts')
+          .select('*')
+          .eq('group_code', group.group_code)
+          .order('item_number')
+          .limit(10);
+
+        return { found: true, group, parts: parts || [] };
+      }
+    }
+
+    // Step 2: Fallback to hardcoded mappings (legacy support)
     const componentMappings: Record<string, string[]> = {
       'portal': ['PORTAL', 'WHEEL HUB DRIVES', 'HUB'],
       'portal hub': ['WHEEL HUB DRIVES', 'PORTAL'],
@@ -444,8 +480,8 @@ async function searchRPSByComponentName(
     };
 
     // Get search terms (use mappings or component name itself)
-    const searchTerms = componentMappings[componentName] || [componentName.toUpperCase()];
-    console.log(`  📋 Search terms: ${searchTerms.join(', ')}`);
+    const searchTerms = componentMappings[normalizedTerm] || componentMappings[componentName] || [componentName.toUpperCase()];
+    console.log(`[RPS Search] Fallback search terms: ${searchTerms.join(', ')}`);
 
     // Search groups by name (ILIKE) - try each term
     for (const term of searchTerms) {
@@ -461,7 +497,7 @@ async function searchRPSByComponentName(
 
         // Verify group has illustrations
         if (group.illustration_pages && group.illustration_pages.length > 0) {
-          console.log(`  ✅ Found group: ${group.group_code} - ${group.group_name} (${group.illustration_pages.length} illustrations)`);
+          console.log(`[RPS Search] Found group: ${group.group_code} - ${group.group_name} (${group.illustration_pages.length} illustrations)`);
 
           // Get parts for this group
           const { data: parts } = await supabaseClient
@@ -476,10 +512,10 @@ async function searchRPSByComponentName(
       }
     }
 
-    console.log(`  ❌ No RPS group found for "${componentName}"`);
+    console.log(`[RPS Search] No RPS group found for "${componentName}"`);
     return { found: false, group: null, parts: [] };
   } catch (error) {
-    console.error('❌ Error in searchRPSByComponentName:', error);
+    console.error('[RPS Search] Error in searchRPSByComponentName:', error);
     return { found: false, group: null, parts: [] };
   }
 }
