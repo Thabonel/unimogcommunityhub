@@ -3,12 +3,13 @@ import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, FileText, Wrench } from 'lucide-react';
+import { BookOpen, FileText } from 'lucide-react';
+// import { Wrench } from 'lucide-react'; // COMMENTED OUT: Workshop Database disabled
 import { Link } from 'react-router-dom';
 import { RecommendationSubmissionDialog } from '@/components/knowledge/RecommendationSubmissionDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/profile';
-import { FEATURES } from '@/config/features';
+// import { FEATURES } from '@/config/features'; // COMMENTED OUT: Workshop Database disabled
 import { useTranslation } from 'react-i18next';
 
 const Knowledge = () => {
@@ -85,7 +86,7 @@ const Knowledge = () => {
             </CardContent>
           </Card>
 
-          {/* Workshop Database */}
+          {/* COMMENTED OUT: Workshop Database - feature incomplete
           {FEATURES.WIS_ENABLED && (
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -102,6 +103,7 @@ const Knowledge = () => {
               </CardContent>
             </Card>
           )}
+          */}
         </div>
         
       </div>
