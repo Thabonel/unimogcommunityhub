@@ -1217,6 +1217,77 @@ async function searchManualChunks(supabaseAdmin: any, query: string, limit: numb
   return searchManualChunksKeyword(supabaseAdmin, query, limit);
 }
 
+// KB Gatherer: Check barry_knowledge_base for validated answers BEFORE comprehensive search
+async function checkKnowledgeBase(supabaseAdmin: any, query: string): Promise<{
+  found: boolean;
+  content: string | null;
+  manualReferences: any[];
+  confidence: number;
+} | null> {
+  try {
+    const queryLower = query.toLowerCase();
+    const words = queryLower.split(/\s+/).filter(w => w.length > 2);
+
+    if (words.length === 0) return null;
+
+    console.log('[KB Gatherer] Checking knowledge base for:', words.slice(0, 5).join(', '));
+
+    const { data: kbEntries, error } = await supabaseAdmin
+      .from('barry_knowledge_base')
+      .select('*')
+      .eq('validated_by_user', true)
+      .gte('confidence_score', 0.8)
+      .order('priority', { ascending: false })
+      .order('confidence_score', { ascending: false })
+      .limit(10);
+
+    if (error || !kbEntries || kbEntries.length === 0) {
+      console.log('[KB Gatherer] No validated KB entries found');
+      return null;
+    }
+
+    for (const entry of kbEntries) {
+      const keywords = entry.question_keywords || [];
+      const matchCount = keywords.filter((kw: string) =>
+        queryLower.includes(kw.toLowerCase())
+      ).length;
+
+      if (matchCount >= 2 || (matchCount >= 1 && keywords.length <= 3)) {
+        console.log(`[KB Gatherer] MATCH found: ${matchCount} keywords matched for entry ${entry.id}`);
+
+        const refs = entry.manual_references || {};
+        const pages = refs.pages || [];
+        const pdfFile = refs.pdf || null;
+        const manual = refs.manual || 'Workshop Manual';
+        const section = refs.section || '';
+
+        const manualReferences = pages.map((pageNum: number) => ({
+          type: 'manual_page',
+          manual_title: manual,
+          page_number: pageNum,
+          section_title: section,
+          pdf_file: pdfFile,
+          storage_url: pdfFile ? `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${pdfFile}#page=${pageNum}` : null,
+          source: 'knowledge_base'
+        }));
+
+        return {
+          found: true,
+          content: entry.barry_response_template,
+          manualReferences,
+          confidence: entry.confidence_score
+        };
+      }
+    }
+
+    console.log('[KB Gatherer] No matching KB entry for query');
+    return null;
+  } catch (err) {
+    console.error('[KB Gatherer] Exception:', err);
+    return null;
+  }
+}
+
 // Look up chapter PDF URL from page number using barry_manual_navigation
 async function getChapterPdfUrl(supabaseAdmin: any, pageNumber: number): Promise<{ url: string; filename: string; pdfPage: number } | null> {
   try {
@@ -1945,6 +2016,20 @@ Use this data to answer weather questions. Be specific with temperatures and con
             cache: true
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
+      }
+
+      // KB GATHERER: Check knowledge base for validated answers BEFORE comprehensive search
+      const kbResult = await checkKnowledgeBase(supabaseAdmin, lastUserMessage.content || '');
+      if (kbResult && kbResult.found) {
+        console.log(`[KB Gatherer] Returning validated answer with ${kbResult.manualReferences.length} references`);
+        return new Response(JSON.stringify({
+          content: kbResult.content,
+          manualReferences: kbResult.manualReferences,
+          knowledgeMode: 'knowledge_base',
+          searchResultCount: kbResult.manualReferences.length,
+          confidence: kbResult.confidence,
+          source: 'validated_kb'
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
 
       try {
