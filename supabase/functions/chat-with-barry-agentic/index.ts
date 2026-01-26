@@ -1261,20 +1261,77 @@ async function checkKnowledgeBase(supabaseAdmin: any, query: string): Promise<{
         const manual = refs.manual || 'Workshop Manual';
         const section = refs.section || '';
 
-        const manualReferences = pages.map((pageNum: number) => ({
-          type: 'manual_page',
-          manual_title: manual,
-          page_number: pageNum,
-          section_title: section,
-          pdf_file: pdfFile,
-          storage_url: pdfFile ? `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${pdfFile}#page=${pageNum}` : null,
-          source: 'knowledge_base'
+        // Build manual references with proper PDF URLs
+        const manualReferences = await Promise.all(pages.map(async (pageNum: number) => {
+          // For U435 pages, use the chapter navigation system
+          if (manual === 'U435' || manual.includes('U435')) {
+            const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
+            if (chapterInfo) {
+              return {
+                type: 'kb_validated',
+                title: section || `Page ${pageNum}`,
+                manual_title: manual,
+                page_number: pageNum,
+                original_page: pageNum,
+                pdf_page: chapterInfo.pdfPage,
+                section_title: section,
+                storage_url: chapterInfo.url,
+                chapter_filename: chapterInfo.filename,
+                source: 'knowledge_base'
+              };
+            }
+          }
+
+          // For other manuals (G603, etc.), use direct PDF URL from manuals bucket
+          if (pdfFile) {
+            return {
+              type: 'kb_validated',
+              title: section || `Page ${pageNum}`,
+              manual_title: manual,
+              page_number: pageNum,
+              original_page: pageNum,
+              pdf_page: pageNum,
+              section_title: section,
+              storage_url: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${pdfFile}#page=${pageNum}`,
+              chapter_filename: pdfFile,
+              source: 'knowledge_base'
+            };
+          }
+
+          // Fallback: try barry_manual_navigation for any page
+          const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
+          if (chapterInfo) {
+            return {
+              type: 'kb_validated',
+              title: section || `Page ${pageNum}`,
+              manual_title: manual,
+              page_number: pageNum,
+              original_page: pageNum,
+              pdf_page: chapterInfo.pdfPage,
+              section_title: section,
+              storage_url: chapterInfo.url,
+              chapter_filename: chapterInfo.filename,
+              source: 'knowledge_base'
+            };
+          }
+
+          // No PDF mapping found
+          console.warn(`[KB Gatherer] No PDF mapping for page ${pageNum}`);
+          return null;
         }));
+
+        // Filter out null references
+        const validRefs = manualReferences.filter((ref): ref is NonNullable<typeof ref> => ref !== null);
+
+        if (validRefs.length === 0) {
+          console.log('[KB Gatherer] KB entry matched but no valid PDF mappings found');
+          continue; // Try next KB entry
+        }
 
         return {
           found: true,
           content: entry.barry_response_template,
-          manualReferences,
+          manualReferences: validRefs,
           confidence: entry.confidence_score
         };
       }
