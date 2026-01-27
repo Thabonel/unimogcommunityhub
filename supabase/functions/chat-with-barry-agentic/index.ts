@@ -14,7 +14,7 @@ import { getClientIP, logSecurityEvent } from '../_shared/security.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform',
 };
 
 const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
