@@ -1,14 +1,15 @@
 import { useState, useCallback } from 'react';
-import { secureGeminiService, ChatMessage, ManualReference, AttachmentMetadata } from '@/services/claude/secureGeminiService';
+import { secureGeminiService, ChatMessage, ManualReference, AttachmentMetadata, WebSearchResult } from '@/services/claude/secureGeminiService';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
 export function useSecureGemini(location?: { latitude: number; longitude: number }) {
   const [messages, setMessages] = useState<ChatMessage[]>(secureGeminiService.getMessages());
   const [manualReferences, setManualReferences] = useState<ManualReference[]>([]);
-  const [knowledgeMode, setKnowledgeMode] = useState<'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'>('general_ai');
+  const [knowledgeMode, setKnowledgeMode] = useState<'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search'>('general_ai');
   const [knowledgeSources, setKnowledgeSources] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<AttachmentMetadata[]>([]);
+  const [webSearchResults, setWebSearchResults] = useState<WebSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -38,6 +39,11 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
       if (response.attachments) {
         setAttachments(response.attachments);
       }
+      if (response.webSearchResults) {
+        setWebSearchResults(response.webSearchResults);
+      } else {
+        setWebSearchResults([]);
+      }
       return response.content;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
@@ -55,6 +61,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     setKnowledgeMode('general_ai');
     setKnowledgeSources(null);
     setAttachments([]);
+    setWebSearchResults([]);
     setError(null);
   }, []);
 
@@ -73,6 +80,7 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
     knowledgeMode,
     knowledgeSources,
     attachments,
+    webSearchResults,
     isLoading,
     error,
     isAuthenticated: !!user,

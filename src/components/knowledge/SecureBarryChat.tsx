@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RotateCw, Trash2, AlertCircle, LogIn } from 'lucide-react';
+import { Send, RotateCw, Trash2, AlertCircle, LogIn, ExternalLink, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -23,6 +23,8 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
 
   const {
     messages,
+    webSearchResults,
+    knowledgeMode,
     isLoading,
     error,
     isAuthenticated,
@@ -204,6 +206,46 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
                 <div className="flex items-center gap-2">
                   <div className="animate-pulse">Barry is thinking...</div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Web Search Results */}
+          {webSearchResults && webSearchResults.length > 0 && knowledgeMode === 'web_search' && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Search className="h-4 w-4 text-blue-600" />
+                <span className="font-medium text-blue-800 text-sm">
+                  Web Search Results ({webSearchResults.length})
+                </span>
+              </div>
+              <div className="space-y-2">
+                {webSearchResults.map((result, index) => (
+                  <a
+                    key={index}
+                    href={result.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-3 bg-white rounded border border-blue-100 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-blue-700 text-sm truncate">
+                          {result.title}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                          {result.description}
+                        </div>
+                        {result.price && (
+                          <div className="text-sm font-medium text-green-600 mt-1">
+                            {result.price}
+                          </div>
+                        )}
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                    </div>
+                  </a>
+                ))}
               </div>
             </div>
           )}
