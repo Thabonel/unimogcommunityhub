@@ -59,7 +59,7 @@ const fuelLogSchema = z.object({
   odometer: z.number().positive(),
   fill_date: z.date(),
   fuel_amount: z.number().positive(),
-  fuel_price_per_unit: z.number().positive(),
+  fuel_price_per_unit: z.number().nonnegative(), // Calculated, can be 0 initially
   total_cost: z.number().positive(),
   fuel_type: z.string(),
   fuel_station: z.string().optional(),
@@ -91,20 +91,22 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
       total_cost: initialValues?.total_cost || 0,
       fuel_type: initialValues?.fuel_type || 'diesel',
       fuel_station: initialValues?.fuel_station || '',
-      currency: initialValues?.currency || 'USD',
+      currency: initialValues?.currency || 'AUD', // Default to AUD for Australian users
       notes: initialValues?.notes || '',
       full_tank: initialValues?.full_tank !== undefined ? initialValues.full_tank : true
     }
   });
 
   const watchFuelAmount = form.watch('fuel_amount');
-  const watchFuelPrice = form.watch('fuel_price_per_unit');
+  const watchTotalCost = form.watch('total_cost');
 
-  const handleCalculateTotal = () => {
-    if (watchFuelAmount && watchFuelPrice) {
+  // Calculate price per unit from total cost and fuel amount
+  const handleCalculatePricePerUnit = () => {
+    if (watchFuelAmount > 0 && watchTotalCost > 0) {
       setIsCalculating(true);
       setTimeout(() => {
-        form.setValue('total_cost', Number((watchFuelAmount * watchFuelPrice).toFixed(2)));
+        const pricePerUnit = Number((watchTotalCost / watchFuelAmount).toFixed(3));
+        form.setValue('fuel_price_per_unit', pricePerUnit);
         setIsCalculating(false);
       }, 100);
     }
@@ -258,97 +260,65 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
               name="fuel_amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Fuel Amount</FormLabel>
+                  <FormLabel>Fuel Amount (Liters)</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="number"
                       step="0.01"
+                      placeholder="e.g. 65.5"
                       {...field}
                       onChange={(e) => {
                         field.onChange(Number(e.target.value));
-                        handleCalculateTotal();
+                        handleCalculatePricePerUnit();
                       }}
                     />
                   </FormControl>
-                  <FormDescription>Liters or Gallons</FormDescription>
+                  <FormDescription>How many liters did you put in?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Price per unit */}
-              <FormField
-                control={form.control}
-                name="fuel_price_per_unit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price Per Unit</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(Number(e.target.value));
-                          handleCalculateTotal();
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Currency */}
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Currency" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {currencies.map(currency => (
-                          <SelectItem key={currency} value={currency}>
-                            {currency}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Total cost */}
+            {/* Total cost - user enters this */}
             <FormField
               control={form.control}
               name="total_cost"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Total Cost</FormLabel>
+                  <FormLabel>Total Cost (AUD)</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="number"
                       step="0.01"
+                      placeholder="e.g. 125.50"
                       {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      onChange={(e) => {
+                        field.onChange(Number(e.target.value));
+                        handleCalculatePricePerUnit();
+                      }}
                     />
                   </FormControl>
+                  <FormDescription>Total amount you paid</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Price per unit - calculated automatically */}
+            {watchFuelAmount > 0 && watchTotalCost > 0 && (
+              <div className="p-3 rounded-lg bg-muted/50 border">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Price per Liter</span>
+                  <span className="font-semibold text-lg">
+                    ${(watchTotalCost / watchFuelAmount).toFixed(3)} AUD/L
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Hidden currency field - defaults to AUD */}
+            <input type="hidden" {...form.register('currency')} />
+            <input type="hidden" {...form.register('fuel_price_per_unit')} />
 
             {/* Fuel station */}
             <FormField
