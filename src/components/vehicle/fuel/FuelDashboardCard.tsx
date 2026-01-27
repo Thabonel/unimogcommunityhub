@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Fuel, Plus, AlertCircle, ChevronRight, TrendingUp, Droplet, Receipt, Ban } from 'lucide-react';
+import { Fuel, Plus, AlertCircle, ChevronRight, TrendingUp, Droplet, Receipt, Ban, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Card,
@@ -41,12 +41,14 @@ interface FuelDashboardCardProps {
   vehicleId?: string;
   onAddFuelLog: () => void;
   onViewDetails: (id: string) => void;
+  onEditFuelLog: (log: FuelLog) => void;
 }
 
 const FuelDashboardCard = ({
   vehicleId,
   onAddFuelLog,
-  onViewDetails
+  onViewDetails,
+  onEditFuelLog
 }: FuelDashboardCardProps) => {
   const { user } = useAuth();
   const { fuelLogs, isLoading, error, fetchFuelLogs, calculateFuelStats } = useFuelLogs(vehicleId);
@@ -78,7 +80,6 @@ const FuelDashboardCard = ({
     }
   }, [isLoading, fuelLogs, calculateFuelStats]);
 
-  // Convert the fuel logs to chart data
   const chartData = stats.fuelLogs.map((log) => {
     const date = new Date(log.fill_date);
     return {
@@ -91,7 +92,7 @@ const FuelDashboardCard = ({
       efficiency: log.efficiency || 0,
       odometer: log.odometer
     };
-  }).reverse(); // To show in chronological order
+  }).reverse();
 
   const getVehicleName = (id: string) => {
     const vehicle = vehicles?.find(v => v.id === id);
@@ -258,7 +259,7 @@ const FuelDashboardCard = ({
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart
-                        data={chartData.slice(-10)} // Show only last 10 for better readability
+                        data={chartData.slice(-10)}
                         margin={{
                           top: 5,
                           right: 20,
@@ -360,9 +361,14 @@ const FuelDashboardCard = ({
                               {getVehicleName(log.vehicle_id)}
                             </CardDescription>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => onViewDetails(log.id)}>
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => onEditFuelLog(log)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => onViewDetails(log.id)}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="p-4 pt-0">

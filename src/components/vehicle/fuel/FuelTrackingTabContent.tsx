@@ -77,6 +77,12 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
     setViewState('edit');
   }, []);
 
+  const handleEditLogFromDashboard = useCallback((log: FuelLog) => {
+    setSelectedLog(log);
+    setSelectedLogId(log.id);
+    setViewState('edit');
+  }, []);
+
   const getVehicleName = useCallback((id: string) => {
     if (!vehicles || vehicles.length === 0) return 'Loading Vehicle...';
     const vehicle = vehicles.find(v => v.id === id);
@@ -113,6 +119,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         <FuelDashboardCard
           onAddFuelLog={() => setViewState('add')}
           onViewDetails={handleViewDetails}
+          onEditFuelLog={handleEditLogFromDashboard}
         />
       )}
 
