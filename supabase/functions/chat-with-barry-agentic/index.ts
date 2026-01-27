@@ -386,6 +386,9 @@ function extractPrice(text: string): string | undefined {
 }
 
 async function searchBrave(query: string, country: string = 'AU'): Promise<WebSearchResult[]> {
+  console.log('[Web Search] searchBrave called with query:', query);
+  console.log('[Web Search] BRAVE_SEARCH_API_KEY present:', !!BRAVE_SEARCH_API_KEY);
+
   if (!BRAVE_SEARCH_API_KEY) {
     console.warn('[Web Search] No Brave API key configured');
     return [];
@@ -2762,6 +2765,8 @@ Always cite specific page numbers and PDF files in your response.`;
       }
 
       // Return general response (with RPS illustrations and/or web search results if gathered)
+      console.log('[Response] Building response with webSearchResults:', webSearchResults.length, 'results');
+      console.log('[Response] knowledgeMode:', knowledgeMode);
       return new Response(JSON.stringify({
         content: responseContent,
         manualReferences: rpsIllustrations.length > 0 ? rpsIllustrations : [],
