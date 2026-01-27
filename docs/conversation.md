@@ -115,9 +115,11 @@ Detection requires BOTH a search intent keyword AND a product keyword.
 Add these to Supabase Edge Function secrets:
 
 ```
-BRAVE_SEARCH_API_KEY=BSA8qumy8jGjf0tb-nQV6jCT4Tl-Bs6
+BRAVE_SEARCH_API_KEY=<your-brave-api-key>
 FEATURE_FLAG_WEB_SEARCH=true
 ```
+
+Get your API key from: https://api.search.brave.com/
 
 ## Deployment Steps
 
