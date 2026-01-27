@@ -30,7 +30,9 @@ const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowe
 const FEATURE_FLAG_RPS_DETERMINISTIC = (Deno.env.get('FEATURE_FLAG_RPS_DETERMINISTIC') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_RPS_CLARIFY = (Deno.env.get('FEATURE_FLAG_RPS_CLARIFY') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_LEARNING_CACHE = (Deno.env.get('FEATURE_FLAG_LEARNING_CACHE') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_WEB_SEARCH = (Deno.env.get('FEATURE_FLAG_WEB_SEARCH') || '').toLowerCase() === 'true';
 const CACHE_TTL_SECONDS = parseInt(Deno.env.get('FEATURE_CACHE_TTL_SECONDS') || '86400');
+const BRAVE_SEARCH_API_KEY = Deno.env.get('BRAVE_SEARCH_API_KEY');
 
 // Load routing keywords from database-extracted JSON (850+ keywords)
 const ROUTING_KEYWORDS = new Set(routingKeywordsData.keywords.map((k: string) => k.toLowerCase()));
@@ -340,6 +342,105 @@ async function fetchWeather(location: Coordinates): Promise<any | null> {
     console.log('[Weather] Exception:', e);
     return null;
   }
+}
+
+// -------- Web Search Gatherer (Feature-flagged) --------
+// Searches the web for parts, suppliers, and purchasing information
+
+const WEB_SEARCH_INTENT_KEYWORDS = [
+  'find', 'buy', 'purchase', 'where can i get', 'supplier',
+  'for sale', 'price', 'cost', 'shop', 'store', 'online',
+  'australia', 'ebay', 'marketplace', 'second hand', 'used',
+  'who sells', 'where to buy', 'order', 'stock', 'availability'
+];
+
+const WEB_SEARCH_PRODUCT_KEYWORDS = [
+  'turbo', 'part', 'seal', 'bearing', 'pump', 'filter', 'hose', 'gasket', 'brake',
+  'clutch', 'axle', 'wheel', 'tire', 'engine', 'gearbox', 'transmission', 'diff',
+  'alternator', 'starter', 'radiator', 'injector', 'valve', 'piston', 'cylinder',
+  'manifold', 'exhaust', 'muffler', 'spring', 'shock', 'bushing', 'u-joint'
+];
+
+interface WebSearchResult {
+  title: string;
+  url: string;
+  description: string;
+  price?: string;
+}
+
+function detectWebSearchIntent(query: string): boolean {
+  const queryLower = query.toLowerCase();
+  const hasSearchIntent = WEB_SEARCH_INTENT_KEYWORDS.some(kw => queryLower.includes(kw));
+  const hasProductMention = WEB_SEARCH_PRODUCT_KEYWORDS.some(kw => queryLower.includes(kw));
+
+  if (hasSearchIntent && hasProductMention) {
+    console.log(`[Web Search] Intent detected: search="${hasSearchIntent}", product="${hasProductMention}"`);
+    return true;
+  }
+  return false;
+}
+
+function extractPrice(text: string): string | undefined {
+  const priceMatch = text.match(/\$[\d,]+(?:\.\d{2})?/);
+  return priceMatch?.[0];
+}
+
+async function searchBrave(query: string, country: string = 'AU'): Promise<WebSearchResult[]> {
+  if (!BRAVE_SEARCH_API_KEY) {
+    console.warn('[Web Search] No Brave API key configured');
+    return [];
+  }
+
+  try {
+    const searchQuery = `${query} Unimog`;
+    console.log(`[Web Search] Searching Brave for: "${searchQuery}" (country: ${country})`);
+
+    const response = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}&country=${country}&count=5`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'X-Subscription-Token': BRAVE_SEARCH_API_KEY
+        }
+      }
+    );
+
+    if (!response.ok) {
+      console.error('[Web Search] Brave API error:', response.status, await response.text());
+      return [];
+    }
+
+    const data = await response.json();
+    const results = (data.web?.results || []).slice(0, 5).map((r: any) => ({
+      title: r.title,
+      url: r.url,
+      description: r.description,
+      price: extractPrice(r.description || '')
+    }));
+
+    console.log(`[Web Search] Found ${results.length} results`);
+    return results;
+  } catch (err) {
+    console.error('[Web Search] Exception:', err);
+    return [];
+  }
+}
+
+function formatWebSearchContext(results: WebSearchResult[], query: string): string {
+  if (results.length === 0) return '';
+
+  let context = `\n\nWEB SEARCH RESULTS for "${query}":\n`;
+  context += `Found ${results.length} relevant suppliers/listings:\n\n`;
+
+  results.forEach((r, i) => {
+    context += `${i + 1}. ${r.title}\n`;
+    context += `   ${r.description}\n`;
+    if (r.price) context += `   Price found: ${r.price}\n`;
+    context += `   Link: ${r.url}\n\n`;
+  });
+
+  context += `IMPORTANT: Include these web links in your response so the user can visit the suppliers. Format them as clickable markdown links.\n`;
+  return context;
 }
 
 // RPS PHASE 7: OCR parts list page using Claude Vision
@@ -1849,6 +1950,28 @@ Use this data to answer weather questions. Be specific with temperatures and con
       }
     }
 
+    // WEB SEARCH GATHERER: Detect purchase/search intent and fetch web results
+    let webSearchContext = '';
+    let webSearchResults: WebSearchResult[] = [];
+
+    if (FEATURE_FLAG_WEB_SEARCH && detectWebSearchIntent(userText)) {
+      console.log('[Web Search Gatherer] Purchase/search intent detected');
+
+      try {
+        webSearchResults = await searchBrave(userText, 'AU');
+
+        if (webSearchResults.length > 0) {
+          webSearchContext = formatWebSearchContext(webSearchResults, userText);
+          console.log(`[Web Search Gatherer] Context injected with ${webSearchResults.length} results`);
+        } else {
+          console.log('[Web Search Gatherer] No results found');
+        }
+      } catch (error) {
+        console.error('[Web Search Gatherer] Error:', error);
+        // Fail gracefully - continue to routing
+      }
+    }
+
     // ENHANCED Decision Table-Based Routing for Barry (v64)
     // Better intent detection that checks for general requests even with Unimog mentions
 
@@ -2531,15 +2654,22 @@ Always cite specific page numbers and PDF files in your response.`;
         systemPrompt += '\n\n' + weatherContext;
         knowledgeMode = 'weather';
       }
+
+      // INJECT WEB SEARCH CONTEXT if gatherer found something
+      if (webSearchContext) {
+        console.log('[Web Search Integration] Adding web search context to prompt');
+        systemPrompt += '\n\n' + webSearchContext;
+        knowledgeMode = 'web_search';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search');
     console.log('===========================');
 
-    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')
@@ -2631,10 +2761,11 @@ Always cite specific page numbers and PDF files in your response.`;
         }
       }
 
-      // Return general response (with RPS illustrations if gathered)
+      // Return general response (with RPS illustrations and/or web search results if gathered)
       return new Response(JSON.stringify({
         content: responseContent,
         manualReferences: rpsIllustrations.length > 0 ? rpsIllustrations : [],
+        webSearchResults: webSearchResults.length > 0 ? webSearchResults : undefined,
         knowledgeMode: knowledgeMode,
         searchResultCount: rpsIllustrations.length,
         usage: data.usage

@@ -40,6 +40,13 @@ export interface AttachmentMetadata {
   uploaded_at: string;
 }
 
+export interface WebSearchResult {
+  title: string;
+  url: string;
+  description: string;
+  price?: string;
+}
+
 export interface GeminiResponse {
   content: string;
   usage?: {
@@ -49,17 +56,19 @@ export interface GeminiResponse {
   };
   manualReferences?: ManualReference[];
   images?: ImageReference[];
-  knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai';
+  knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search';
   knowledgeSources?: string | null;
   attachments?: AttachmentMetadata[];
+  webSearchResults?: WebSearchResult[];
 }
 
 class SecureGeminiService {
   private messages: ChatMessage[] = [];
   private lastManualReferences: ManualReference[] = [];
-  private lastKnowledgeMode: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' = 'general_ai';
+  private lastKnowledgeMode: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search' = 'general_ai';
   private lastKnowledgeSources: string | null = null;
   private lastAttachments: AttachmentMetadata[] = [];
+  private lastWebSearchResults: WebSearchResult[] = [];
 
   constructor() {
     // Initialize with Barry's greeting - will be overridden by language-specific greeting from backend
@@ -70,7 +79,7 @@ class SecureGeminiService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai'; knowledgeSources?: string | null; attachments?: AttachmentMetadata[] }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search'; knowledgeSources?: string | null; attachments?: AttachmentMetadata[]; webSearchResults?: WebSearchResult[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -205,6 +214,14 @@ class SecureGeminiService {
         this.lastAttachments = data.attachments;
       }
 
+      // Store web search results if provided
+      if (data.webSearchResults) {
+        console.log(`🔍 Web search results received: ${data.webSearchResults.length} results`);
+        this.lastWebSearchResults = data.webSearchResults;
+      } else {
+        this.lastWebSearchResults = [];
+      }
+
       // Extract referenced images from response
       const referencedImages = data?.images || [];
 
@@ -222,7 +239,8 @@ class SecureGeminiService {
         manualReferences: data.manualReferences,
         knowledgeMode: data.knowledgeMode,
         knowledgeSources: data.knowledgeSources,
-        attachments: data.attachments
+        attachments: data.attachments,
+        webSearchResults: data.webSearchResults
       };
     } catch (error) {
       console.error('Chat error:', error);
@@ -247,7 +265,7 @@ class SecureGeminiService {
     return this.lastManualReferences;
   }
 
-  getLastKnowledgeMode(): 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' {
+  getLastKnowledgeMode(): 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search' {
     return this.lastKnowledgeMode;
   }
 
@@ -257,6 +275,10 @@ class SecureGeminiService {
 
   getLastAttachments(): AttachmentMetadata[] {
     return this.lastAttachments;
+  }
+
+  getLastWebSearchResults(): WebSearchResult[] {
+    return this.lastWebSearchResults;
   }
 
   clearHistory(): void {
@@ -270,6 +292,7 @@ class SecureGeminiService {
     this.lastKnowledgeMode = 'general_ai';
     this.lastKnowledgeSources = null;
     this.lastAttachments = [];
+    this.lastWebSearchResults = [];
   }
 
   isConfigured(): boolean {
