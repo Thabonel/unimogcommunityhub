@@ -113,6 +113,12 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
   };
 
   const handleFinalSubmit = async (data: FuelLogFormValues) => {
+    console.log('[FuelLogForm] Submitting data:', {
+      fuel_amount: data.fuel_amount,
+      total_cost: data.total_cost,
+      fuel_price_per_unit: data.fuel_price_per_unit,
+      currency: data.currency
+    });
     setIsSubmitting(true);
     try {
       await onSubmit(data);
