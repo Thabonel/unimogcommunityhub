@@ -18,9 +18,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { FuelType, Vehicle } from '@/hooks/vehicle-maintenance/types';
 
 const fuelTypes: FuelType[] = [
-  "diesel", 
-  "petrol", 
-  "electric", 
+  "diesel",
+  "petrol",
+  "electric",
   "hybrid",
   "biodiesel",
   "ethanol",
@@ -101,24 +101,17 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
   const watchTotalCost = form.watch('total_cost');
 
   // Calculate price per unit from total cost and fuel amount
-  const handleCalculatePricePerUnit = () => {
-    if (watchFuelAmount > 0 && watchTotalCost > 0) {
-      setIsCalculating(true);
-      setTimeout(() => {
-        const pricePerUnit = Number((watchTotalCost / watchFuelAmount).toFixed(3));
-        form.setValue('fuel_price_per_unit', pricePerUnit);
-        setIsCalculating(false);
-      }, 100);
+  const handleCalculatePricePerUnit = (amount?: number, cost?: number) => {
+    const a = amount ?? watchFuelAmount;
+    const c = cost ?? watchTotalCost;
+
+    if (a > 0 && c > 0) {
+      const pricePerUnit = Number((c / a).toFixed(3));
+      form.setValue('fuel_price_per_unit', pricePerUnit, { shouldValidate: true });
     }
   };
 
   const handleFinalSubmit = async (data: FuelLogFormValues) => {
-    console.log('[FuelLogForm] Submitting data:', {
-      fuel_amount: data.fuel_amount,
-      total_cost: data.total_cost,
-      fuel_price_per_unit: data.fuel_price_per_unit,
-      currency: data.currency
-    });
     setIsSubmitting(true);
     try {
       await onSubmit(data);
@@ -138,7 +131,7 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
           Keep track of your fuel consumption and costs
         </CardDescription>
       </CardHeader>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFinalSubmit)}>
           <CardContent className="space-y-4">
@@ -220,7 +213,7 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
                 <FormItem>
                   <FormLabel>Odometer Reading</FormLabel>
                   <FormControl>
-                    <Input 
+                    <Input
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
@@ -274,8 +267,9 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
                       placeholder="e.g. 65.5"
                       {...field}
                       onChange={(e) => {
-                        field.onChange(Number(e.target.value));
-                        handleCalculatePricePerUnit();
+                        const val = Number(e.target.value);
+                        field.onChange(val);
+                        handleCalculatePricePerUnit(val, watchTotalCost);
                       }}
                     />
                   </FormControl>
@@ -299,8 +293,9 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
                       placeholder="e.g. 125.50"
                       {...field}
                       onChange={(e) => {
-                        field.onChange(Number(e.target.value));
-                        handleCalculatePricePerUnit();
+                        const val = Number(e.target.value);
+                        field.onChange(val);
+                        handleCalculatePricePerUnit(watchFuelAmount, val);
                       }}
                     />
                   </FormControl>
@@ -380,9 +375,9 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
             />
           </CardContent>
           <CardFooter className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
             >
               Cancel

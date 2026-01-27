@@ -30,7 +30,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
       ...data,
       fill_date: data.fill_date.toISOString()
     };
-    
+
     const result = await addFuelLog(dbData);
     if (result.success) {
       setViewState('dashboard');
@@ -40,13 +40,13 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
 
   const handleUpdateFuelLog = useCallback(async (data: FuelLogFormValues) => {
     if (!selectedLogId) return;
-    
+
     // Convert Date object to ISO string for database storage
     const dbData = {
       ...data,
       fill_date: data.fill_date.toISOString()
     };
-    
+
     const result = await updateFuelLog(selectedLogId, dbData);
     if (result.success) {
       setViewState('dashboard');
@@ -56,7 +56,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
 
   const handleDeleteFuelLog = useCallback(async () => {
     if (!selectedLogId) return;
-    
+
     const result = await deleteFuelLog(selectedLogId);
     if (result.success) {
       setViewState('dashboard');
@@ -78,7 +78,8 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
   }, []);
 
   const getVehicleName = useCallback((id: string) => {
-    const vehicle = vehicles?.find(v => v.id === id);
+    if (!vehicles || vehicles.length === 0) return 'Loading Vehicle...';
+    const vehicle = vehicles.find(v => v.id === id);
     return vehicle ? `${vehicle.name} (${vehicle.model})` : 'Unknown Vehicle';
   }, [vehicles]);
 
@@ -109,12 +110,12 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
   return (
     <div>
       {viewState === 'dashboard' && (
-        <FuelDashboardCard 
-          onAddFuelLog={() => setViewState('add')} 
-          onViewDetails={handleViewDetails} 
+        <FuelDashboardCard
+          onAddFuelLog={() => setViewState('add')}
+          onViewDetails={handleViewDetails}
         />
       )}
-      
+
       {viewState === 'add' && (
         <FuelLogForm
           onSubmit={handleAddFuelLog}

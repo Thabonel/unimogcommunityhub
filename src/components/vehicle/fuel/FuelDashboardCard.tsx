@@ -26,12 +26,13 @@ import {
 } from 'recharts';
 import { useFuelLogs } from '@/hooks/vehicle-maintenance/use-fuel-logs';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
+import { useAuth } from '@/contexts/AuthContext';
 import { FuelLog } from '@/hooks/vehicle-maintenance/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-type FuelLogWithEfficiency = FuelLog & { 
+type FuelLogWithEfficiency = FuelLog & {
   efficiency?: number | null;
   distance?: number;
 };
@@ -42,13 +43,14 @@ interface FuelDashboardCardProps {
   onViewDetails: (id: string) => void;
 }
 
-const FuelDashboardCard = ({ 
-  vehicleId, 
-  onAddFuelLog, 
-  onViewDetails 
+const FuelDashboardCard = ({
+  vehicleId,
+  onAddFuelLog,
+  onViewDetails
 }: FuelDashboardCardProps) => {
+  const { user } = useAuth();
   const { fuelLogs, isLoading, error, fetchFuelLogs, calculateFuelStats } = useFuelLogs(vehicleId);
-  const { vehicles, isLoading: isLoadingVehicles } = useVehicles();
+  const { vehicles, isLoading: isLoadingVehicles } = useVehicles(user?.id);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [stats, setStats] = useState<{
     totalCost: number;
