@@ -1,8 +1,8 @@
 // Service Worker for Unimog Community Hub
-// Version 2.0.0 - Proper cache management with update notifications
+// Version 2.1.0 - Fix stale asset handling after deployments
 
-const CACHE_NAME = 'unimog-hub-v2';
-const VERSION = '2.0.0';
+const CACHE_NAME = 'unimog-hub-v2.1';
+const VERSION = '2.1.0';
 
 // Assets to pre-cache on install (critical files only)
 const PRECACHE_ASSETS = [
@@ -26,8 +26,9 @@ self.addEventListener('install', (event) => {
         return cache.addAll(PRECACHE_ASSETS);
       })
       .then(() => {
-        // Don't skip waiting - let the app control when to update
-        console.log('[SW] Install complete, waiting for activation');
+        // Skip waiting to activate immediately - important for fixing stale asset issues
+        console.log('[SW] Install complete, skipping wait to activate immediately');
+        return self.skipWaiting();
       })
   );
 });
@@ -133,15 +134,45 @@ async function cacheFirst(request) {
   const cachedResponse = await caches.match(request);
 
   if (cachedResponse) {
-    return cachedResponse;
+    // Verify cached response has correct content-type for JS/CSS files
+    const contentType = cachedResponse.headers.get('content-type') || '';
+    const url = new URL(request.url);
+
+    if (url.pathname.endsWith('.js') && !contentType.includes('javascript')) {
+      console.log('[SW] Cached JS file has wrong content-type, fetching fresh:', request.url);
+      // Don't return cached HTML masquerading as JS
+    } else if (url.pathname.endsWith('.css') && !contentType.includes('css')) {
+      console.log('[SW] Cached CSS file has wrong content-type, fetching fresh:', request.url);
+      // Don't return cached HTML masquerading as CSS
+    } else {
+      return cachedResponse;
+    }
   }
 
   try {
     const networkResponse = await fetch(request);
 
+    // Only cache if response is OK and has correct content-type
     if (networkResponse.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResponse.clone());
+      const contentType = networkResponse.headers.get('content-type') || '';
+      const url = new URL(request.url);
+
+      // Verify we got the right file type, not an HTML error page
+      const isValidJS = url.pathname.endsWith('.js') && contentType.includes('javascript');
+      const isValidCSS = url.pathname.endsWith('.css') && contentType.includes('css');
+
+      if (isValidJS || isValidCSS) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResponse.clone());
+      } else {
+        console.log('[SW] Asset returned wrong content-type, not caching:', request.url, contentType);
+        // Asset no longer exists (deployment changed hashes), trigger reload
+        notifyClientsToReload();
+      }
+    } else if (networkResponse.status === 404) {
+      // Asset no longer exists after deployment
+      console.log('[SW] Asset not found (404), likely stale after deployment:', request.url);
+      notifyClientsToReload();
     }
 
     return networkResponse;
@@ -149,6 +180,15 @@ async function cacheFirst(request) {
     console.log('[SW] Failed to fetch:', request.url);
     throw error;
   }
+}
+
+// Notify all clients to reload due to stale assets
+function notifyClientsToReload() {
+  self.clients.matchAll().then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: 'RELOAD_REQUIRED', reason: 'stale_assets' });
+    });
+  });
 }
 
 // Stale-while-revalidate strategy

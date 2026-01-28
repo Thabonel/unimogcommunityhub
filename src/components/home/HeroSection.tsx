@@ -34,7 +34,7 @@ const HeroSection = () => {
           <p className="text-lg md:text-xl mb-8 text-white/90">
             {t('hero.subtitle')}
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
               <Link to="/signup?plan=trial">
                 {t('hero.cta_claim')}
