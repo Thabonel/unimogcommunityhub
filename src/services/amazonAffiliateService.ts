@@ -251,10 +251,14 @@ export function getRegionalAffiliateURLWithASINs(
   regionalUrls?: Record<string, string> | null
 ): string {
   const region = getAmazonRegion(userCountryCode);
+  const regionConfig = AMAZON_REGIONS[region] || AMAZON_REGIONS.US;
 
-  // If full regional URL configured, use it directly
+  // If full regional URL configured, ensure it has the correct tracking tag
   if (regionalUrls && regionalUrls[region]) {
-    return regionalUrls[region];
+    const url = new URL(regionalUrls[region]);
+    // Always set/override the tag to ensure tracking works
+    url.searchParams.set('tag', regionConfig.tag);
+    return url.toString();
   }
 
   // Extract fallback ASIN from original URL
