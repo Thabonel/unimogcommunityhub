@@ -8,6 +8,7 @@ import { useUserLocation } from '@/hooks/use-user-location';
 import { useProfile } from '@/hooks/profile';
 import { useLocation } from 'react-router-dom';
 import { useBarry } from '@/contexts/BarryContext';
+import { SITE_IMAGES } from '@/config/images';
 
 export function FloatingBarryButton() {
   const [showBarryChat, setShowBarryChat] = useState(false);
@@ -54,11 +55,14 @@ export function FloatingBarryButton() {
               }`}
             >
               <div className="relative w-10 h-10">
-                <img
-                  src="/barry-avatar.png"
-                  alt="Barry"
-                  className="w-full h-full rounded-full object-cover"
-                />
+                <picture>
+                  <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                  <img
+                    src={SITE_IMAGES.barryAvatarFallback}
+                    alt="Barry"
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </picture>
                 <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
               </div>
             </Button>
@@ -76,11 +80,14 @@ export function FloatingBarryButton() {
           <DialogHeader className="p-4 md:p-6 pb-3 md:pb-4 flex-shrink-0 border-b">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="relative flex-shrink-0">
-                <img
-                  src="/barry-avatar.png"
-                  alt="Barry the AI Mechanic"
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-unimog-500"
-                />
+                <picture>
+                  <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                  <img
+                    src={SITE_IMAGES.barryAvatarFallback}
+                    alt="Barry the AI Mechanic"
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-unimog-500"
+                  />
+                </picture>
                 <Wrench className="h-3 w-3 md:h-4 md:w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
               </div>
               <div className="min-w-0 flex-1">
