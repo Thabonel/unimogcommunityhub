@@ -11,8 +11,8 @@ const HeroSection = () => {
   const heroImageUrl = SITE_IMAGES.heroMain;
 
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
-      <div className="absolute inset-0">
+    <section className="relative py-20 md:py-32 pb-28 md:pb-40">
+      <div className="absolute inset-0 overflow-hidden">
         <img
           src={heroImageUrl}
           alt="Unimog off-road adventure"
@@ -27,15 +27,15 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl font-bold tracking-tight mb-6 text-white md:text-6xl">
             {t('hero.title')}
           </h1>
           <p className="text-lg md:text-xl mb-8 text-white/90">
             {t('hero.subtitle')}
           </p>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 sm:gap-4">
-            <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto group" asChild>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-3 sm:gap-4">
+            <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto" asChild>
               <Link to="/signup?plan=trial">
                 {t('hero.cta_claim')}
                 <ChevronRight className="ml-2 h-4 w-4" />
