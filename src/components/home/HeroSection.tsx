@@ -34,26 +34,26 @@ const HeroSection = () => {
           <p className="text-lg md:text-xl mb-8 text-white/90">
             {t('hero.subtitle')}
           </p>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center items-center gap-3 sm:gap-4">
-            <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto" asChild>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
+            <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full" asChild>
               <Link to="/signup?plan=trial">
                 {t('hero.cta_claim')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" className="bg-camo-brown hover:bg-camo-brown/90 text-white w-full sm:w-auto" asChild>
+            <Button size="lg" className="bg-camo-brown hover:bg-camo-brown/90 text-white w-full" asChild>
               <Link to="/vendors/byond-rv">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Shop Byond RV
               </Link>
             </Button>
-            <Button size="lg" className="bg-amazon-orange hover:bg-amazon-orange/90 text-white w-full sm:w-auto" asChild>
+            <Button size="lg" className="bg-amazon-orange hover:bg-amazon-orange/90 text-white w-full" asChild>
               <Link to="/shop">
                 <ShoppingBag className="mr-2 h-4 w-4" />
                 Unimog Shop
               </Link>
             </Button>
-            <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full sm:w-auto" asChild>
+            <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full" asChild>
               <Link to="/community/members">
                 {t('hero.cta_featured')}
                 <ChevronRight className="ml-2 h-4 w-4" />
