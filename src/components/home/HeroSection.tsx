@@ -6,24 +6,25 @@ import { useTranslation } from 'react-i18next';
 
 const HeroSection = () => {
   const { t } = useTranslation();
-  // Use local image for fastest loading and 100% reliability
-  // No dependency on environment variables or external services
-  const heroImageUrl = SITE_IMAGES.heroMain;
 
   return (
     <section className="relative py-20 md:py-32 pb-28 md:pb-40">
       <div className="absolute inset-0 overflow-hidden">
-        <img
-          src={heroImageUrl}
-          alt="Unimog off-road adventure"
-          className="object-cover object-center w-full h-full"
-          loading="eager"
-          onError={(e) => {
-            console.error('Hero image failed to load');
-            // Fallback to a solid color if image fails
-            e.currentTarget.style.display = 'none';
-          }}
-        />
+        <picture>
+          <source srcSet={SITE_IMAGES.heroMain} type="image/webp" />
+          <source srcSet={SITE_IMAGES.heroMainFallback} type="image/jpeg" />
+          <img
+            src={SITE_IMAGES.heroMainFallback}
+            alt="Unimog off-road adventure"
+            className="object-cover object-center w-full h-full"
+            loading="eager"
+            fetchPriority="high"
+            onError={(e) => {
+              console.error('Hero image failed to load');
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </picture>
         <div className="absolute inset-0 bg-military-black/50 mix-blend-multiply"></div>
       </div>
       <div className="container relative text-white">

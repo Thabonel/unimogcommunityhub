@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Wrench } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { SITE_IMAGES } from '@/config/images';
 
 const AIBotHeader = () => {
   return (
@@ -10,7 +10,7 @@ const AIBotHeader = () => {
       <div className="flex items-center">
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border-2 border-unimog-500">
-            <AvatarImage src="/barry-avatar.png" alt="Barry the AI Mechanic" />
+            <AvatarImage src={SITE_IMAGES.barryAvatar} alt="Barry the AI Mechanic" />
             <AvatarFallback>
               <Wrench className="h-5 w-5 text-primary" />
             </AvatarFallback>
