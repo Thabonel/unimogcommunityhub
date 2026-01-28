@@ -89,6 +89,7 @@ export default {
 				'khaki-tan': '#C2B280',
 				'sand-beige': '#D7C9AA',
 				'olive-drab': '#556B2F',
+				'amazon-orange': '#FF9900',
 				// Keeping the existing Military U1700L colors
 				military: {
 					olive: '#3D5A40',
