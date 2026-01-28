@@ -354,7 +354,7 @@ export function AmazonProductsManagement() {
       <div>
         <h2 className="text-2xl font-bold">Amazon Products Management</h2>
         <p className="text-muted-foreground">
-          Manage Amazon affiliate products using your Associates ID: unimogcommuni-22
+          Manage Amazon affiliate products using your Associates ID: wheelsandwins-22
         </p>
       </div>
 

@@ -114,7 +114,7 @@ export function getAmazonRegion(countryCode: string | undefined): string {
  *
  * @example
  * buildAmazonURL('B000BK6G84', 'AU')
- * // Returns: 'https://www.amazon.com.au/dp/B000BK6G84?tag=unimogcommuni-22'
+ * // Returns: 'https://www.amazon.com.au/dp/B000BK6G84?tag=wheelsandwins-22'
  */
 export function buildAmazonURL(asin: string, regionCode: string): string {
   const region = AMAZON_REGIONS[regionCode] || AMAZON_REGIONS.US;
@@ -139,7 +139,7 @@ export function buildAmazonURL(asin: string, regionCode: string): string {
  *   'https://www.amazon.com/dp/B000BK6G84?tag=old-20',
  *   'AU'
  * )
- * // Returns: 'https://www.amazon.com.au/dp/B000BK6G84?tag=unimogcommuni-22'
+ * // Returns: 'https://www.amazon.com.au/dp/B000BK6G84?tag=wheelsandwins-22'
  */
 export function getRegionalAffiliateURL(
   originalURL: string,
@@ -240,9 +240,9 @@ export function getRegionalASIN(
  *   'https://amazon.com/dp/B0DDK8M3CV',
  *   'AU',
  *   { US: 'B0DDK8M3CV', AU: 'B0DJQF9DY8' },
- *   { AU: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=unimogcommuni-22' }
+ *   { AU: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=wheelsandwins-22' }
  * )
- * // Returns: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=unimogcommuni-22'
+ * // Returns: 'https://amazon.com.au/dp/B0DJQF9DY8?tag=wheelsandwins-22'
  */
 export function getRegionalAffiliateURLWithASINs(
   originalURL: string,
