@@ -74,6 +74,62 @@
 
   <body>
     <div id="root"></div>
+
+    <!-- Auto-recovery for stale cache issues - runs BEFORE React loads -->
+    <script>
+      (function() {
+        var recoveryKey = 'cache-recovery-attempted';
+        var recoveryTime = sessionStorage.getItem(recoveryKey);
+        var now = Date.now();
+
+        // Only attempt recovery once per session (prevent infinite loops)
+        if (recoveryTime && (now - parseInt(recoveryTime)) < 60000) {
+          console.log('[Recovery] Already attempted recovery this session');
+          return;
+        }
+
+        // Listen for script loading errors (catches "Unexpected token '<'" errors)
+        window.addEventListener('error', function(e) {
+          var isScriptError = e.filename && (e.filename.endsWith('.js') || e.filename.includes('/assets/'));
+          var isSyntaxError = e.message && (
+            e.message.includes('Unexpected token') ||
+            e.message.includes('SyntaxError') ||
+            e.message.includes('Failed to fetch dynamically imported module')
+          );
+
+          if (isScriptError || isSyntaxError) {
+            console.log('[Recovery] Detected stale cache error, clearing and reloading...');
+            sessionStorage.setItem(recoveryKey, now.toString());
+
+            // Clear all caches
+            if ('caches' in window) {
+              caches.keys().then(function(names) {
+                return Promise.all(names.map(function(name) {
+                  console.log('[Recovery] Deleting cache:', name);
+                  return caches.delete(name);
+                }));
+              }).then(function() {
+                // Unregister service workers
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(reg) {
+                      reg.unregister();
+                    });
+                  });
+                }
+                // Reload after a brief delay
+                setTimeout(function() {
+                  window.location.reload(true);
+                }, 100);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          }
+        }, true);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
 
     <!-- PWA Service Worker Registration -->
