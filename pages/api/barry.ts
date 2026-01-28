@@ -92,20 +92,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   }
 
   try {
-    // Step 1: Search WIS database for relevant information
-    const searchQuery = `${modelPrefix} ${question}`;
-    const { data: searchResults, error: searchError } = await supabase.rpc('wis_search', {
-      q: searchQuery,
-      limit_rows: 10
-    });
+    // Step 1: Check validated knowledge base first
+    const queryKeywords = question.toLowerCase().split(/\s+/).filter(k => k.length > 3);
 
-    if (searchError) {
-      console.error('WIS search error:', searchError);
-      return res.status(200).json({
-        answer: "G'day! I'm having trouble accessing the workshop manuals right now. Could you try again in a moment? In the meantime, make sure you're following basic safety procedures!",
-        references: [],
-        media: []
+    const { data: validatedAnswers, error: kbError } = await supabase
+      .from('barry_knowledge_base')
+      .select('*')
+      .eq('validated_by_user', true)
+      .order('confidence_score', { ascending: false })
+      .order('validation_count', { ascending: false })
+      .limit(3);
+
+    if (kbError) {
+      console.error('Knowledge base query error:', kbError);
+    }
+
+    // Check if we have a validated answer for this question
+    let useValidated = false;
+    if (validatedAnswers && validatedAnswers.length > 0) {
+      const keywordsMatch = validatedAnswers.filter(answer => {
+        if (!answer.search_keywords) return false;
+        return answer.search_keywords.some((kw: string) =>
+          queryKeywords.some(qk => kw.toLowerCase() === qk.toLowerCase())
+        );
       });
+
+      if (keywordsMatch.length > 0) {
+        useValidated = true;
+        // Use the highest-rated validated answer
+        return res.status(200).json({
+          answer: keywordsMatch[0].barry_response_template,
+          references: keywordsMatch[0].manual_references || [],
+          media: []
+        });
+      }
+    }
+
+    // Step 2: If no validated answer, use comprehensive search
+    let searchResults: any[] = [];
+    let searchMethod = 'wis_keyword';
+
+    if (!useValidated) {
+      console.log('[Barry] No validated answer found, performing comprehensive search');
+
+      // Fallback to regular WIS search first
+      const searchQuery = `${modelPrefix} ${question}`;
+      const { data: wisResults, error: wisError } = await supabase.rpc('wis_search', {
+        q: searchQuery,
+        limit_rows: 10
+      });
+
+      if (wisError) {
+        console.error('WIS search error:', wisError);
+      } else if (wisResults && wisResults.length > 0) {
+        searchResults = wisResults;
+      } else {
+        // If WIS search returns empty, try comprehensive manual search
+        console.log('[Barry] WIS search empty, trying comprehensive manual search');
+        searchMethod = 'comprehensive_manual';
+
+        const { data: compResults, error: compError } = await supabase.rpc('search_all_manual_content', {
+          user_query: question,
+          max_results: 25
+        });
+
+        if (compError) {
+          console.error('Comprehensive search error:', compError);
+        } else if (compResults) {
+          searchResults = compResults;
+        }
+      }
     }
 
     // Step 2: Process search results and prepare context
@@ -114,49 +170,70 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let contextText = '';
 
     if (searchResults && searchResults.length > 0) {
-      // Group results by document
-      const docMap = new Map<string, any>();
-      
-      searchResults.forEach((result: any) => {
-        if (!docMap.has(result.doc_id)) {
-          docMap.set(result.doc_id, {
-            doc_id: result.doc_id,
-            doc_type: result.doc_type,
-            ref: result.ref,
-            title: result.title,
-            chunks: [],
-            media: result.media || []
-          });
-        }
-        
+      if (searchMethod === 'comprehensive_manual') {
+        // Handle comprehensive manual search results
+        contextText = searchResults.map((result: any) =>
+          `Page ${result.page_number} - ${result.section_title}\n` +
+          result.content+
+          '\n---\n'
+        ).join('');
+
+        references.push(...searchResults.map((result: any) => ({
+          doc_id: result.chunk_id,
+          doc_type: 'manual_chunk',
+          ref: `Page ${result.page_number}`,
+          title: result.manual_title,
+          chunks: [{
+            content: result.content,
+            chunk_index: 0
+          }]
+        })));
+      } else {
+        // Handle WIS search results (group by document)
+        const docMap = new Map<string, any>();
+
+        searchResults.forEach((result: any) => {
+          if (!docMap.has(result.doc_id)) {
+            docMap.set(result.doc_id, {
+              doc_id: result.doc_id,
+              doc_type: result.doc_type,
+              ref: result.ref,
+              title: result.title,
+              chunks: [],
+              media: result.media || []
+            });
+          }
+
         const doc = docMap.get(result.doc_id);
         doc.chunks.push({
-          content: result.content,
-          chunk_index: result.chunk_index
-        });
-        
-        // Collect media items
-        if (result.media && Array.isArray(result.media)) {
-          result.media.forEach((mediaItem: any) => {
-            const exists = media.some(m => 
-              m.bucket === mediaItem.bucket && m.file_name === mediaItem.file_name
-            );
-            if (!exists) {
-              media.push(mediaItem);
-            }
+            content: result.content,
+            chunk_index: result.chunk_index
           });
-        }
-      });
-      
-      // Convert to references array
-      references.push(...Array.from(docMap.values()));
-      
-      // Build context for AI
-      contextText = references.map(ref => 
-        `Document: ${ref.title} (${ref.ref})\n` +
-        ref.chunks.map((chunk: any) => chunk.content).join('\n') +
-        '\n---\n'
-      ).join('');
+
+          // Collect media items
+          if (result.media && Array.isArray(result.media)) {
+            result.media.forEach((mediaItem: any) => {
+            const exists = media.some(m =>
+              m.bucket === mediaItem.bucket && m.file_name === mediaItem.file_name
+              );
+              if (!exists) {
+                media.push(mediaItem);
+              }
+            });
+          }
+        });
+
+        // Convert to references array
+        references.push(...Array.from(docMap.values()));
+
+        // Build context for AI
+        contextText = references.map(ref => {
+          const chunks = ref.chunks || [];
+          return `Document: ${ref.title} (${ref.ref})\n` +
+            chunks.map((chunk: any) => chunk.content).join('\n') +
+            '\n---\n';
+        }).join('');
+      }
     }
 
     // Step 3: Generate Barry's response using OpenAI
@@ -218,11 +295,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     );
 
     // Return successful response
-    return res.status(200).json({
+    const response = {
       answer: barryAnswer,
       references: references.slice(0, 5), // Limit to top 5 references
-      media: mediaWithUrls
-    });
+      media: mediaWithUrls,
+      metadata: {
+        searchMethod,
+        searchResultsCount: searchResults.length,
+        usedValidatedAnswer: useValidated
+      }
+    };
+
+    // Record the search in chat_logs for future feedback
+    try {
+      const start = Date.now();
+      await supabase.from('chat_logs').insert({
+        user_id: (req as any).session?.user?.id || 'anonymous',
+        user_query: question,
+        barry_response: response,
+        search_query: `${modelPrefix} ${question}`,
+        search_results: searchResults,
+        response_time: Date.now() - start
+      });
+    } catch (logError) {
+      console.error('Failed to log chat:', logError);
+    }
+
+    return res.status(200).json(response);
 
   } catch (error) {
     console.error('Barry API error:', error);
