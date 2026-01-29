@@ -308,25 +308,29 @@ function ProductCard({ product, onProductClick, userCountryCode }: ProductCardPr
 
   useEffect(() => {
     const performConversion = async () => {
-      if (product.currency === viewerCurrency) {
-        setConvertedPrice(product.price);
+      // Use current_price when available, fallback to manual price
+      const displayPrice = product.current_price || product.price;
+      const displayCurrency = product.price_currency || product.currency;
+
+      if (displayCurrency === viewerCurrency) {
+        setConvertedPrice(displayPrice);
         return;
       }
 
       setIsConverting(true);
       try {
-        const converted = await convertCurrency(product.price, product.currency, viewerCurrency);
+        const converted = await convertCurrency(displayPrice, displayCurrency, viewerCurrency);
         setConvertedPrice(converted);
       } catch (error) {
         console.error('Error converting currency:', error);
-        setConvertedPrice(product.price);
+        setConvertedPrice(displayPrice);
       } finally {
         setIsConverting(false);
       }
     };
 
     performConversion();
-  }, [product.price, product.currency, viewerCurrency]);
+  }, [product.price, product.current_price, product.currency, product.price_currency, viewerCurrency]);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
