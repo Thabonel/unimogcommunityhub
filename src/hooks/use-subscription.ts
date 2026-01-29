@@ -13,6 +13,10 @@ interface Subscription {
   stripeSessionId: string | null;
   updatedAt: string;
   level?: 'standard' | 'lifetime' | 'free'; // Added for compatibility
+  isVerified?: boolean; // Unimog ownership verification
+  legacySubscriber?: boolean; // Grandfathered subscriber
+  founderStatus?: boolean; // Lifetime member with founder benefits
+  supporterTier?: 'supporter' | 'patron' | 'founder' | null; // Community supporter level
 }
 
 export function useSubscription() {
@@ -35,7 +39,11 @@ export function useSubscription() {
       
       const { data, error: fetchError } = await supabase
         .from('user_subscriptions')
-        .select('*')
+        .select(`
+          *,
+          verifications!inner(status),
+          community_supporters(tier, is_active, monthly_amount)
+        `)
         .eq('user_id', user.id)
         .single();
         
@@ -50,9 +58,31 @@ export function useSubscription() {
         return;
       }
       
-      // Format subscription data
-      const isActive = data.subscription_status === 'active' || data.subscription_status === 'trialing' || data.is_free_access === true;
-      const subscriptionLevel = data.subscription_type === 'lifetime' ? 'lifetime' : (isActive ? 'standard' : 'free');
+      // Check verification status
+      const isVerified = data.is_verified === true ||
+        (data.verifications && data.verifications.status === 'approved');
+
+      // Check supporter status
+      const supporterData = data.community_supporters?.[0];
+      const supporterTier = supporterData?.is_active ? supporterData.tier : null;
+
+      // Determine access level - New monetization model
+      const hasLegacyAccess = data.subscription_status === 'active' ||
+        data.subscription_status === 'trialing' ||
+        data.is_free_access === true;
+
+      const hasVerifiedAccess = isVerified; // Verified Unimog owners get free access
+      const hasSupporterAccess = supporterTier !== null; // Community supporters get access
+
+      const isActive = hasLegacyAccess || hasVerifiedAccess || hasSupporterAccess;
+
+      // Determine subscription level
+      let subscriptionLevel: 'standard' | 'lifetime' | 'free' = 'free';
+      if (data.subscription_type === 'lifetime' || data.founder_status) {
+        subscriptionLevel = 'lifetime';
+      } else if (isActive) {
+        subscriptionLevel = 'standard';
+      }
 
       const formattedSubscription: Subscription = {
         id: data.id || '',
@@ -62,7 +92,11 @@ export function useSubscription() {
         expiresAt: data.current_period_end || data.trial_ends_at,
         stripeCustomerId: data.stripe_customer_id,
         stripeSessionId: data.stripe_subscription_id,
-        updatedAt: data.updated_at
+        updatedAt: data.updated_at,
+        isVerified: isVerified,
+        legacySubscriber: data.legacy_subscriber === true,
+        founderStatus: data.founder_status === true,
+        supporterTier: supporterTier
       };
       
       setSubscription(formattedSubscription);
@@ -89,11 +123,36 @@ export function useSubscription() {
     if (!subscription) return false;
     return subscription.isActive;
   };
-  
+
   // Get subscription level
   const getSubscriptionLevel = () => {
     if (!subscription || !subscription.isActive) return 'free';
     return subscription.subscriptionLevel;
+  };
+
+  // New access control helpers for monetization transition
+  const hasVerifiedAccess = () => {
+    return subscription?.isVerified === true;
+  };
+
+  const isLegacySubscriber = () => {
+    return subscription?.legacySubscriber === true;
+  };
+
+  const isFounder = () => {
+    return subscription?.founderStatus === true;
+  };
+
+  const getSupporterTier = () => {
+    return subscription?.supporterTier || null;
+  };
+
+  const getAccessReason = () => {
+    if (!subscription?.isActive) return 'none';
+    if (subscription.legacySubscriber) return 'legacy_subscriber';
+    if (subscription.isVerified) return 'verified_owner';
+    if (subscription.supporterTier) return 'supporter';
+    return 'unknown';
   };
   
   // Subscribe to a plan
@@ -200,6 +259,12 @@ export function useSubscription() {
     hasActiveSubscription,
     getSubscriptionLevel,
     subscribe,
-    cancelSubscription
+    cancelSubscription,
+    // New monetization model helpers
+    hasVerifiedAccess,
+    isLegacySubscriber,
+    isFounder,
+    getSupporterTier,
+    getAccessReason
   };
 }

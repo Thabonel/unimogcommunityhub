@@ -171,6 +171,115 @@ async function filterExistingIllustrationPages(
 }
 
 // RPS PHASE 7: Detect component-based exploded view queries
+// AFFILIATE PRODUCTS DETECTION FUNCTIONS
+// Detect product opportunities in user queries
+interface ProductOpportunity {
+  category: string;
+  keywords: string[];
+  intent: 'replace' | 'install' | 'purchase' | 'research';
+}
+
+function detectProductOpportunity(query: string): ProductOpportunity | null {
+  const text = query.toLowerCase();
+
+  // Recovery gear opportunities
+  if (/(?:winch|recovery|stuck|pull|tow|strap|rope|shackle|snatch)/i.test(text)) {
+    return {
+      category: 'recovery_gear',
+      keywords: ['winch', 'recovery gear', 'tow strap', 'shackle', 'snatch block'],
+      intent: 'purchase'
+    };
+  }
+
+  // Tools and maintenance opportunities
+  if (/(?:tool|wrench|socket|repair|maintenance|fix|replace|install)/i.test(text)) {
+    return {
+      category: 'tools_maintenance',
+      keywords: ['socket set', 'torque wrench', 'diagnostic tool', 'multimeter'],
+      intent: 'replace'
+    };
+  }
+
+  // Parts and upgrades
+  if (/(?:filter|oil|brake|clutch|bearing|seal|gasket|parts?)/i.test(text)) {
+    return {
+      category: 'parts_upgrades',
+      keywords: ['oil filter', 'air filter', 'brake pads', 'hydraulic fluid'],
+      intent: 'replace'
+    };
+  }
+
+  // Camping and expedition gear
+  if (/(?:camp|expedition|sleep|tent|cook|fridge|water|solar)/i.test(text)) {
+    return {
+      category: 'camping_expedition',
+      keywords: ['portable fridge', 'solar panel', 'water tank', 'camping gear'],
+      intent: 'purchase'
+    };
+  }
+
+  // Electronics and navigation
+  if (/(?:gps|radio|antenna|battery|charger|inverter|electric)/i.test(text)) {
+    return {
+      category: 'electronics',
+      keywords: ['GPS navigator', 'two-way radio', 'power inverter', 'battery charger'],
+      intent: 'purchase'
+    };
+  }
+
+  // Books and manuals (beyond what's already in Barry)
+  if (/(?:book|guide|manual|learn|how.*to|reference)/i.test(text)) {
+    return {
+      category: 'books_manuals',
+      keywords: ['Unimog manual', 'off-road guide', 'expedition handbook'],
+      intent: 'research'
+    };
+  }
+
+  // Outdoor gear
+  if (/(?:jacket|boot|glove|helmet|safety|protection|clothing)/i.test(text)) {
+    return {
+      category: 'outdoor_gear',
+      keywords: ['work boots', 'safety jacket', 'mechanic gloves', 'helmet'],
+      intent: 'purchase'
+    };
+  }
+
+  return null;
+}
+
+function generateAffiliateContext(products: any[], opportunity: ProductOpportunity): string {
+  if (!products.length) return '';
+
+  const contextLines = [
+    `\n=== RECOMMENDED PRODUCTS (${opportunity.category.toUpperCase().replace('_', ' ')}) ===`,
+    `Based on your ${opportunity.intent} query, here are some relevant products:\n`
+  ];
+
+  products.slice(0, 3).forEach((product, index) => {
+    contextLines.push(
+      `${index + 1}. ${product.title}`,
+      `   Price: ${product.currency || 'USD'} ${product.price || 'Price varies'}`,
+      `   ${product.short_description || product.description || ''}`,
+      `   Link: ${product.affiliate_url}`,
+      ''
+    );
+  });
+
+  contextLines.push(
+    '=== INTEGRATION INSTRUCTIONS ===',
+    'When mentioning these products in your response:',
+    '1. Only recommend if genuinely relevant to the query',
+    '2. Mention specific benefits for Unimog use',
+    '3. Include price and purchasing information naturally',
+    '4. Use affiliate links provided above',
+    '5. Be helpful, not pushy - focus on solving their problem first',
+    ''
+  );
+
+  return contextLines.join('\n');
+}
+
 function detectComponentQuery(userQuery: string): { isComponentQuery: boolean; componentName: string | null } {
   const queryLower = userQuery.toLowerCase();
 
@@ -1975,6 +2084,38 @@ Use this data to answer weather questions. Be specific with temperatures and con
       }
     }
 
+    // AFFILIATE PRODUCTS GATHERER: Detect product opportunities and inject affiliate context
+    let affiliateContext = '';
+    let affiliateProducts: any[] = [];
+
+    const needsProductRecommendations = detectProductOpportunity(userText);
+    if (needsProductRecommendations) {
+      console.log(`[Affiliate Gatherer] Product opportunity detected: ${needsProductRecommendations.category}`);
+
+      try {
+        // Search for relevant affiliate products
+        const { data: products, error } = await supabaseAdmin
+          .from('affiliate_products')
+          .select('*')
+          .eq('category', needsProductRecommendations.category)
+          .eq('is_active', true)
+          .order('is_featured', { ascending: false })
+          .order('click_count', { ascending: false })
+          .limit(3);
+
+        if (!error && products && products.length > 0) {
+          affiliateProducts = products;
+          affiliateContext = generateAffiliateContext(products, needsProductRecommendations);
+          console.log(`[Affiliate Gatherer] Context injected for ${products.length} products`);
+        } else {
+          console.log('[Affiliate Gatherer] No relevant products found');
+        }
+      } catch (error) {
+        console.error('[Affiliate Gatherer] Error:', error);
+        // Fail gracefully - let core routing continue
+      }
+    }
+
     // ENHANCED Decision Table-Based Routing for Barry (v64)
     // Better intent detection that checks for general requests even with Unimog mentions
 
@@ -2579,6 +2720,7 @@ Always cite specific page numbers and PDF files in your response.`;
           return new Response(JSON.stringify({
             content: claudeResponse,
             manualReferences: manualReferences,
+            affiliateProducts: affiliateProducts.length > 0 ? affiliateProducts : undefined,
             knowledgeMode: knowledgeMode,
             searchResultCount: manualReferences.length,
             usage: claudeData.usage
@@ -2664,15 +2806,22 @@ Always cite specific page numbers and PDF files in your response.`;
         systemPrompt += '\n\n' + webSearchContext;
         knowledgeMode = 'web_search';
       }
+
+      // INJECT AFFILIATE CONTEXT if gatherer found something
+      if (affiliateContext) {
+        console.log('[Affiliate Integration] Adding affiliate products context to prompt');
+        systemPrompt += '\n\n' + affiliateContext;
+        knowledgeMode = 'affiliate_products';
+      }
     }
 
     // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search' || knowledgeMode === 'affiliate_products');
     console.log('===========================');
 
-    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search') {
+    if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search' || knowledgeMode === 'affiliate_products') {
       // Simple rate limiting
       const { data: recentChats } = await supabaseClient
         .from('chat_rate_limits')
@@ -2771,6 +2920,7 @@ Always cite specific page numbers and PDF files in your response.`;
         content: responseContent,
         manualReferences: rpsIllustrations.length > 0 ? rpsIllustrations : [],
         webSearchResults: webSearchResults.length > 0 ? webSearchResults : undefined,
+        affiliateProducts: affiliateProducts.length > 0 ? affiliateProducts : undefined,
         knowledgeMode: knowledgeMode,
         searchResultCount: rpsIllustrations.length,
         usage: data.usage
