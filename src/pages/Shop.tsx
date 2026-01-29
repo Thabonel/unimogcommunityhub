@@ -31,6 +31,10 @@ interface AffiliateProduct {
   category: string;
   price: number;
   currency: string;
+  current_price?: number | null;
+  price_currency?: string | null;
+  last_price_check?: string | null;
+  api_error_count?: number;
   image_url: string;
   affiliate_provider: string;
   affiliate_url: string;
