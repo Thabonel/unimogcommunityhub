@@ -1772,7 +1772,7 @@ serve(async (req) => {
       if (isTechnicalQuestion) {
         console.log('[Subscription Gatherer] Free user asked technical question, returning upgrade prompt');
         return new Response(JSON.stringify({
-          response: "Sorry mate, technical Unimog advice is for paid members. It's just the price of two coffees for peace of mind - you'll get full access to my knowledge, plus trip planning, community features, and all the workshop manuals. Give it a try with our 30-day free trial, no credit card required!",
+          response: "Sorry mate, technical Unimog advice is for verified owners and members. It's just the price of two coffees for peace of mind - or completely free if you own a Unimog! Verify your ownership with a photo of your registration or title, and you'll get full access to my knowledge, plus trip planning, community features, and all the workshop manuals. Free forever for verified owners!",
           upgrade_required: true,
           manual_references: []
         }), {

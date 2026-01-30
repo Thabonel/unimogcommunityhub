@@ -5,13 +5,13 @@ import { ChevronRight } from 'lucide-react';
 
 export const FreeTrialCTA = () => {
   return (
-    <Button 
-      size="lg" 
+    <Button
+      size="lg"
       className="bg-military-olive hover:bg-military-olive/90 text-white w-full sm:w-auto"
       asChild
     >
-      <Link to="/signup?plan=trial">
-        Start Free Trial
+      <Link to="/verify">
+        Verify Ownership
         <ChevronRight className="ml-2 h-4 w-4" />
       </Link>
     </Button>

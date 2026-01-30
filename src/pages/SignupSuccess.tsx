@@ -70,8 +70,8 @@ const SignupSuccess = () => {
       case 'trial':
       default:
         return {
-          title: '🎉 Your 30-Day Free Trial Has Been Activated!',
-          description: 'You now have full access to all premium features including Barry AI, advanced trip planning, and the complete Unimog manual library.',
+          title: 'Welcome to Unimog Community Hub!',
+          description: 'Verify your Unimog ownership to unlock full access to all features including Barry AI, advanced trip planning, and the complete Unimog manual library.',
         };
     }
   };

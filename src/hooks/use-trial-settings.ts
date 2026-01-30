@@ -24,7 +24,7 @@ export function useTrialSettings(initialSettings?: Partial<TrialSettings>) {
     sendTrialStartEmail: true,
     sendTrialEndingReminder: true,
     reminderDaysBefore: 7,
-    customTrialMessage: "Try out all premium features free for {{duration}} days. No credit card required.",
+    customTrialMessage: "Verify your Unimog ownership and get free lifetime access to all features.",
     trialEndMessage: "Your trial is ending soon! Subscribe now to keep enjoying premium features.",
     automaticConversion: true,
     ...initialSettings

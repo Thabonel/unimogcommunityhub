@@ -323,15 +323,15 @@ export default function SubscriptionGuard({
           <h1 className="text-2xl font-bold mb-2">Subscription Required</h1>
           <p className="text-muted-foreground mb-6">
             {trialStatus === 'expired' ? (
-              "Your free trial has expired. Please upgrade your membership to continue accessing all features."
+              "Your temporary access has expired. Verify your Unimog ownership for free lifetime access, or become a community supporter."
             ) : (
-              "This content is only available to subscribers. Upgrade your membership to access all Unimog Community Hub features."
+              "This content is available to verified Unimog owners. Verify your ownership for free access to all features."
             )}
           </p>
           <div className="flex justify-center gap-4">
-            <Link to="/pricing">
+            <Link to="/verify">
               <Button className="px-6">
-                Upgrade Membership
+                Verify Ownership
               </Button>
             </Link>
             <Link to="/">

@@ -34,19 +34,19 @@ export const BarryUpgradePrompt = () => {
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button asChild className="flex-1 min-w-0">
-            <Link to="/signup?plan=monthly">
-              <span className="truncate">Start Free Trial</span>
+            <Link to="/verify">
+              <span className="truncate">Verify Ownership</span>
             </Link>
           </Button>
           <Button asChild variant="outline" className="flex-1 min-w-0">
-            <Link to="/#pricing">
-              <span className="truncate">View Pricing</span>
+            <Link to="/supporter-signup">
+              <span className="truncate">Support Community</span>
             </Link>
           </Button>
         </div>
 
         <p className="text-xs text-center text-muted-foreground">
-          No credit card required for trial
+          Free forever for verified Unimog owners
         </p>
       </CardContent>
     </Card>
