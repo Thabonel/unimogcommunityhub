@@ -12,135 +12,322 @@ function logStep(step: string, details?: any) {
   console.log(`[CREATE-CHECKOUT] ${step}${details ? ` - ${JSON.stringify(details)}` : ''}`);
 }
 
-// Handle all requests
+// Supporter tier price IDs (to be configured in environment)
+const SUPPORTER_PRICES = {
+  supporter_monthly: Deno.env.get("STRIPE_SUPPORTER_MONTHLY_PRICE_ID"),
+  supporter_annual: Deno.env.get("STRIPE_SUPPORTER_ANNUAL_PRICE_ID"),
+  patron_monthly: Deno.env.get("STRIPE_PATRON_MONTHLY_PRICE_ID"),
+  patron_annual: Deno.env.get("STRIPE_PATRON_ANNUAL_PRICE_ID"),
+  champion_monthly: Deno.env.get("STRIPE_CHAMPION_MONTHLY_PRICE_ID"),
+  champion_annual: Deno.env.get("STRIPE_CHAMPION_ANNUAL_PRICE_ID"),
+};
+
+// Vendor tier price IDs
+const VENDOR_PRICES = {
+  basic: Deno.env.get("STRIPE_VENDOR_BASIC_PRICE_ID"),
+  featured: Deno.env.get("STRIPE_VENDOR_FEATURED_PRICE_ID"),
+  premium: Deno.env.get("STRIPE_VENDOR_PREMIUM_PRICE_ID"),
+};
+
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     logStep("Function started");
-    
-    // Parse request body
-    const { priceId, planType, trialDays } = await req.json();
-    
-    if (!planType) {
-      throw new Error("Plan type is required");
+
+    const body = await req.json();
+    const {
+      type,           // 'donation' | 'supporter' | 'vendor' | 'subscription' | 'lifetime'
+      priceId,        // Optional: explicit price ID
+      planType,       // Legacy: 'monthly' | 'lifetime'
+      tier,           // For supporter/vendor: 'supporter' | 'patron' | 'champion' | 'basic' | 'featured' | 'premium'
+      amount,         // For donations: amount in dollars
+      isAnnual,       // For supporter: annual billing
+      trialDays,
+      metadata = {}   // Additional metadata (donor_name, message, etc.)
+    } = body;
+
+    const checkoutType = type || (planType ? 'subscription' : null);
+
+    if (!checkoutType) {
+      throw new Error("Checkout type is required (donation, supporter, vendor, or subscription)");
     }
-    
-    logStep("Request parsed", { planType, hasPriceId: !!priceId, trialDays });
-    
-    // Initialize Supabase client with auth context from the request
+
+    logStep("Request parsed", { checkoutType, tier, amount, isAnnual });
+
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
-    
+
     // Get the user from the JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("Missing Authorization header");
     }
-    
+
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !user) {
       throw new Error("Unauthorized: Invalid token or user not found");
     }
-    
+
     logStep("User authenticated", { userId: user.id, email: user.email });
-    
+
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
       throw new Error("STRIPE_SECRET_KEY environment variable is not set");
     }
-    
+
     const stripe = new Stripe(stripeKey, {
       apiVersion: "2023-10-16",
     });
-    
+
     logStep("Stripe initialized");
 
-    // Check if user already exists as a Stripe customer
-    const { data: customers, status } = await stripe.customers.list({
+    // Get or create Stripe customer
+    const { data: customers } = await stripe.customers.list({
       email: user.email,
       limit: 1
     });
-    
-    let customerId: string | undefined;
-    
+
+    let customerId: string;
+
     if (customers && customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Found existing Stripe customer", { customerId });
     } else {
-      // Create a new customer if one doesn't exist
       const customerResponse = await stripe.customers.create({
         email: user.email,
-        metadata: {
-          user_id: user.id
-        }
+        metadata: { user_id: user.id }
       });
       customerId = customerResponse.id;
       logStep("Created new Stripe customer", { customerId });
     }
 
-    // Determine which price ID to use if not explicitly provided
-    let checkoutPriceId = priceId;
-    
-    if (!checkoutPriceId) {
-      const priceEnvKey = planType === 'lifetime' 
-        ? 'STRIPE_LIFETIME_PRICE_ID'
-        : 'STRIPE_STANDARD_PRICE_ID';
-      
-      checkoutPriceId = Deno.env.get(priceEnvKey);
-      
-      if (!checkoutPriceId) {
-        // Fallback to config variables if direct env vars not found
-        const configKey = planType === 'lifetime' ? 'lifetimePriceId' : 'premiumMonthlyPriceId';
-        const stripeConfig = JSON.parse(Deno.env.get("STRIPE_CONFIG") || "{}");
-        checkoutPriceId = stripeConfig[configKey];
+    // Build checkout session based on type
+    let sessionConfig: Stripe.Checkout.SessionCreateParams;
+    const origin = req.headers.get("origin") || "https://unimogcommunityhub.com";
+
+    switch (checkoutType) {
+      case 'donation': {
+        // One-time donation with dynamic amount using price_data
+        if (!amount || amount < 3) {
+          throw new Error("Donation amount must be at least $3");
+        }
+
+        sessionConfig = {
+          customer: customerId,
+          line_items: [{
+            price_data: {
+              currency: 'aud',
+              product_data: {
+                name: 'Community Donation',
+                description: 'Support the Unimog Community Hub',
+              },
+              unit_amount: Math.round(amount * 100), // Convert to cents
+            },
+            quantity: 1,
+          }],
+          mode: 'payment',
+          success_url: `${origin}/dashboard?donation=success`,
+          cancel_url: `${origin}/dashboard?donation=canceled`,
+          client_reference_id: user.id,
+          metadata: {
+            userId: user.id,
+            type: 'donation',
+            amount: amount.toString(),
+            donor_name: metadata.donor_name || '',
+            message: metadata.message || '',
+            is_anonymous: metadata.is_anonymous ? 'true' : 'false',
+          },
+        };
+        break;
+      }
+
+      case 'supporter': {
+        // Supporter subscription tiers
+        const tierKey = `${tier || 'supporter'}_${isAnnual ? 'annual' : 'monthly'}` as keyof typeof SUPPORTER_PRICES;
+        const supporterPriceId = priceId || SUPPORTER_PRICES[tierKey];
+
+        if (!supporterPriceId) {
+          // Fallback: use price_data for custom amounts
+          const tierAmounts: Record<string, number> = {
+            supporter: 5,
+            patron: 15,
+            champion: 25,
+          };
+          const baseAmount = tierAmounts[tier || 'supporter'] || 5;
+          const finalAmount = isAnnual ? Math.round(baseAmount * 12 * 0.85) : baseAmount;
+
+          sessionConfig = {
+            customer: customerId,
+            line_items: [{
+              price_data: {
+                currency: 'aud',
+                product_data: {
+                  name: `Community Supporter - ${(tier || 'supporter').charAt(0).toUpperCase() + (tier || 'supporter').slice(1)}`,
+                  description: `Thank you for supporting the Unimog Community!`,
+                },
+                unit_amount: finalAmount * 100,
+                recurring: {
+                  interval: isAnnual ? 'year' : 'month',
+                },
+              },
+              quantity: 1,
+            }],
+            mode: 'subscription',
+            success_url: `${origin}/supporter-signup?success=true`,
+            cancel_url: `${origin}/supporter-signup?canceled=true`,
+            client_reference_id: user.id,
+            metadata: {
+              userId: user.id,
+              type: 'supporter',
+              tier: tier || 'supporter',
+              isAnnual: isAnnual ? 'true' : 'false',
+              public_name: metadata.public_name || '',
+              message: metadata.message || '',
+              show_publicly: metadata.show_publicly ? 'true' : 'false',
+            },
+          };
+        } else {
+          sessionConfig = {
+            customer: customerId,
+            line_items: [{ price: supporterPriceId, quantity: 1 }],
+            mode: 'subscription',
+            success_url: `${origin}/supporter-signup?success=true`,
+            cancel_url: `${origin}/supporter-signup?canceled=true`,
+            client_reference_id: user.id,
+            metadata: {
+              userId: user.id,
+              type: 'supporter',
+              tier: tier || 'supporter',
+              isAnnual: isAnnual ? 'true' : 'false',
+              public_name: metadata.public_name || '',
+              message: metadata.message || '',
+              show_publicly: metadata.show_publicly ? 'true' : 'false',
+            },
+          };
+        }
+        break;
+      }
+
+      case 'vendor': {
+        // Vendor subscription tiers
+        const vendorPriceId = priceId || VENDOR_PRICES[tier as keyof typeof VENDOR_PRICES];
+
+        if (!vendorPriceId) {
+          // Fallback: use price_data
+          const tierAmounts: Record<string, number> = {
+            basic: 50,
+            featured: 100,
+            premium: 150,
+          };
+          const vendorAmount = tierAmounts[tier || 'basic'] || 50;
+
+          sessionConfig = {
+            customer: customerId,
+            line_items: [{
+              price_data: {
+                currency: 'aud',
+                product_data: {
+                  name: `Commercial Vendor - ${(tier || 'basic').charAt(0).toUpperCase() + (tier || 'basic').slice(1)}`,
+                  description: `Vendor subscription for the Unimog Community Hub`,
+                },
+                unit_amount: vendorAmount * 100,
+                recurring: { interval: 'month' },
+              },
+              quantity: 1,
+            }],
+            mode: 'subscription',
+            success_url: `${origin}/vendor-application?success=true`,
+            cancel_url: `${origin}/vendor-application?canceled=true`,
+            client_reference_id: user.id,
+            metadata: {
+              userId: user.id,
+              type: 'vendor',
+              tier: tier || 'basic',
+              business_name: metadata.business_name || '',
+              contact_email: metadata.contact_email || '',
+            },
+          };
+        } else {
+          sessionConfig = {
+            customer: customerId,
+            line_items: [{ price: vendorPriceId, quantity: 1 }],
+            mode: 'subscription',
+            success_url: `${origin}/vendor-application?success=true`,
+            cancel_url: `${origin}/vendor-application?canceled=true`,
+            client_reference_id: user.id,
+            metadata: {
+              userId: user.id,
+              type: 'vendor',
+              tier: tier || 'basic',
+              business_name: metadata.business_name || '',
+              contact_email: metadata.contact_email || '',
+            },
+          };
+        }
+        break;
+      }
+
+      case 'subscription':
+      case 'lifetime':
+      default: {
+        // Legacy subscription flow
+        let checkoutPriceId = priceId;
+        const legacyPlanType = planType || checkoutType;
+
+        if (!checkoutPriceId) {
+          const priceEnvKey = legacyPlanType === 'lifetime'
+            ? 'STRIPE_LIFETIME_PRICE_ID'
+            : 'STRIPE_STANDARD_PRICE_ID';
+
+          checkoutPriceId = Deno.env.get(priceEnvKey);
+
+          if (!checkoutPriceId) {
+            const stripeConfig = JSON.parse(Deno.env.get("STRIPE_CONFIG") || "{}");
+            checkoutPriceId = legacyPlanType === 'lifetime'
+              ? stripeConfig.lifetimePriceId
+              : stripeConfig.premiumMonthlyPriceId;
+          }
+        }
+
+        if (!checkoutPriceId) {
+          throw new Error(`Price ID for ${legacyPlanType} plan is not configured`);
+        }
+
+        const mode = legacyPlanType === 'lifetime' ? 'payment' : 'subscription';
+        const trialPeriodDays = trialDays && mode === 'subscription' ? parseInt(trialDays) : undefined;
+
+        sessionConfig = {
+          customer: customerId,
+          line_items: [{ price: checkoutPriceId, quantity: 1 }],
+          mode,
+          success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${origin}/subscription/canceled`,
+          client_reference_id: user.id,
+          metadata: {
+            userId: user.id,
+            planType: legacyPlanType,
+            type: 'subscription',
+          },
+          subscription_data: trialPeriodDays ? { trial_period_days: trialPeriodDays } : undefined,
+        };
+        break;
       }
     }
-    
-    if (!checkoutPriceId) {
-      throw new Error(`Price ID for ${planType} plan is not configured`);
-    }
-    
-    logStep("Using price ID", { checkoutPriceId, planType });
-    
-    // Determine the mode based on plan type
-    const mode = planType === 'lifetime' ? 'payment' : 'subscription';
-    logStep("Checkout mode set", { mode });
 
-    // Optional trial period (only applies to subscriptions)
-    const trialPeriodDays = trialDays && mode === 'subscription' ? parseInt(trialDays) : undefined;
-    
-    // Create a new checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: checkoutPriceId,
-          quantity: 1,
-        },
-      ],
-      mode,
-      success_url: `${req.headers.get("origin") || "https://unimogcommunityhub.com"}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin") || "https://unimogcommunityhub.com"}/subscription/canceled`,
-      client_reference_id: user.id,
-      metadata: {
-        userId: user.id,
-        planType,
-      },
-      subscription_data: trialPeriodDays ? {
-        trial_period_days: trialPeriodDays
-      } : undefined
-    });
-    
-    logStep("Checkout session created", { 
-      sessionId: session.id, 
+    logStep("Creating checkout session", { type: checkoutType, mode: sessionConfig.mode });
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    logStep("Checkout session created", {
+      sessionId: session.id,
       url: session.url?.substring(0, 50) + '...'
     });
 
@@ -153,7 +340,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error) {
     console.error("Error creating checkout session:", error);
-    
+
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {

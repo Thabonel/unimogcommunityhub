@@ -16,6 +16,7 @@ import { useProfile } from '@/hooks/profile';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
 import { MobileAppCard } from '@/components/dashboard/MobileAppCard';
+import { BuyMeABeerWidget } from '@/components/dashboard/BuyMeABeerWidget';
 import { FeaturedVendors } from '@/components/dashboard/FeaturedVendors';
 import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
 import { VehicleStatsCard } from '@/components/dashboard/VehicleStatsCard';
@@ -196,6 +197,11 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Buy Me a Beer Widget */}
+            <div className="mt-6">
+              <BuyMeABeerWidget />
+            </div>
 
             {/* Mobile App Card - Desktop only */}
             <div className="mt-6">
