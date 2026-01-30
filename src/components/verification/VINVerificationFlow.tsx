@@ -56,6 +56,7 @@ export default function VINVerificationFlow({
     confidence?: number;
     autoApproved?: boolean;
   } | null>(null);
+  const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -193,7 +194,8 @@ export default function VINVerificationFlow({
         ocr_processed: !!ocrData,
         ocr_data: ocrData || null,
         confidence_score: ocrData?.confidence || null,
-        auto_approved: ocrData?.autoApproved || false
+        auto_approved: ocrData?.autoApproved || false,
+        privacy_acknowledged: true
       };
 
       const { error: insertError } = await supabase
@@ -265,10 +267,17 @@ export default function VINVerificationFlow({
           ))}
         </div>
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Your documents are processed securely and only used for verification. We use OCR technology to automatically extract VIN numbers when possible.
+        <Alert className="bg-green-50 border-green-200">
+          <Check className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            <strong>Your Privacy is Protected:</strong>
+            <ul className="mt-2 space-y-1 text-sm">
+              <li>Documents stored in encrypted, private storage</li>
+              <li>Only you and admins can view your documents</li>
+              <li>Documents auto-deleted after verification approval</li>
+              <li>VIN extracted locally, never shared externally</li>
+              <li>No data sold or shared with third parties</li>
+            </ul>
           </AlertDescription>
         </Alert>
       </CardContent>
@@ -429,6 +438,28 @@ export default function VINVerificationFlow({
           />
         </div>
 
+        {/* Privacy Acknowledgment */}
+        <div className="bg-gray-50 border rounded-lg p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="privacy-ack"
+              checked={privacyAcknowledged}
+              onChange={(e) => setPrivacyAcknowledged(e.target.checked)}
+              className="mt-1 h-4 w-4 text-military-green border-gray-300 rounded focus:ring-military-green"
+            />
+            <label htmlFor="privacy-ack" className="text-sm text-gray-700">
+              <strong>I understand and agree:</strong>
+              <ul className="mt-1 space-y-1 text-gray-600">
+                <li>My document is stored securely and encrypted</li>
+                <li>Only admins will review it for verification</li>
+                <li>My document will be deleted after approval</li>
+                <li>My VIN is used only to confirm Unimog ownership</li>
+              </ul>
+            </label>
+          </div>
+        </div>
+
         <div className="flex gap-2">
           <Button
             onClick={() => setCurrentStep('upload')}
@@ -439,7 +470,7 @@ export default function VINVerificationFlow({
           </Button>
           <Button
             onClick={submitVerification}
-            disabled={!data.vinNumber || !data.vehicleModel || isLoading}
+            disabled={!data.vinNumber || !data.vehicleModel || !privacyAcknowledged || isLoading}
             className="flex-1 bg-military-green hover:bg-military-green/90"
           >
             {isLoading ? (
