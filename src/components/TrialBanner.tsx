@@ -34,27 +34,27 @@ const TrialBannerContent = () => {
         <div className="container flex flex-wrap items-center justify-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
           <span>
-            Your 30-day free trial is active! {trialData?.daysRemaining} {trialData?.daysRemaining === 1 ? 'day' : 'days'} remaining of full access.
+            {trialData?.daysRemaining} {trialData?.daysRemaining === 1 ? 'day' : 'days'} of temporary access remaining.
           </span>
-          <Link to="/pricing">
+          <Link to="/verify">
             <Button variant="link" size="sm" className="h-auto p-0 text-primary">
-              Subscribe now
+              Verify ownership for free lifetime access
             </Button>
           </Link>
         </div>
       </div>
     );
   }
-  
+
   if (trialStatus === 'expired') {
     return (
       <div className="bg-amber-100 py-1.5 px-4 text-sm text-center">
         <div className="container flex flex-wrap items-center justify-center gap-2">
           <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
-          <span>Your 30-day free trial has expired.</span>
-          <Link to="/pricing">
+          <span>Your temporary access has expired.</span>
+          <Link to="/verify">
             <Button variant="link" size="sm" className="h-auto p-0 text-primary">
-              Subscribe now to continue
+              Verify Unimog ownership for free access
             </Button>
           </Link>
         </div>

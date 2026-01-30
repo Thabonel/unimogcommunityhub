@@ -66,7 +66,7 @@
     "subtitle": "Join the Verified Unimog Owner Showcase — a serious network for real owners. Claim your public garage page, get factory-grade repair help with Barry (AI mechanic), and connect with capable owners who actually use and maintain their trucks.",
     "cta_claim": "Showcase Your Unimog",
     "cta_featured": "See Featured Builds",
-    "cta_trial": "Start Free Trial",
+    "cta_trial": "Learn More",
     "cta_join": "Join the Community",
     "image_alt": "Unimog off-road adventure"
   },
@@ -140,8 +140,8 @@
     }
   },
   "pricing": {
-    "section_title": "Simple, Transparent Pricing",
-    "section_subtitle": "30-day free trial on all plans.",
+    "section_title": "Free for Unimog Owners",
+    "section_subtitle": "Verify your Unimog ownership once and get complete access forever. No subscriptions, no fees.",
     "detecting_currency": "Detecting your currency...",
     "prices_shown": "Prices shown in {{currency}} for {{country}}",
     "converted_from_aud": "(converted from AUD)",
@@ -189,11 +189,11 @@
   },
   "cta": {
     "title": "Ready to Join the Network?",
-    "subtitle": "Claim your truck, unlock Barry, and connect with capable owners worldwide.",
-    "button_claim": "Claim My Truck Profile",
-    "button_trial": "Start Free Trial",
-    "button": "Start Free Trial",
-    "disclaimer": "No credit card required. Try all features free for 30 days.",
-    "trial_text": "No credit card required. Try all features free for 30 days."
+    "subtitle": "Verify your Unimog ownership and get free lifetime access to the complete platform.",
+    "button_claim": "Verify Ownership",
+    "button_trial": "Learn How It Works",
+    "button": "Get Started Free",
+    "disclaimer": "Free forever for verified Unimog owners. No subscription required.",
+    "trial_text": "Free forever for verified Unimog owners. No subscription required."
   }
 }

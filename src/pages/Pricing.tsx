@@ -73,8 +73,8 @@ const Pricing = () => {
 
   const faqs = [
     {
-      question: 'Is there a free trial?',
-      answer: 'Yes! Every new user gets a 30-day free trial with full access to all features of the Unimog Community Hub, including AI assistants. No credit card required to start.'
+      question: 'How do I get free access?',
+      answer: 'Verify your Unimog ownership by uploading a photo of your registration or title. Our system automatically verifies your VIN and grants you lifetime free access to all features, including Barry AI Mechanic.'
     },
     {
       question: 'What payment methods do you accept?',
@@ -95,13 +95,13 @@ const Pricing = () => {
       <div className="container py-12">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 text-unimog-800 dark:text-unimog-200">
-            Simple, Transparent Pricing
+            Free for Unimog Owners
           </h1>
           <p className="text-lg text-muted-foreground mb-2">
-            Get started with our <span className="font-semibold text-primary">30-day free trial</span>. No credit card required.
+            <span className="font-semibold text-primary">Verify your ownership</span> and get lifetime free access.
           </p>
           <p className="text-base text-muted-foreground">
-            Choose a plan that works for your Unimog journey after your trial.
+            Complete access to all features when you verify your Unimog.
           </p>
           {userCountry && !isLoading && (
             <div className="flex items-center justify-center gap-4 mt-4">

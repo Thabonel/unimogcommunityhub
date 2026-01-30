@@ -149,10 +149,10 @@ export default function ManualPreview() {
                   <div className="flex gap-3">
                     <Button
                       size="lg"
-                      onClick={() => navigate('/pricing')}
+                      onClick={() => navigate('/verify')}
                       className="bg-military-green hover:bg-military-green/90"
                     >
-                      Start Free Trial
+                      Verify Ownership
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     <Button
@@ -160,11 +160,11 @@ export default function ManualPreview() {
                       variant="outline"
                       onClick={() => navigate('/pricing')}
                     >
-                      View Pricing
+                      View Options
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    30-day free trial • No credit card required • Cancel anytime
+                    Free forever for verified Unimog owners
                   </p>
                 </div>
               </div>
@@ -257,15 +257,15 @@ export default function ManualPreview() {
             <CardContent className="p-8 text-center">
               <h3 className="text-2xl font-bold mb-2">Ready to access the full manual?</h3>
               <p className="mb-6 text-white/90">
-                Start your 30-day free trial and get instant access to 45+ Unimog manuals
+                Verify your Unimog ownership and get instant access to all 45+ manuals for free
               </p>
               <div className="flex justify-center gap-3">
                 <Button
                   size="lg"
                   variant="secondary"
-                  onClick={() => navigate('/pricing')}
+                  onClick={() => navigate('/verify')}
                 >
-                  Start Free Trial
+                  Verify Ownership
                 </Button>
                 <Button
                   size="lg"

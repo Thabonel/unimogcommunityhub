@@ -49,25 +49,25 @@ export function SubscriptionSection() {
     if (trialStatus === 'active' && trialData) {
       return {
         status: 'trial',
-        title: 'Free Trial Active',
-        description: `Your free trial expires in ${trialData.daysRemaining} ${trialData.daysRemaining === 1 ? 'day' : 'days'}.`,
+        title: 'Temporary Access',
+        description: `${trialData.daysRemaining} ${trialData.daysRemaining === 1 ? 'day' : 'days'} remaining. Verify ownership for free lifetime access.`,
         icon: <CheckCircle className="h-5 w-5 text-blue-600" />
       };
     }
-    
+
     if (trialStatus === 'expired') {
       return {
         status: 'trial-expired',
-        title: 'Trial Expired',
-        description: 'Your free trial has ended. Subscribe to continue accessing premium features.',
+        title: 'Access Expired',
+        description: 'Verify your Unimog ownership for free lifetime access to all features.',
         icon: <AlertCircle className="h-5 w-5 text-amber-600" />
       };
     }
-    
+
     return {
       status: 'none',
-      title: 'No Active Subscription',
-      description: 'Subscribe to access all premium features of Unimog Community Hub.',
+      title: 'Verification Required',
+      description: 'Verify your Unimog ownership for free access to all features.',
       icon: <AlertCircle className="h-5 w-5 text-gray-400" />
     };
   };

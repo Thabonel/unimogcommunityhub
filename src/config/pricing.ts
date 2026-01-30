@@ -56,10 +56,10 @@ export const TIER_FEATURES = {
   ]
 } as const;
 
-// Free trial configuration
+// Temporary access configuration (before verification)
 export const TRIAL_CONFIG = {
   duration: 30, // days
-  description: '30-day free trial with full access',
+  description: 'Temporary access - verify ownership for permanent free access',
   features: TIER_FEATURES.common
 } as const;
 

@@ -264,14 +264,14 @@ export default function Testimonials() {
               Join {stats?.totalReviews || 0}+ Unimog Owners
             </h3>
             <p className="mb-6 text-white/90">
-              Start your 30-day free trial and experience why Unimog enthusiasts love UnimogCommunityHub
+              Verify your Unimog ownership and get free lifetime access to all features
             </p>
             <Button
               size="lg"
               variant="secondary"
-              onClick={() => navigate('/pricing')}
+              onClick={() => navigate('/verify')}
             >
-              Start Free Trial
+              Verify Ownership
             </Button>
           </CardContent>
         </Card>
