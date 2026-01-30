@@ -37,7 +37,7 @@ const HeroSection = () => {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
             <Button size="lg" className="bg-military-olive hover:bg-military-olive/90 text-white w-full" asChild>
-              <Link to="/signup?plan=trial">
+              <Link to="/verify">
                 {t('hero.cta_claim')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
