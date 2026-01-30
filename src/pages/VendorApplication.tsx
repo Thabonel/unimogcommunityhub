@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Building, DollarSign, BarChart3, Star } from 'lucide-react';
+import { Building, DollarSign, BarChart3, Star, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VendorApplication() {
   const [formData, setFormData] = useState({
@@ -19,6 +21,9 @@ export default function VendorApplication() {
     businessDescription: '',
     tier: 'basic' as 'basic' | 'featured' | 'premium'
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const vendorTiers = [
     {
@@ -67,8 +72,58 @@ export default function VendorApplication() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement vendor application submission
-    console.log('Vendor application submitted:', formData);
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to apply as a vendor",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.businessName || !formData.contactEmail || !formData.businessDescription) {
+      toast({
+        title: "Required fields missing",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          type: 'vendor',
+          tier: formData.tier,
+          metadata: {
+            business_name: formData.businessName,
+            contact_email: formData.contactEmail,
+            phone: formData.phone || null,
+            website: formData.website || null,
+            business_address: formData.businessAddress || null,
+            business_description: formData.businessDescription,
+          }
+        }
+      });
+
+      if (error || !data?.url) {
+        throw new Error(error?.message || 'Failed to create checkout session');
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      console.error('Vendor application error:', err);
+      toast({
+        title: "Application failed",
+        description: err.message || "Could not process application. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -212,19 +267,26 @@ export default function VendorApplication() {
                 <CardContent className="pt-6">
                   <h4 className="font-semibold mb-2">Application Process</h4>
                   <div className="text-sm text-blue-700 space-y-1">
-                    <p>• Applications are reviewed within 2-3 business days</p>
-                    <p>• We may contact you for additional information</p>
-                    <p>• Once approved, you'll receive billing setup instructions</p>
-                    <p>• Your first invoice will be prorated for the current month</p>
+                    <p>• Complete payment to start your vendor subscription</p>
+                    <p>• Your listing will be reviewed within 2-3 business days</p>
+                    <p>• Once approved, your business will appear in the marketplace</p>
+                    <p>• Cancel anytime through your account settings</p>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="flex gap-4">
-                <Button type="submit" className="flex-1">
-                  Submit Application
+                <Button type="submit" className="flex-1" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Submit Application & Pay'
+                  )}
                 </Button>
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" disabled={isLoading}>
                   Save Draft
                 </Button>
               </div>

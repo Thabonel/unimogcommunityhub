@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Heart, Star, Crown } from 'lucide-react';
-import { useSubscription } from '@/hooks/use-subscription';
+import { Heart, Star, Crown, Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export function SupporterTierSelector() {
   const [selectedAmount, setSelectedAmount] = useState(15);
@@ -16,7 +18,9 @@ export function SupporterTierSelector() {
   const [publicName, setPublicName] = useState('');
   const [supporterMessage, setSupporterMessage] = useState('');
   const [showPublicly, setShowPublicly] = useState(true);
-  const { subscribe } = useSubscription();
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const presetAmounts = [
     { amount: 5, label: 'Supporter', icon: Heart, description: 'Help keep the lights on' },
@@ -41,11 +45,54 @@ export function SupporterTierSelector() {
   const annualAmount = finalAmount * 12;
   const annualSavings = annualAmount * 0.15; // 15% discount for annual
 
+  const getTierFromAmount = (amount: number): 'supporter' | 'patron' | 'champion' => {
+    if (amount >= 25) return 'champion';
+    if (amount >= 15) return 'patron';
+    return 'supporter';
+  };
+
   const handleSubscribe = async () => {
-    // This would integrate with Stripe for supporter subscriptions
-    const result = await subscribe('supporter');
-    if (result.success) {
-      // Handle successful subscription
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to become a supporter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const tier = getTierFromAmount(finalAmount);
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          type: 'supporter',
+          tier,
+          isAnnual,
+          metadata: {
+            public_name: publicName || null,
+            message: supporterMessage || null,
+            show_publicly: showPublicly,
+          }
+        }
+      });
+
+      if (error || !data?.url) {
+        throw new Error(error?.message || 'Failed to create checkout session');
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      console.error('Subscription error:', err);
+      toast({
+        title: "Subscription failed",
+        description: err.message || "Could not process subscription. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,10 +242,19 @@ export function SupporterTierSelector() {
             className="w-full"
             size="lg"
             onClick={handleSubscribe}
-            disabled={finalAmount < 5}
+            disabled={finalAmount < 5 || isLoading}
           >
-            <Heart className="h-4 w-4 mr-2" />
-            Support with ${finalAmount}/{isAnnual ? 'year' : 'month'}
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Heart className="h-4 w-4 mr-2" />
+                Support with ${finalAmount}/{isAnnual ? 'year' : 'month'}
+              </>
+            )}
           </Button>
 
           <div className="text-xs text-center text-muted-foreground">
