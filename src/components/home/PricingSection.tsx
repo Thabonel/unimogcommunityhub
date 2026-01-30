@@ -151,7 +151,7 @@ const PricingSection = () => {
             </CardContent>
             <CardFooter>
               <Button asChild variant="outline" className="w-full">
-                <Link to="/support">Support Community</Link>
+                <Link to="/supporter-signup">Support Community</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -198,7 +198,7 @@ const PricingSection = () => {
             </CardContent>
             <CardFooter>
               <Button asChild variant="outline" className="w-full">
-                <Link to="/vendor-apply">Apply as Vendor</Link>
+                <Link to="/vendor-application">Apply as Vendor</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -234,7 +234,7 @@ const PricingSection = () => {
             </div>
             <div className="bg-white p-6 rounded-lg border">
               <h4 className="font-bold mb-2">Is my data secure?</h4>
-              <p className="text-muted-foreground">Yes! Documents are processed securely and only used for verification. We don't store or share your personal information.</p>
+              <p className="text-muted-foreground">Absolutely. Documents are encrypted, stored privately, and auto-deleted after approval. Only admins can view them for verification. Your VIN is never shared externally.</p>
             </div>
           </div>
         </div>

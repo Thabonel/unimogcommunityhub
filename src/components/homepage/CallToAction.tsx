@@ -25,14 +25,14 @@ export function CallToAction() {
           {t('cta.subtitle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Link to="/signup?plan=trial">
+          <Link to="/verify">
             <Button size="lg" className="rounded-md">
               {t('cta.button_claim')}
             </Button>
           </Link>
-          <Link to="/signup">
+          <Link to="/supporter-signup">
             <Button size="lg" variant="outline" className="rounded-md">
-              {t('cta.button_trial')}
+              Support the Community
             </Button>
           </Link>
         </div>
