@@ -11,6 +11,9 @@ import About from '@/pages/About';
 import NotFound from '@/pages/NotFound';
 import Contact from '@/pages/Contact';
 import Pricing from '@/pages/Pricing';
+import NewPricing from '@/pages/NewPricing';
+import SupporterSignup from '@/pages/SupporterSignup';
+import VendorApplication from '@/pages/VendorApplication';
 import Trips from '@/pages/Trips';
 import Events from '@/pages/Events';
 import EventDetail from '@/pages/EventDetail';
@@ -83,7 +86,27 @@ export const router = createBrowserRouter([
       },
       {
         path: '/pricing',
+        element: <NewPricing />
+      },
+      {
+        path: '/old-pricing',
         element: <Pricing />
+      },
+      {
+        path: '/supporter-signup',
+        element: <SupporterSignup />
+      },
+      {
+        path: '/vendor-application',
+        element: <VendorApplication />
+      },
+      {
+        path: '/verify',
+        element: <VerifyOwnership />
+      },
+      {
+        path: '/support',
+        element: <SupporterSignup />
       },
       {
         path: '/privacy',

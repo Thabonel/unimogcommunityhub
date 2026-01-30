@@ -41,7 +41,7 @@ export function useSubscription() {
         .from('user_subscriptions')
         .select(`
           *,
-          verifications!inner(status),
+          verifications(status),
           community_supporters(tier, is_active, monthly_amount)
         `)
         .eq('user_id', user.id)
@@ -50,17 +50,82 @@ export function useSubscription() {
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
         console.error('Error fetching subscription:', fetchError);
         setError(new Error(fetchError.message)); // Set error state
+
+        // If user doesn't have a subscription record, create one
+        if (fetchError.code === 'PGRST116' || fetchError.message.includes('No rows')) {
+          try {
+            console.log('Creating user subscription record...');
+            const { error: createError } = await supabase
+              .from('user_subscriptions')
+              .insert([{
+                user_id: user.id,
+                subscription_status: 'inactive',
+                is_verified: false
+              }])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Error creating subscription:', createError);
+              return;
+            }
+
+            // Recursively call to fetch the newly created subscription
+            await fetchSubscription();
+            return;
+          } catch (createErr) {
+            console.error('Failed to create subscription record:', createErr);
+            return;
+          }
+        }
         return;
       }
-      
+
       if (!data) {
-        setSubscription(null);
+        // User doesn't have subscription record, create one
+        try {
+          console.log('No subscription data found, creating record...');
+          const { data: newData, error: createError } = await supabase
+            .from('user_subscriptions')
+            .insert([{
+              user_id: user.id,
+              subscription_status: 'inactive',
+              is_verified: false
+            }])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating subscription:', createError);
+            return;
+          }
+
+          // Set the newly created subscription
+          const formattedSubscription: Subscription = {
+            id: newData.id,
+            isActive: false,
+            subscriptionLevel: 'free',
+            level: 'free',
+            expiresAt: null,
+            stripeCustomerId: null,
+            stripeSessionId: null,
+            updatedAt: newData.updated_at,
+            isVerified: false,
+            legacySubscriber: false,
+            founderStatus: false,
+            supporterTier: null
+          };
+
+          setSubscription(formattedSubscription);
+        } catch (createErr) {
+          console.error('Failed to create subscription record:', createErr);
+        }
         return;
       }
       
       // Check verification status
       const isVerified = data.is_verified === true ||
-        (data.verifications && data.verifications.status === 'approved');
+        (data.verifications && data.verifications[0] && data.verifications[0].status === 'approved');
 
       // Check supporter status
       const supporterData = data.community_supporters?.[0];
