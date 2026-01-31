@@ -29,12 +29,8 @@ const VENDOR_PRICES = {
   premium: Deno.env.get("STRIPE_VENDOR_PREMIUM_PRICE_ID"),
 };
 
-// Donation price IDs (one-time payments in AUD)
-const DONATION_PRICES: Record<number, string | undefined> = {
-  5: Deno.env.get("STRIPE_DONATION_5_PRICE_ID"),
-  10: Deno.env.get("STRIPE_DONATION_10_PRICE_ID"),
-  20: Deno.env.get("STRIPE_DONATION_20_PRICE_ID"),
-};
+// Donation product ID (for customer-chosen amounts)
+const DONATION_PRODUCT_ID = Deno.env.get("STRIPE_DONATION_PRODUCT_ID");
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -117,19 +113,24 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      // Check if we have a pre-configured price ID for this amount
-      const priceId = DONATION_PRICES[amount];
-      logStep("Processing donation", { amount, donationRef, hasUser: !!userId, hasPriceId: !!priceId });
+      logStep("Processing donation", { amount, donationRef, hasUser: !!userId, hasProductId: !!DONATION_PRODUCT_ID });
 
-      // Build line_items based on whether we have a price ID
+      // Build line_items - use product ID if configured, otherwise create inline product
       let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
 
-      if (priceId) {
-        // Use pre-configured Stripe price
-        lineItems = [{ price: priceId, quantity: 1 }];
-        logStep("Using pre-configured price ID", { priceId });
+      if (DONATION_PRODUCT_ID) {
+        // Use existing product with dynamic amount
+        lineItems = [{
+          price_data: {
+            currency: 'aud',
+            product: DONATION_PRODUCT_ID,
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        }];
+        logStep("Using configured product ID with dynamic amount", { productId: DONATION_PRODUCT_ID });
       } else {
-        // Fallback to price_data for custom amounts
+        // Fallback: create inline product (works without any config)
         lineItems = [{
           price_data: {
             currency: 'aud',
@@ -141,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
           },
           quantity: 1,
         }];
-        logStep("Using dynamic price_data for custom amount");
+        logStep("Using inline product_data (no product ID configured)");
       }
 
       // Create checkout session without requiring a Stripe customer
