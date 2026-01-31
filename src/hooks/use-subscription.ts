@@ -16,7 +16,7 @@ interface Subscription {
   isVerified?: boolean; // Unimog ownership verification
   legacySubscriber?: boolean; // Grandfathered subscriber
   founderStatus?: boolean; // Lifetime member with founder benefits
-  supporterTier?: 'supporter' | 'patron' | 'founder' | null; // Community supporter level
+  activeSupporterTier?: 'supporter' | 'patron' | 'founder' | null; // Community supporter level
 }
 
 export function useSubscription() {
@@ -133,7 +133,7 @@ export function useSubscription() {
             isVerified: false,
             legacySubscriber: false,
             founderStatus: false,
-            supporterTier: null
+            activeSupporterTier: null
           };
 
           setSubscription(formattedSubscription);
@@ -147,7 +147,9 @@ export function useSubscription() {
       const isVerified = data.is_verified === true || verificationStatus === 'approved';
 
       // Check supporter status
-      const supporterTier = supporterRecord?.is_active ? supporterRecord.tier : null;
+      const activeSupporterTier = supporterRecord?.is_active
+        ? (supporterRecord.tier as 'supporter' | 'patron' | 'founder')
+        : null;
 
       // Determine access level - New monetization model
       const hasLegacyAccess = data.subscription_status === 'active' ||
@@ -155,7 +157,7 @@ export function useSubscription() {
         data.is_free_access === true;
 
       const hasVerifiedAccess = isVerified; // Verified Unimog owners get free access
-      const hasSupporterAccess = supporterTier !== null; // Community supporters get access
+      const hasSupporterAccess = activeSupporterTier !== null; // Community supporters get access
 
       const isActive = hasLegacyAccess || hasVerifiedAccess || hasSupporterAccess;
 
@@ -179,7 +181,7 @@ export function useSubscription() {
         isVerified: isVerified,
         legacySubscriber: data.legacy_subscriber === true,
         founderStatus: data.founder_status === true,
-        supporterTier: supporterTier
+        activeSupporterTier: activeSupporterTier
       };
       
       setSubscription(formattedSubscription);
@@ -227,14 +229,14 @@ export function useSubscription() {
   };
 
   const getSupporterTier = () => {
-    return subscription?.supporterTier || null;
+    return subscription?.activeSupporterTier || null;
   };
 
   const getAccessReason = () => {
     if (!subscription?.isActive) return 'none';
     if (subscription.legacySubscriber) return 'legacy_subscriber';
     if (subscription.isVerified) return 'verified_owner';
-    if (subscription.supporterTier) return 'supporter';
+    if (subscription.activeSupporterTier) return 'supporter';
     return 'unknown';
   };
   

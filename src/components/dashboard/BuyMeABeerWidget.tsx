@@ -76,7 +76,7 @@ export function BuyMeABeerWidget() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
+      const response = await supabase.functions.invoke('create-checkout', {
         body: {
           type: 'donation',
           amount: total,
@@ -88,12 +88,18 @@ export function BuyMeABeerWidget() {
         }
       });
 
-      console.log('[Donation] Response:', { data, error });
+      console.log('[Donation] Full response:', response);
 
-      if (error) {
-        console.error('[Donation] Function error:', error);
-        throw new Error(error.message || JSON.stringify(error));
+      // Extract error details from response
+      if (response.error) {
+        // Try to get error message from response data
+        const errorMessage = response.data?.error || response.error.message || 'Unknown error';
+        console.error('[Donation] Function error:', errorMessage, response);
+        throw new Error(errorMessage);
       }
+
+      const data = response.data;
+      console.log('[Donation] Data:', data);
 
       if (!data?.success) {
         console.error('[Donation] Function returned error:', data);
