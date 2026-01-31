@@ -76,6 +76,11 @@ export function BuyMeABeerWidget() {
     setIsLoading(true);
 
     try {
+      // Debug: Check if user has valid session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('[Donation] Current session:', sessionData?.session ? 'Valid' : 'None');
+      console.log('[Donation] Session user:', sessionData?.session?.user?.email);
+
       const response = await supabase.functions.invoke('create-checkout', {
         body: {
           type: 'donation',

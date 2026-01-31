@@ -37,7 +37,14 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     logStep("Function started");
 
+    // Log environment check
+    const hasSupabaseUrl = !!Deno.env.get("SUPABASE_URL");
+    const hasAnonKey = !!Deno.env.get("SUPABASE_ANON_KEY");
+    const hasStripeKey = !!Deno.env.get("STRIPE_SECRET_KEY");
+    logStep("Environment check", { hasSupabaseUrl, hasAnonKey, hasStripeKey });
+
     const body = await req.json();
+    logStep("Request body parsed", { type: body.type, amount: body.amount });
     const {
       type,           // 'donation' | 'supporter' | 'vendor' | 'subscription' | 'lifetime'
       priceId,        // Optional: explicit price ID
