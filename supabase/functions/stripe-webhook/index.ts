@@ -40,44 +40,58 @@ const handler = async (req: Request): Promise<Response> => {
         const session = event.data.object;
 
         if (session.payment_status === "paid") {
-          const userId = session.client_reference_id || session.metadata?.userId;
           const paymentType = session.metadata?.type || session.metadata?.planType || 'subscription';
 
-          if (!userId) {
-            logStep("Error: User ID not found in session");
-            return new Response("User ID not found in session", { status: 400 });
-          }
+          // For donations, user_id is optional (anonymous donations allowed)
+          // For other payment types, user_id is required
+          if (paymentType === 'donation') {
+            // Handle one-time donation (authenticated or anonymous)
+            const userId = session.metadata?.userId || null;
+            const donationRef = session.metadata?.donation_ref || session.client_reference_id;
+            const amount = parseFloat(session.metadata?.amount || '0');
+            const donorName = session.metadata?.donor_name || null;
+            const donorEmail = session.metadata?.donor_email || session.customer_email || null;
+            const message = session.metadata?.message || null;
+            const isAnonymous = session.metadata?.is_anonymous === 'true' || !donorName;
 
-          logStep("Processing payment", { userId, paymentType, sessionId: session.id });
+            logStep("Processing donation", {
+              donationRef,
+              amount,
+              hasUserId: !!userId,
+              donorEmail: donorEmail ? 'provided' : 'none'
+            });
 
-          switch (paymentType) {
-            case 'donation': {
-              // Handle one-time donation
-              const amount = parseFloat(session.metadata?.amount || '0');
-              const donorName = session.metadata?.donor_name || null;
-              const message = session.metadata?.message || null;
-              const isAnonymous = session.metadata?.is_anonymous === 'true';
+            const { error: donationError } = await supabase
+              .from("donations")
+              .insert({
+                user_id: userId || null,
+                amount,
+                currency: session.currency?.toUpperCase() || 'AUD',
+                donor_name: isAnonymous ? null : donorName,
+                donor_email: donorEmail,
+                message: isAnonymous ? null : message,
+                is_anonymous: isAnonymous,
+                stripe_session_id: session.id,
+                stripe_payment_intent_id: session.payment_intent,
+              });
 
-              const { error: donationError } = await supabase
-                .from("donations")
-                .insert({
-                  user_id: userId,
-                  amount,
-                  currency: session.currency?.toUpperCase() || 'AUD',
-                  donor_name: isAnonymous ? null : donorName,
-                  message: isAnonymous ? null : message,
-                  is_anonymous: isAnonymous,
-                  stripe_session_id: session.id,
-                  stripe_payment_intent_id: session.payment_intent,
-                });
-
-              if (donationError) {
-                logStep("Error inserting donation", { error: donationError.message });
-              } else {
-                logStep("Donation recorded", { amount, userId });
-              }
-              break;
+            if (donationError) {
+              logStep("Error inserting donation", { error: donationError.message });
+            } else {
+              logStep("Donation recorded", { amount, userId: userId || 'anonymous', donationRef });
             }
+          } else {
+            // Non-donation payments require user_id
+            const userId = session.client_reference_id || session.metadata?.userId;
+
+            if (!userId) {
+              logStep("Error: User ID not found in session");
+              return new Response("User ID not found in session", { status: 400 });
+            }
+
+            logStep("Processing payment", { userId, paymentType, sessionId: session.id });
+
+            switch (paymentType) {
 
             case 'supporter': {
               // Handle supporter subscription
@@ -238,6 +252,7 @@ const handler = async (req: Request): Promise<Response> => {
 
               logStep("Subscription created/updated", { planType, userId });
               break;
+            }
             }
           }
         }

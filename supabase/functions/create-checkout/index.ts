@@ -53,7 +53,7 @@ const handler = async (req: Request): Promise<Response> => {
       amount,         // For donations: amount in dollars
       isAnnual,       // For supporter: annual billing
       trialDays,
-      metadata = {}   // Additional metadata (donor_name, message, etc.)
+      metadata = {}   // Additional metadata (donor_name, message, donor_email, etc.)
     } = body;
 
     const checkoutType = type || (planType ? 'subscription' : null);
@@ -64,12 +64,112 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Request parsed", { checkoutType, tier, amount, isAnnual });
 
-    // Initialize Supabase client
+    // Initialize Stripe
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
+    }
+
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: "2023-10-16",
+    });
+
+    logStep("Stripe initialized");
+
+    const origin = req.headers.get("origin") || "https://unimogcommunityhub.com";
+
+    // DONATION TYPE: No authentication required - like Buy Me a Coffee
+    if (checkoutType === 'donation') {
+      if (!amount || amount < 3) {
+        throw new Error("Donation amount must be at least $3");
+      }
+
+      // Generate unique donation reference ID
+      const donationRef = `donation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Try to get user if authenticated (optional)
+      let userId: string | null = null;
+      let userEmail: string | null = null;
+
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
+          const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+
+          const token = authHeader.replace("Bearer ", "");
+          const { data: { user } } = await supabase.auth.getUser(token);
+          if (user) {
+            userId = user.id;
+            userEmail = user.email || null;
+            logStep("Donation from authenticated user", { userId, email: userEmail });
+          }
+        } catch (e) {
+          logStep("Auth check failed, proceeding as anonymous", { error: e.message });
+        }
+      }
+
+      logStep("Processing anonymous donation", { amount, donationRef, hasUser: !!userId });
+
+      // Create checkout session without requiring a Stripe customer
+      const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+        line_items: [{
+          price_data: {
+            currency: 'aud',
+            product_data: {
+              name: 'Community Donation',
+              description: 'Support the Unimog Community Hub',
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        }],
+        mode: 'payment',
+        success_url: `${origin}/dashboard?donation=success`,
+        cancel_url: `${origin}/dashboard?donation=canceled`,
+        client_reference_id: donationRef,
+        metadata: {
+          donation_ref: donationRef,
+          userId: userId || '',
+          type: 'donation',
+          amount: amount.toString(),
+          donor_name: metadata.donor_name || '',
+          donor_email: metadata.donor_email || '',
+          message: metadata.message || '',
+          is_anonymous: metadata.is_anonymous ? 'true' : 'false',
+        },
+      };
+
+      // If we have a user email or provided email, pre-fill it
+      if (userEmail) {
+        sessionConfig.customer_email = userEmail;
+      } else if (metadata.donor_email) {
+        sessionConfig.customer_email = metadata.donor_email;
+      }
+
+      logStep("Creating donation checkout session");
+      const session = await stripe.checkout.sessions.create(sessionConfig);
+
+      logStep("Donation checkout session created", {
+        sessionId: session.id,
+        url: session.url?.substring(0, 50) + '...'
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, url: session.url }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // ALL OTHER TYPES: Require authentication
     const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
     const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the user from the JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("Missing Authorization header");
@@ -84,19 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Initialize Stripe
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY environment variable is not set");
-    }
-
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2023-10-16",
-    });
-
-    logStep("Stripe initialized");
-
-    // Get or create Stripe customer
+    // Get or create Stripe customer for authenticated flows
     const { data: customers } = await stripe.customers.list({
       email: user.email,
       limit: 1
@@ -118,43 +206,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Build checkout session based on type
     let sessionConfig: Stripe.Checkout.SessionCreateParams;
-    const origin = req.headers.get("origin") || "https://unimogcommunityhub.com";
 
     switch (checkoutType) {
-      case 'donation': {
-        // One-time donation with dynamic amount using price_data
-        if (!amount || amount < 3) {
-          throw new Error("Donation amount must be at least $3");
-        }
-
-        sessionConfig = {
-          customer: customerId,
-          line_items: [{
-            price_data: {
-              currency: 'aud',
-              product_data: {
-                name: 'Community Donation',
-                description: 'Support the Unimog Community Hub',
-              },
-              unit_amount: Math.round(amount * 100), // Convert to cents
-            },
-            quantity: 1,
-          }],
-          mode: 'payment',
-          success_url: `${origin}/dashboard?donation=success`,
-          cancel_url: `${origin}/dashboard?donation=canceled`,
-          client_reference_id: user.id,
-          metadata: {
-            userId: user.id,
-            type: 'donation',
-            amount: amount.toString(),
-            donor_name: metadata.donor_name || '',
-            message: metadata.message || '',
-            is_anonymous: metadata.is_anonymous ? 'true' : 'false',
-          },
-        };
-        break;
-      }
 
       case 'supporter': {
         // Supporter subscription tiers
