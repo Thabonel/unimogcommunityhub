@@ -20,6 +20,7 @@ export function BuyMeABeerWidget() {
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<DonationStats | null>(null);
   const [donorName, setDonorName] = useState('');
+  const [donorEmail, setDonorEmail] = useState('');
   const [message, setMessage] = useState('');
   const [showDetails, setShowDetails] = useState(false);
   const { user } = useAuth();
@@ -55,15 +56,6 @@ export function BuyMeABeerWidget() {
   };
 
   const handleDonate = async () => {
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to make a donation",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (total < 3) {
       toast({
         title: "Minimum donation",
@@ -76,10 +68,8 @@ export function BuyMeABeerWidget() {
     setIsLoading(true);
 
     try {
-      // Debug: Check if user has valid session
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('[Donation] Current session:', sessionData?.session ? 'Valid' : 'None');
-      console.log('[Donation] Session user:', sessionData?.session?.user?.email);
+      console.log('[Donation] Starting donation flow, amount:', total);
+      console.log('[Donation] User logged in:', !!user);
 
       const response = await supabase.functions.invoke('create-checkout', {
         body: {
@@ -87,6 +77,7 @@ export function BuyMeABeerWidget() {
           amount: total,
           metadata: {
             donor_name: donorName || null,
+            donor_email: donorEmail || null,
             message: message || null,
             is_anonymous: !donorName,
           }
@@ -95,9 +86,7 @@ export function BuyMeABeerWidget() {
 
       console.log('[Donation] Full response:', response);
 
-      // Extract error details from response
       if (response.error) {
-        // Try to get error message from response data
         const errorMessage = response.data?.error || response.error.message || 'Unknown error';
         console.error('[Donation] Function error:', errorMessage, response);
         throw new Error(errorMessage);
@@ -201,6 +190,21 @@ export function BuyMeABeerWidget() {
                     className="h-8 text-sm border-amber-200 focus:border-amber-400"
                   />
                 </div>
+                {!user && (
+                  <div>
+                    <Label htmlFor="donor-email" className="text-xs text-amber-700">
+                      Email (optional, for receipt)
+                    </Label>
+                    <Input
+                      id="donor-email"
+                      type="email"
+                      value={donorEmail}
+                      onChange={(e) => setDonorEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="h-8 text-sm border-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="message" className="text-xs text-amber-700">
                     Message (optional)
