@@ -29,6 +29,13 @@ const VENDOR_PRICES = {
   premium: Deno.env.get("STRIPE_VENDOR_PREMIUM_PRICE_ID"),
 };
 
+// Donation price IDs (one-time payments in AUD)
+const DONATION_PRICES: Record<number, string | undefined> = {
+  5: Deno.env.get("STRIPE_DONATION_5_PRICE_ID"),
+  10: Deno.env.get("STRIPE_DONATION_10_PRICE_ID"),
+  20: Deno.env.get("STRIPE_DONATION_20_PRICE_ID"),
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -110,11 +117,20 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      logStep("Processing anonymous donation", { amount, donationRef, hasUser: !!userId });
+      // Check if we have a pre-configured price ID for this amount
+      const priceId = DONATION_PRICES[amount];
+      logStep("Processing donation", { amount, donationRef, hasUser: !!userId, hasPriceId: !!priceId });
 
-      // Create checkout session without requiring a Stripe customer
-      const sessionConfig: Stripe.Checkout.SessionCreateParams = {
-        line_items: [{
+      // Build line_items based on whether we have a price ID
+      let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+
+      if (priceId) {
+        // Use pre-configured Stripe price
+        lineItems = [{ price: priceId, quantity: 1 }];
+        logStep("Using pre-configured price ID", { priceId });
+      } else {
+        // Fallback to price_data for custom amounts
+        lineItems = [{
           price_data: {
             currency: 'aud',
             product_data: {
@@ -124,7 +140,13 @@ const handler = async (req: Request): Promise<Response> => {
             unit_amount: Math.round(amount * 100),
           },
           quantity: 1,
-        }],
+        }];
+        logStep("Using dynamic price_data for custom amount");
+      }
+
+      // Create checkout session without requiring a Stripe customer
+      const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+        line_items: lineItems,
         mode: 'payment',
         success_url: `${origin}/dashboard?donation=success`,
         cancel_url: `${origin}/dashboard?donation=canceled`,

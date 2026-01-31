@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Beer, Plus, Minus, Loader2 } from 'lucide-react';
+import { Beer, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ interface DonationStats {
 }
 
 export function BuyMeABeerWidget() {
-  const [total, setTotal] = useState(0);
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<DonationStats | null>(null);
   const [donorName, setDonorName] = useState('');
@@ -26,10 +26,10 @@ export function BuyMeABeerWidget() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const beerAmounts = [
-    { amount: 5, label: '$5' },
-    { amount: 10, label: '$10' },
-    { amount: 20, label: '$20' },
+  const donationTiers = [
+    { amount: 5, label: '$5', emoji: '🍺' },
+    { amount: 10, label: '$10', emoji: '🍻' },
+    { amount: 20, label: '$20', emoji: '🎉' },
   ];
 
   useEffect(() => {
@@ -47,19 +47,15 @@ export function BuyMeABeerWidget() {
     }
   };
 
-  const addAmount = (amount: number) => {
-    setTotal(prev => prev + amount);
-  };
-
-  const clearTotal = () => {
-    setTotal(0);
+  const selectAmount = (amount: number) => {
+    setSelectedAmount(prev => prev === amount ? null : amount);
   };
 
   const handleDonate = async () => {
-    if (total < 3) {
+    if (!selectedAmount) {
       toast({
-        title: "Minimum donation",
-        description: "Minimum donation amount is $3",
+        title: "Select an amount",
+        description: "Please select a donation amount",
         variant: "destructive"
       });
       return;
@@ -68,13 +64,13 @@ export function BuyMeABeerWidget() {
     setIsLoading(true);
 
     try {
-      console.log('[Donation] Starting donation flow, amount:', total);
+      console.log('[Donation] Starting donation flow, amount:', selectedAmount);
       console.log('[Donation] User logged in:', !!user);
 
       const response = await supabase.functions.invoke('create-checkout', {
         body: {
           type: 'donation',
-          amount: total,
+          amount: selectedAmount,
           metadata: {
             donor_name: donorName || null,
             donor_email: donorEmail || null,
@@ -132,42 +128,29 @@ export function BuyMeABeerWidget() {
           If you find the site useful, please donate if you can afford it.
         </p>
 
-        {/* Beer buttons */}
+        {/* Donation tier buttons */}
         <div className="flex gap-2">
-          {beerAmounts.map((beer) => (
+          {donationTiers.map((tier) => (
             <Button
-              key={beer.amount}
-              variant="outline"
+              key={tier.amount}
+              variant={selectedAmount === tier.amount ? "default" : "outline"}
               size="sm"
-              onClick={() => addAmount(beer.amount)}
-              className="flex-1 border-amber-300 hover:bg-amber-100 hover:border-amber-400"
+              onClick={() => selectAmount(tier.amount)}
+              className={`flex-1 ${
+                selectedAmount === tier.amount
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-500'
+                  : 'border-amber-300 hover:bg-amber-100 hover:border-amber-400'
+              }`}
             >
-              <Plus className="h-3 w-3 mr-1" />
-              {beer.label}
+              {selectedAmount === tier.amount && <Check className="h-3 w-3 mr-1" />}
+              <span className="mr-1">{tier.emoji}</span>
+              {tier.label}
             </Button>
           ))}
         </div>
 
-        {/* Total display */}
-        <div className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-amber-200">
-          <span className="text-sm font-medium text-amber-900">Total:</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-amber-700">${total}</span>
-            {total > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearTotal}
-                className="h-6 w-6 p-0 text-amber-500 hover:text-amber-700"
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
         {/* Optional details toggle */}
-        {total > 0 && (
+        {selectedAmount && (
           <>
             <button
               onClick={() => setShowDetails(!showDetails)}
@@ -225,7 +208,7 @@ export function BuyMeABeerWidget() {
         {/* Donate button */}
         <Button
           onClick={handleDonate}
-          disabled={total < 3 || isLoading}
+          disabled={!selectedAmount || isLoading}
           className="w-full bg-amber-500 hover:bg-amber-600 text-white"
         >
           {isLoading ? (
@@ -236,7 +219,7 @@ export function BuyMeABeerWidget() {
           ) : (
             <>
               <Beer className="h-4 w-4 mr-2" />
-              {total > 0 ? `Donate $${total}` : 'Tap amounts above'}
+              {selectedAmount ? `Donate $${selectedAmount}` : 'Select an amount'}
             </>
           )}
         </Button>
