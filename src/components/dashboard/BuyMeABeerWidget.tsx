@@ -88,13 +88,25 @@ export function BuyMeABeerWidget() {
         }
       });
 
-      if (error || !data?.url) {
-        throw new Error(error?.message || 'Failed to create checkout session');
+      console.log('[Donation] Response:', { data, error });
+
+      if (error) {
+        console.error('[Donation] Function error:', error);
+        throw new Error(error.message || JSON.stringify(error));
+      }
+
+      if (!data?.success) {
+        console.error('[Donation] Function returned error:', data);
+        throw new Error(data?.error || 'Checkout session creation failed');
+      }
+
+      if (!data?.url) {
+        throw new Error('No checkout URL returned');
       }
 
       window.location.href = data.url;
     } catch (err: any) {
-      console.error('Donation error:', err);
+      console.error('[Donation] Error:', err);
       toast({
         title: "Donation failed",
         description: err.message || "Could not process donation. Please try again.",
