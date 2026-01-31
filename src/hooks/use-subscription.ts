@@ -37,15 +37,35 @@ export function useSubscription() {
       setIsLoading(true);
       setError(null); // Reset error state before fetching
       
+      // Fetch subscription data (without embedded joins - tables don't have FK relationship)
       const { data, error: fetchError } = await supabase
         .from('user_subscriptions')
-        .select(`
-          *,
-          verifications(status),
-          community_supporters(tier, is_active, monthly_amount)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .single();
+
+      // Fetch verification status separately
+      let verificationStatus: string | null = null;
+      const { data: verificationData } = await supabase
+        .from('verifications')
+        .select('status')
+        .eq('user_id', user.id)
+        .eq('status', 'approved')
+        .maybeSingle();
+      if (verificationData) {
+        verificationStatus = verificationData.status;
+      }
+
+      // Fetch supporter status separately
+      let supporterRecord: { tier: string; is_active: boolean; monthly_amount: number } | null = null;
+      const { data: supporterData } = await supabase
+        .from('community_supporters')
+        .select('tier, is_active, monthly_amount')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (supporterData) {
+        supporterRecord = supporterData;
+      }
         
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
         console.error('Error fetching subscription:', fetchError);
@@ -124,12 +144,10 @@ export function useSubscription() {
       }
       
       // Check verification status
-      const isVerified = data.is_verified === true ||
-        (data.verifications && data.verifications[0] && data.verifications[0].status === 'approved');
+      const isVerified = data.is_verified === true || verificationStatus === 'approved';
 
       // Check supporter status
-      const supporterData = data.community_supporters?.[0];
-      const supporterTier = supporterData?.is_active ? supporterData.tier : null;
+      const supporterTier = supporterRecord?.is_active ? supporterRecord.tier : null;
 
       // Determine access level - New monetization model
       const hasLegacyAccess = data.subscription_status === 'active' ||
