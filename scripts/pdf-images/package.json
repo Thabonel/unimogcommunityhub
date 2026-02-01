@@ -1,0 +1,20 @@
+{
+  "name": "pdf-images-renderer",
+  "version": "1.0.0",
+  "description": "Render PDF pages to images for Barry AI visual content",
+  "scripts": {
+    "render": "ts-node render-pages.ts",
+    "batch": "ts-node batch-render.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "pdfjs-dist": "^3.11.174",
+    "@napi-rs/canvas": "^0.1.56",
+    "sharp": "^0.33.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
