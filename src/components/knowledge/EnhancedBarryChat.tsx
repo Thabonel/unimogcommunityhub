@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSimpleBarry, ManualReference } from '@/hooks/use-simple-barry';
 import { ManualCitation } from './ManualCitation';
+import { BarryMessageContent } from './BarryMessageContent';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -295,9 +296,13 @@ export function EnhancedBarryChat({
                           : 'bg-muted'
                       )}
                     >
-                      <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-                        {message.content}
-                      </div>
+                      {message.role === 'assistant' ? (
+                        <BarryMessageContent content={message.content} />
+                      ) : (
+                        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                          {message.content}
+                        </div>
+                      )}
 
                       {/* Manual Citations - shown inline for assistant messages */}
                       {message.role === 'assistant' && message.manualReferences && message.manualReferences.length > 0 && (
