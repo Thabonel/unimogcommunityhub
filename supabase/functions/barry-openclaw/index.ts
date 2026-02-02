@@ -92,6 +92,105 @@ const SAFETY_TRIGGERS: Record<string, string[]> = {
   fuel_system: ['fuel', 'diesel', 'injector', 'fuel pump']
 };
 
+// ============ SECURITY GUARDRAILS ============
+const MAX_QUERY_LENGTH = 2000;  // Max characters per query
+const MAX_MESSAGES = 20;        // Max conversation history
+const MAX_TOTAL_INPUT = 10000;  // Max total input size
+
+// Prompt injection patterns to block
+const INJECTION_PATTERNS = [
+  /ignore\s+(all\s+)?(previous|above|prior)\s+(instructions?|prompts?|rules?)/i,
+  /disregard\s+(all\s+)?(previous|above|prior)/i,
+  /you\s+are\s+now\s+/i,
+  /new\s+instructions?:/i,
+  /system\s*:\s*/i,
+  /\[SYSTEM\]/i,
+  /admin\s+override/i,
+  /bypass\s+(security|filter|guard)/i,
+  /pretend\s+you('re|\s+are)\s+/i,
+  /act\s+as\s+(if|a)\s+/i,
+  /roleplay\s+as/i,
+  /jailbreak/i,
+  /DAN\s+mode/i
+];
+
+// SQL injection patterns to sanitize
+const SQL_INJECTION_PATTERNS = [
+  /(['";])\s*(OR|AND)\s+\1/gi,
+  /UNION\s+SELECT/gi,
+  /DROP\s+TABLE/gi,
+  /DELETE\s+FROM/gi,
+  /INSERT\s+INTO/gi,
+  /UPDATE\s+.*\s+SET/gi,
+  /--\s*$/gm,
+  /;\s*--/g
+];
+
+function sanitizeInput(input: string): string {
+  let sanitized = input;
+  // Remove potential SQL injection attempts
+  for (const pattern of SQL_INJECTION_PATTERNS) {
+    sanitized = sanitized.replace(pattern, '');
+  }
+  // Remove control characters
+  sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  return sanitized.trim();
+}
+
+function detectPromptInjection(query: string): boolean {
+  for (const pattern of INJECTION_PATTERNS) {
+    if (pattern.test(query)) {
+      console.warn('[Security] Prompt injection attempt detected');
+      return true;
+    }
+  }
+  return false;
+}
+
+function validateInputSize(messages: ChatMessage[], query: string): { valid: boolean; error?: string } {
+  // Check query length
+  if (query.length > MAX_QUERY_LENGTH) {
+    return { valid: false, error: `Query too long. Maximum ${MAX_QUERY_LENGTH} characters.` };
+  }
+
+  // Check message count
+  if (messages.length > MAX_MESSAGES) {
+    return { valid: false, error: `Too many messages. Maximum ${MAX_MESSAGES} in conversation.` };
+  }
+
+  // Check total input size
+  const totalSize = messages.reduce((sum, m) => sum + m.content.length, 0) + query.length;
+  if (totalSize > MAX_TOTAL_INPUT) {
+    return { valid: false, error: 'Total input too large. Please start a new conversation.' };
+  }
+
+  return { valid: true };
+}
+
+// Simple in-memory rate limiter (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 20; // 20 requests per minute per user
+
+function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const userLimit = rateLimitMap.get(userId);
+
+  if (!userLimit || now > userLimit.resetTime) {
+    // Reset or create new window
+    rateLimitMap.set(userId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+
+  if (userLimit.count >= RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfter = Math.ceil((userLimit.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  userLimit.count++;
+  return { allowed: true };
+}
+
 // Types
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -512,6 +611,65 @@ serve(async (req) => {
       );
     }
 
+    // ============ SECURITY GUARDRAILS ============
+    const lastMsg = messages[messages.length - 1];
+    const rawQuery = lastMsg?.content || '';
+
+    // 1. Validate input sizes
+    const sizeCheck = validateInputSize(messages, rawQuery);
+    if (!sizeCheck.valid) {
+      console.warn('[Security] Input size validation failed:', sizeCheck.error);
+      return new Response(JSON.stringify({
+        content: sizeCheck.error,
+        manualReferences: [],
+        knowledgeMode: 'blocked',
+        searchResultCount: 0,
+        skill_chain: ['security-guard'],
+        execution_time_ms: performance.now() - startTime
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // 2. Check for prompt injection attempts
+    if (detectPromptInjection(rawQuery)) {
+      console.warn('[Security] Prompt injection blocked');
+      return new Response(JSON.stringify({
+        content: "I can only help with Unimog technical questions. Please ask about maintenance, repairs, or specifications.",
+        manualReferences: [],
+        knowledgeMode: 'blocked',
+        searchResultCount: 0,
+        skill_chain: ['security-guard'],
+        execution_time_ms: performance.now() - startTime
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // 3. Sanitize input for database queries
+    const sanitizedMessages = messages.map(m => ({
+      ...m,
+      content: sanitizeInput(m.content || '')
+    }));
+
+    // 4. Check rate limit (using userId from request or IP-based fallback)
+    const rateLimitKey = userId || req.headers.get('x-forwarded-for') || 'anonymous';
+    const rateCheck = checkRateLimit(rateLimitKey);
+    if (!rateCheck.allowed) {
+      console.warn('[Security] Rate limit exceeded for:', rateLimitKey);
+      return new Response(JSON.stringify({
+        content: `Too many requests. Please wait ${rateCheck.retryAfter} seconds before trying again.`,
+        manualReferences: [],
+        knowledgeMode: 'rate_limited',
+        searchResultCount: 0,
+        skill_chain: ['security-guard'],
+        execution_time_ms: performance.now() - startTime
+      }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateCheck.retryAfter || 60)
+        }
+      });
+    }
+
     // Initialize Supabase clients
     const authHeader = req.headers.get('Authorization');
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -529,8 +687,9 @@ serve(async (req) => {
       if (authUser) user = authUser;
     }
 
-    const lastUserMessage = messages[messages.length - 1];
-    const userQuery = lastUserMessage.content || '';
+    // Use sanitized inputs from security guardrails
+    const lastUserMessage = sanitizedMessages[sanitizedMessages.length - 1];
+    const userQuery = sanitizeInput(lastUserMessage.content || '');
 
     console.log(`[Barry-OpenClaw] Query: ${userQuery.substring(0, 100)}...`);
 
@@ -610,7 +769,7 @@ serve(async (req) => {
       domainResult.task,
       manualResult.context,
       rpsResult.context,
-      messages.slice(0, -1) // Exclude current message from history
+      sanitizedMessages.slice(0, -1) // Exclude current message from history (sanitized)
     );
 
     console.log(`[Generator] Response length: ${responseContent.length}, Citations: ${citations.join(', ')}`);
@@ -667,11 +826,11 @@ serve(async (req) => {
     // Add RPS illustrations
     manualReferences.push(...rpsResult.illustrations);
 
-    // Log to chat_logs
+    // Log to chat_logs (use sanitized messages)
     try {
       await supabaseAdmin.from('chat_logs').insert({
         user_id: user.id,
-        messages: messages,
+        messages: sanitizedMessages,
         response: finalContent,
         model: ANTHROPIC_MODEL,
         knowledge_source: 'openclaw',
