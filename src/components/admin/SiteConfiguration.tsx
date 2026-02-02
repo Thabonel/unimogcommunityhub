@@ -1,13 +1,12 @@
-
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsSection } from "./settings/SettingsSection";
 import { AnswerEngineSettingsSection } from './settings/AnswerEngineSettingsSection';
+import { OpenClawSettingsSection } from './settings/OpenClawSettingsSection';
 import { NotificationSettingsSection } from "./settings/NotificationSettingsSection";
 import { TrialSettingsSection } from "./settings/TrialSettingsSection";
 import { BrandingSection } from "./settings/BrandingSection";
 import { SecuritySettingsSection } from "./settings/SecuritySettingsSection";
-import { Settings, Bell, Clock, Palette, Shield } from "lucide-react";
+import { Settings, Bell, Clock, Palette, Shield, Bot } from "lucide-react";
 
 export const SiteConfiguration = () => {
   return (
@@ -33,6 +32,10 @@ export const SiteConfiguration = () => {
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             <span>Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            <span>AI Engine</span>
           </TabsTrigger>
         </TabsList>
 
@@ -133,13 +136,17 @@ export const SiteConfiguration = () => {
         </TabsContent>
 
         <TabsContent value="security">
-          <SettingsSection 
+          <SettingsSection
             title="Security Settings"
             description="Configure authentication and security options"
             icon={Shield}
           >
             <SecuritySettingsSection />
           </SettingsSection>
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <OpenClawSettingsSection />
         </TabsContent>
       </Tabs>
     </div>
