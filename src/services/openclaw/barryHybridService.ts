@@ -25,6 +25,8 @@ export interface HybridResponse extends BarryOpenClawResponse {
 export class BarryHybridService {
   private static instance: BarryHybridService;
   private config: HybridServiceConfig;
+  private configLoaded: boolean = false;
+  private configLoadPromise: Promise<void> | null = null;
 
   private constructor() {
     // Default configuration - start with 0% OpenClaw, increase gradually
@@ -33,6 +35,58 @@ export class BarryHybridService {
       enableFallback: true,
       trackMetrics: true
     };
+    // Load config from database on construction
+    this.loadConfigFromDatabase();
+  }
+
+  /**
+   * Load configuration from barry_openclaw_config database table
+   */
+  private async loadConfigFromDatabase(): Promise<void> {
+    if (this.configLoadPromise) return this.configLoadPromise;
+
+    this.configLoadPromise = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('barry_openclaw_config')
+          .select('config_key, config_value');
+
+        if (error) {
+          console.warn('[BarryHybrid] Failed to load config from DB:', error);
+          return;
+        }
+
+        if (data) {
+          for (const row of data) {
+            if (row.config_key === 'openclaw_percentage') {
+              this.config.openclawPercentage = typeof row.config_value === 'number'
+                ? row.config_value
+                : parseInt(String(row.config_value)) || 0;
+            } else if (row.config_key === 'enable_fallback') {
+              this.config.enableFallback = row.config_value === true || row.config_value === 'true';
+            } else if (row.config_key === 'track_metrics') {
+              this.config.trackMetrics = row.config_value === true || row.config_value === 'true';
+            }
+          }
+          console.log(`[BarryHybrid] Config loaded from DB: OpenClaw ${this.config.openclawPercentage}%`);
+        }
+
+        this.configLoaded = true;
+      } catch (err) {
+        console.warn('[BarryHybrid] Error loading config:', err);
+      }
+    })();
+
+    return this.configLoadPromise;
+  }
+
+  /**
+   * Ensure config is loaded before proceeding
+   */
+  private async ensureConfigLoaded(): Promise<void> {
+    if (!this.configLoaded && this.configLoadPromise) {
+      await this.configLoadPromise;
+    }
   }
 
   static getInstance(): BarryHybridService {
@@ -43,7 +97,7 @@ export class BarryHybridService {
   }
 
   /**
-   * Update hybrid service configuration
+   * Update hybrid service configuration (local only - use admin UI for persistent changes)
    */
   setConfig(config: Partial<HybridServiceConfig>): void {
     this.config = { ...this.config, ...config };
@@ -55,6 +109,15 @@ export class BarryHybridService {
    */
   getConfig(): HybridServiceConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Refresh config from database (call after admin changes)
+   */
+  async refreshConfig(): Promise<void> {
+    this.configLoaded = false;
+    this.configLoadPromise = null;
+    await this.loadConfigFromDatabase();
   }
 
   /**
@@ -98,10 +161,13 @@ export class BarryHybridService {
     location?: { latitude: number; longitude: number },
     userId?: string
   ): Promise<HybridResponse> {
+    // Ensure config is loaded from database before routing
+    await this.ensureConfigLoaded();
+
     const useOpenClaw = this.shouldUseOpenClaw();
     const startTime = performance.now();
 
-    console.log(`[BarryHybrid] Routing to ${useOpenClaw ? 'OpenClaw' : 'Legacy'}`);
+    console.log(`[BarryHybrid] Routing to ${useOpenClaw ? 'OpenClaw' : 'Legacy'} (${this.config.openclawPercentage}% OpenClaw)`);
 
     try {
       let response: BarryOpenClawResponse;
