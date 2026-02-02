@@ -263,11 +263,11 @@ async function executeManualSearch(
 
     if (chunks.length === 0) return { found: false, chunks: [], context: '' };
 
-    // Build context string for Claude
-    let context = '=== MANUAL CONTENT ===\n\n';
+    // Build context string for Claude - include substantial content so Claude can reference it
+    let context = '=== MANUAL CONTENT (Real data from U435 Workshop Manual) ===\n\n';
     chunks.forEach((chunk: any, i: number) => {
-      context += `[Page ${chunk.page_number}] ${chunk.section_title || 'Manual Entry'}\n`;
-      context += `${chunk.content?.substring(0, 500) || ''}...\n\n`;
+      context += `--- Page ${chunk.page_number}: ${chunk.section_title || 'Manual Entry'} ---\n`;
+      context += `${chunk.content?.substring(0, 1500) || ''}\n\n`;
     });
 
     return { found: true, chunks, context };
@@ -374,18 +374,36 @@ async function executeResponseGenerator(
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
-  // Build system prompt
+  // Build system prompt with clear instructions about real manual access
   let systemPrompt = BARRY_PERSONA;
+
+  systemPrompt += `\n\n=== IMPORTANT: YOU HAVE REAL MANUAL ACCESS ===
+You have DIRECT ACCESS to the actual U435 Workshop Manual database. The content below is REAL data extracted from official Unimog manuals - not hypothetical or placeholder data.
+
+When you cite a page number, the user's interface will AUTOMATICALLY display that PDF page. So when you say "see page 632", the user will actually see page 632 from the workshop manual.
+
+DO NOT say things like:
+- "I don't have access to manuals"
+- "I can't fetch those pages"
+- "You'll need to find the manual yourself"
+
+You DO have the manual data. USE IT. Reference the specific content provided below.
+`;
+
   systemPrompt += `\n\n${manualContext}`;
   if (rpsContext) systemPrompt += `\n${rpsContext}`;
 
   systemPrompt += `\n\n=== RESPONSE INSTRUCTIONS ===
 Task type: ${task}
-CRITICAL:
-1. ALWAYS cite page numbers: "According to page X..."
-2. For diagrams, use: ![Description](URL)
-3. Be SELECTIVE - only cite pages that DIRECTLY answer the question
-4. If info isn't in context, say "I don't have that in my manual database"`;
+
+MANDATORY BEHAVIOR:
+1. The manual content above is REAL - you MUST reference and cite it
+2. For every technical answer, cite: "According to page X..." or "See page X for..."
+3. The user's interface DISPLAYS the cited pages automatically - they will SEE the PDF
+4. For RPS diagrams, include the markdown image - it renders in the chat
+5. Quote specific values (torque specs, capacities, steps) from the content
+6. NEVER say "I don't have access" or "I can't fetch" - you HAVE the data above
+7. Only say "not covered in my database" if no content above relates to the query`;
 
   // Build messages
   const messages = [
@@ -608,11 +626,31 @@ serve(async (req) => {
     }
 
     // Build manual references from chunks and RPS
+    // Always include found chunks - prioritize cited ones but include all for user reference
     const manualReferences: ManualReference[] = [];
+    const addedPages = new Set<number>();
 
-    // Add manual chunk references
+    // First add explicitly cited pages
     for (const chunk of manualResult.chunks) {
-      if (citations.includes(chunk.page_number)) {
+      if (citations.includes(chunk.page_number) && !addedPages.has(chunk.page_number)) {
+        addedPages.add(chunk.page_number);
+        manualReferences.push({
+          type: 'u435_openclaw',
+          title: chunk.section_title || 'Manual Entry',
+          page_number: chunk.page_number,
+          original_page: chunk.page_number,
+          pdf_page: chunk.page_number,
+          storage_url: chunk.storage_url || '',
+          manual_type: 'U435',
+          content_preview: chunk.content?.substring(0, 200)
+        });
+      }
+    }
+
+    // Then add other found pages (up to 5 total manual refs)
+    for (const chunk of manualResult.chunks) {
+      if (!addedPages.has(chunk.page_number) && manualReferences.length < 5) {
+        addedPages.add(chunk.page_number);
         manualReferences.push({
           type: 'u435_openclaw',
           title: chunk.section_title || 'Manual Entry',
