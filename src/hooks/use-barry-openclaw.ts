@@ -33,16 +33,16 @@ export interface ChatMessage {
 }
 
 export interface ManualReference {
-  type: string;
+  type?: string;
   title: string;
   filename?: string;
   chapter_filename?: string;
-  original_page: number;
-  pdf_page: number;
-  storage_url: string;
+  original_page?: number;
+  pdf_page?: number;
+  storage_url?: string;
   chapter_number?: number;
-  manual_type: string;
-  page_number?: number;
+  manual_type?: string;
+  page_number: number;  // Required for ManualCitation compatibility
   section_title?: string;
   content?: string;
   page_image_url?: string;
@@ -65,9 +65,15 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
     const enrichedRefs = await Promise.all(
       references.map(async (ref) => {
         try {
+          // Ensure page_number is always set (required for ManualCitation)
+          const baseRef: ManualReference = {
+            ...ref,
+            page_number: ref.page_number || ref.pdf_page || ref.original_page || 0
+          };
+
           // Skip chunk lookup for RPS illustrations
           if (ref.type === 'rps_illustration') {
-            return ref;
+            return baseRef;
           }
 
           let manualIdentifier = ref.filename || ref.chapter_filename;
@@ -79,37 +85,45 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
           }
 
           if (!manualIdentifier) {
-            return ref;
+            return baseRef;
           }
 
           const { data: chunks, error } = await supabase
             .from('manual_chunks')
             .select('content, section_title, page_number, page_image_url, manual_title')
-            .eq('page_number', ref.pdf_page || ref.original_page)
+            .eq('page_number', baseRef.page_number)
             .ilike('manual_title', `%${manualIdentifier}%`)
             .limit(1)
             .maybeSingle();
 
           if (error || !chunks) {
-            return ref;
+            return baseRef;
           }
 
           return {
-            ...ref,
+            ...baseRef,
             content: chunks.content,
             section_title: chunks.section_title,
-            page_number: chunks.page_number,
+            page_number: chunks.page_number || baseRef.page_number,
             page_image_url: chunks.page_image_url
           };
         } catch {
-          return ref;
+          // Ensure page_number is set even on error
+          return {
+            ...ref,
+            page_number: ref.page_number || ref.pdf_page || ref.original_page || 0
+          };
         }
       })
     );
 
     return enrichedRefs;
   } catch {
-    return references;
+    // Ensure all refs have page_number even on total failure
+    return references.map(ref => ({
+      ...ref,
+      page_number: ref.page_number || ref.pdf_page || ref.original_page || 0
+    }));
   }
 }
 

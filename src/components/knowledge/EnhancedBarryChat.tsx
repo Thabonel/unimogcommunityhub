@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSimpleBarry, ManualReference } from '@/hooks/use-simple-barry';
+import { useBarryOpenClaw, ManualReference } from '@/hooks/use-barry-openclaw';
 import { ManualCitation } from './ManualCitation';
 import { BarryMessageContent } from './BarryMessageContent';
 import { cn } from '@/lib/utils';
@@ -51,7 +51,7 @@ export function EnhancedBarryChat({
     sendMessage,
     clearChat,
     retry
-  } = useSimpleBarry(location);
+  } = useBarryOpenClaw({ location });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
