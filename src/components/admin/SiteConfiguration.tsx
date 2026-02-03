@@ -2,11 +2,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsSection } from "./settings/SettingsSection";
 import { AnswerEngineSettingsSection } from './settings/AnswerEngineSettingsSection';
 import { OpenClawSettingsSection } from './settings/OpenClawSettingsSection';
+import { ScrapingSettingsSection } from './settings/ScrapingSettingsSection';
 import { NotificationSettingsSection } from "./settings/NotificationSettingsSection";
 import { TrialSettingsSection } from "./settings/TrialSettingsSection";
 import { BrandingSection } from "./settings/BrandingSection";
 import { SecuritySettingsSection } from "./settings/SecuritySettingsSection";
-import { Settings, Bell, Clock, Palette, Shield, Bot } from "lucide-react";
+import { Settings, Bell, Clock, Palette, Shield, Bot, Globe } from "lucide-react";
 
 export const SiteConfiguration = () => {
   return (
@@ -36,6 +37,10 @@ export const SiteConfiguration = () => {
           <TabsTrigger value="ai" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             <span>AI Engine</span>
+          </TabsTrigger>
+          <TabsTrigger value="scraping" className="flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            <span>Scraping</span>
           </TabsTrigger>
         </TabsList>
 
@@ -147,6 +152,10 @@ export const SiteConfiguration = () => {
 
         <TabsContent value="ai">
           <OpenClawSettingsSection />
+        </TabsContent>
+
+        <TabsContent value="scraping">
+          <ScrapingSettingsSection />
         </TabsContent>
       </Tabs>
     </div>

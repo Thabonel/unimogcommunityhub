@@ -461,6 +461,101 @@ async function executeRPSSearch(
   }
 }
 
+// ============ SKILL 4b: SCRAPED CONTENT SEARCH ============
+async function executeScrapedContentSearch(
+  supabaseAdmin: any,
+  query: string,
+  maxResults: number = 5
+): Promise<{ found: boolean; trips: any[]; guides: any[]; context: string }> {
+  try {
+    const queryLower = query.toLowerCase();
+    const keywords = queryLower
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2);
+
+    if (keywords.length === 0) return { found: false, trips: [], guides: [], context: '' };
+
+    // Determine if user is asking about trips or repair guides
+    const isTripQuery = /trip|route|trail|adventure|expedition|travel|overlander|wikiloc|camping/i.test(query);
+    const isGuideQuery = /how\s+to|repair|fix|replace|maintain|procedure|steps|guide/i.test(query);
+
+    let trips: any[] = [];
+    let guides: any[] = [];
+
+    // Search for relevant scraped content
+    if (isTripQuery || !isGuideQuery) {
+      const { data: tripResults } = await supabaseAdmin
+        .from('scraped_content')
+        .select('*')
+        .eq('content_type', 'trip')
+        .textSearch('content', keywords.join(' & '), { type: 'websearch', config: 'english' })
+        .limit(maxResults);
+
+      trips = tripResults || [];
+    }
+
+    if (isGuideQuery || !isTripQuery) {
+      const { data: guideResults } = await supabaseAdmin
+        .from('scraped_content')
+        .select('*')
+        .eq('content_type', 'guide')
+        .textSearch('content', keywords.join(' & '), { type: 'websearch', config: 'english' })
+        .limit(maxResults);
+
+      guides = guideResults || [];
+    }
+
+    if (trips.length === 0 && guides.length === 0) {
+      return { found: false, trips: [], guides: [], context: '' };
+    }
+
+    // Build context string
+    let context = '';
+
+    if (trips.length > 0) {
+      context += '\n=== COMMUNITY TRIP REPORTS ===\n';
+      for (const trip of trips) {
+        context += `\n--- Trip: ${trip.title} ---\n`;
+        context += `Source: ${trip.url}\n`;
+        if (trip.metadata?.difficulty) context += `Difficulty: ${trip.metadata.difficulty}\n`;
+        if (trip.metadata?.gpx_data?.distance_km) context += `Distance: ${trip.metadata.gpx_data.distance_km} km\n`;
+        context += `${trip.content?.substring(0, 800) || ''}\n`;
+      }
+    }
+
+    if (guides.length > 0) {
+      context += '\n=== COMMUNITY REPAIR GUIDES ===\n';
+      for (const guide of guides) {
+        context += `\n--- Guide: ${guide.title} ---\n`;
+        context += `Source: ${guide.url}\n`;
+        if (guide.metadata?.applicable_models?.length > 0) {
+          context += `Applicable Models: ${guide.metadata.applicable_models.join(', ')}\n`;
+        }
+        if (guide.metadata?.tools_required?.length > 0) {
+          context += `Tools Required: ${guide.metadata.tools_required.join(', ')}\n`;
+        }
+        if (guide.metadata?.procedure_steps?.length > 0) {
+          context += `Steps:\n`;
+          for (const step of guide.metadata.procedure_steps.slice(0, 5)) {
+            context += `${step.step_number}. ${step.instruction}\n`;
+            if (step.warning) context += `   WARNING: ${step.warning}\n`;
+          }
+        } else {
+          context += `${guide.content?.substring(0, 600) || ''}\n`;
+        }
+      }
+    }
+
+    console.log(`[ScrapedContent] Found ${trips.length} trips, ${guides.length} guides`);
+
+    return { found: true, trips, guides, context };
+  } catch (error) {
+    console.error('[ScrapedContent] Error:', error);
+    return { found: false, trips: [], guides: [], context: '' };
+  }
+}
+
 // ============ SKILL 5: RESPONSE GENERATOR ============
 async function executeResponseGenerator(
   query: string,
@@ -476,17 +571,24 @@ async function executeResponseGenerator(
   // Build system prompt with clear instructions about real manual access
   let systemPrompt = BARRY_PERSONA;
 
-  systemPrompt += `\n\n=== IMPORTANT: YOU HAVE REAL MANUAL ACCESS ===
-You have DIRECT ACCESS to the actual U435 Workshop Manual database. The content below is REAL data extracted from official Unimog manuals - not hypothetical or placeholder data.
+  systemPrompt += `\n\n=== IMPORTANT: YOU HAVE REAL DATA ACCESS ===
+You have DIRECT ACCESS to:
+1. The actual U435 Workshop Manual database (official Unimog documentation)
+2. RPS Parts System with exploded view illustrations
+3. Community-scraped trip reports and repair guides from Unimog forums and sites
+
+The content below is REAL data - not hypothetical or placeholder data.
 
 When you cite a page number, the user's interface will AUTOMATICALLY display that PDF page. So when you say "see page 632", the user will actually see page 632 from the workshop manual.
+
+For community content (trips, repair guides), cite the source but note it's community-contributed (not official Mercedes documentation).
 
 DO NOT say things like:
 - "I don't have access to manuals"
 - "I can't fetch those pages"
 - "You'll need to find the manual yourself"
 
-You DO have the manual data. USE IT. Reference the specific content provided below.
+You DO have the data. USE IT. Reference the specific content provided below.
 `;
 
   systemPrompt += `\n\n${manualContext}`;
@@ -729,25 +831,31 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // SKILL 3 & 4: Manual Search + RPS Search (parallel context gathering)
+    // SKILL 3, 4, 4b: Manual Search + RPS Search + Scraped Content (parallel context gathering)
     executedSkills.push('manual-search');
     executedSkills.push('rps-search');
+    executedSkills.push('scraped-content-search');
 
-    const [manualResult, rpsResult] = await Promise.all([
+    const [manualResult, rpsResult, scrapedResult] = await Promise.all([
       executeManualSearch(supabaseAdmin, userQuery, 10),
-      executeRPSSearch(supabaseAdmin, userQuery)
+      executeRPSSearch(supabaseAdmin, userQuery),
+      executeScrapedContentSearch(supabaseAdmin, userQuery, 5)
     ]);
 
     console.log(`[Manual] Found ${manualResult.chunks.length} chunks`);
     console.log(`[RPS] Found ${rpsResult.illustrations.length} illustrations`);
+    console.log(`[Scraped] Found ${scrapedResult.trips.length} trips, ${scrapedResult.guides.length} guides`);
 
-    // Combine context
+    // Combine context - prioritize official manuals, supplement with community content
     let combinedContext = '';
     if (manualResult.found) {
       combinedContext += manualResult.context;
     }
     if (rpsResult.found) {
       combinedContext += rpsResult.context;
+    }
+    if (scrapedResult.found) {
+      combinedContext += scrapedResult.context;
     }
 
     if (!combinedContext) {
