@@ -3,12 +3,17 @@
 ## Quick Reference Topics
 **Claude Code will automatically load these detailed references when starting a session:**
 
-- **User Types & Subscriptions**: @docs/memory/user-types.md
-- **Common Commands & Operations**: @docs/memory/common-commands.md
-- **Database Schema & Queries**: @docs/memory/database-schema.md
+- **📋 AI Context Index**: @docs/README.md (START HERE - task-based loading guide)
+- **User Types & Subscriptions**: @docs/reference/user-types.md
+- **Common Commands & Operations**: @docs/reference/common-commands.md
+- **Database Schema & Queries**: @docs/reference/database-schema.md
+- **App Overview & Architecture**: @docs/reference/app-overview.md
+- **Barry AI System**: @docs/reference/barry-system.md
+- **Platform Architecture**: @docs/reference/platform-architecture.md
 
 > These files provide detailed, up-to-date information on frequently referenced topics.
 > They are automatically imported and loaded into memory at session start.
+> The README.md provides task-based context loading instructions for maximum efficiency.
 
 ---
 
