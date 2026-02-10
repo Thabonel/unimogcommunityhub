@@ -16,7 +16,6 @@ export const countryToCurrency: Record<string, string> = {
   'IN': 'INR', // India
   'BR': 'BRL', // Brazil
   'ZA': 'ZAR', // South Africa
-  // Add more mappings as needed
 };
 
 // Common currency symbols for display purposes
@@ -60,8 +59,6 @@ export function getCurrencySymbol(currencyCode: string): string {
  * @returns Formatted currency string
  */
 export function formatCurrency(amount: number, currencyCode: string = 'USD'): string {
-  const symbol = getCurrencySymbol(currencyCode);
-  
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currencyCode,
