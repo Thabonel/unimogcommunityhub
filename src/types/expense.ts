@@ -216,7 +216,7 @@ export type SummaryType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly
 export interface ExpenseWithDetails extends Expense {
   category?: ExpenseCategory;
   attachments?: ExpenseAttachment[];
-  approval_request?: ExpenseApprovalRequest;
+  approval_request?: any; // Will be typed properly after DB migration
   created_by_user?: { display_name: string; email: string };
   approved_by_user?: { display_name: string; email: string };
 }
