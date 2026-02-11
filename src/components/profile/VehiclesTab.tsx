@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Gauge, FileText, PlusCircle, Fuel, Edit, Trash2, MapPin, Calendar } from 'lucide-react';
+import { Gauge, FileText, PlusCircle, Fuel, Edit, Trash2, MapPin, Calendar, Receipt } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
@@ -258,6 +258,12 @@ const VehiclesTab = ({ userData }: VehiclesTabProps) => {
               <Button className="w-full min-w-0 px-3 text-xs sm:text-sm bg-primary text-primary-foreground hover:bg-primary/90">
                 <Gauge size={16} className="shrink-0" />
                 <span className="truncate">Full Dashboard</span>
+              </Button>
+            </Link>
+            <Link to="/expense-tracking" className="w-full">
+              <Button variant="outline" className="w-full min-w-0 px-3 text-xs sm:text-sm">
+                <Receipt size={16} className="shrink-0" />
+                <span className="truncate">Expense Tracking</span>
               </Button>
             </Link>
             <Link to="/fuel-tracking" className="w-full">

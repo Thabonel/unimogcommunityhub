@@ -18,6 +18,7 @@ import VehicleShowcase from "@/pages/VehicleShowcase";
 import Feedback from "@/pages/Feedback";
 import FuelTracking from "@/pages/FuelTracking";
 import ServiceLogs from "@/pages/ServiceLogs";
+import ExpenseTracking from "@/pages/ExpenseTracking";
 import { lazyWithRetry, lazyImportWithRetry } from "@/utils/lazyWithRetry";
 
 // Loading fallback component
@@ -88,6 +89,15 @@ export const protectedRoutes: AppRouteObject[] = [
     element: (
       <ProtectedRoute>
         <ServiceLogs />
+      </ProtectedRoute>
+    ),
+    requireAuth: true,
+  },
+  {
+    path: "/expense-tracking",
+    element: (
+      <ProtectedRoute>
+        <ExpenseTracking />
       </ProtectedRoute>
     ),
     requireAuth: true,

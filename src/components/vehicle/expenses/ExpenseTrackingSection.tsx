@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase-client';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAuth } from '@/contexts/AuthContext';
 import { Vehicle } from '@/hooks/vehicle-maintenance/types';
 import {
   ExpenseList,
@@ -18,15 +18,31 @@ interface ExpenseTrackingSectionProps {
   vehicles: Vehicle[];
 }
 
+// Simple category mapping - TODO: Make this dynamic
+const getCategoryId = async (categoryName: string) => {
+  const categoryMap: Record<string, string> = {
+    'fuel': 'fuel',
+    'maintenance': 'maintenance',
+    'repair': 'repair',
+    'parts': 'parts',
+    'insurance': 'insurance',
+    'other': 'other'
+  };
+
+  // For now, return the category name itself as category_id
+  // In a full implementation, we'd query the expense_categories table
+  return categoryMap[categoryName] || 'other';
+};
+
 export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
   vehicleId,
   vehicles,
 }) => {
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseRecord | null>(null);
-  const [selectedReceipts, setSelectedReceipts] = useState<ExpenseReceipt[]>([]);
+  // const [selectedReceipts, setSelectedReceipts] = useState<ExpenseReceipt[]>([]);
 
   const { uploadFiles, deleteFile, getPublicUrl } = useExpenseUpload();
 
@@ -36,7 +52,7 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
       if (!user) return [];
 
       let query = supabase
-        .from('expense_records')
+        .from('expenses')
         .select('*')
         .eq('user_id', user.id)
         .order('expense_date', { ascending: false });
@@ -63,7 +79,7 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
       if (expenses.length === 0) return {};
 
       const { data, error } = await supabase
-        .from('expense_receipts')
+        .from('expense_attachments')
         .select('expense_id');
 
       if (error) throw error;
@@ -85,10 +101,10 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
       if (!selectedExpense) return [];
 
       const { data, error } = await supabase
-        .from('expense_receipts')
+        .from('expense_attachments')
         .select('*')
         .eq('expense_id', selectedExpense.id)
-        .order('uploaded_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as ExpenseReceipt[];
@@ -107,14 +123,17 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
         .toISOString()
         .split('T')[0];
 
+      const categoryId = await getCategoryId(vars.data.category);
+
       const { data: expense, error: expenseError } = await supabase
-        .from('expense_records')
+        .from('expenses')
         .insert({
           vehicle_id: vars.data.vehicle_id,
           user_id: user.id,
+          created_by: user.id,
           amount: vars.data.amount,
           currency: vars.data.currency,
-          category: vars.data.category,
+          category_id: categoryId,
           description: vars.data.description,
           expense_date: expenseDateStr,
           notes: vars.data.notes || null,
@@ -135,18 +154,21 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
         }
 
         if (uploadedPaths.length > 0) {
-          const receipts = uploadedPaths.map((path: string, idx: number) => ({
+          const attachments = uploadedPaths.map((path: string, idx: number) => ({
             expense_id: expense.id,
             file_name: vars.files[idx].name,
-            file_type: vars.files[idx].type,
+            file_type: 'image', // Default to image, could be enhanced based on file type
             file_size: vars.files[idx].size,
             storage_path: path,
+            mime_type: vars.files[idx].type,
+            storage_bucket: 'expense-receipts',
             is_primary: idx === 0,
+            uploaded_by: user.id,
           }));
 
           const { error: receiptError } = await supabase
-            .from('expense_receipts')
-            .insert(receipts);
+            .from('expense_attachments')
+            .insert(attachments);
 
           if (receiptError) throw receiptError;
         }
@@ -164,10 +186,10 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
     },
   });
 
-  const { mutate: deleteExpense, isPending: isDeleting } = useMutation({
+  const { mutate: deleteExpense } = useMutation({
     mutationFn: async (expense: ExpenseRecord) => {
       const { error } = await supabase
-        .from('expense_records')
+        .from('expenses')
         .delete()
         .eq('id', expense.id);
 
@@ -185,7 +207,7 @@ export const ExpenseTrackingSection: React.FC<ExpenseTrackingSectionProps> = ({
       if (!success) throw new Error('Failed to delete file');
 
       const { error } = await supabase
-        .from('expense_receipts')
+        .from('expense_attachments')
         .delete()
         .eq('id', receipt.id);
 
