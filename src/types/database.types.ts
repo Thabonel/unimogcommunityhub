@@ -105,6 +105,9 @@ export interface Database {
           next_service_due?: string;
           next_service_mileage?: number;
           notes?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -122,6 +125,9 @@ export interface Database {
           next_service_due?: string;
           next_service_mileage?: number;
           notes?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -139,6 +145,9 @@ export interface Database {
           next_service_due?: string;
           next_service_mileage?: number;
           notes?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
           updated_at?: string;
         };
       };
@@ -157,6 +166,10 @@ export interface Database {
           is_full_tank: boolean;
           trip_id?: string;
           notes?: string;
+          receipt_url?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
           created_at: string;
         };
         Insert: {
@@ -173,6 +186,10 @@ export interface Database {
           is_full_tank?: boolean;
           trip_id?: string;
           notes?: string;
+          receipt_url?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
           created_at?: string;
         };
         Update: {
@@ -189,6 +206,10 @@ export interface Database {
           is_full_tank?: boolean;
           trip_id?: string;
           notes?: string;
+          receipt_url?: string;
+          ocr_status?: string;
+          ocr_confidence?: number;
+          requires_review?: boolean;
         };
       };
       vehicle_fuel_stats: {

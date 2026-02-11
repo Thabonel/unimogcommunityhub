@@ -198,7 +198,10 @@ export interface ExpenseStats {
   monthly_totals: Record<string, number>;
 }
 
-// Additional specialized types
+export type ExpenseType = 'maintenance' | 'fuel' | 'modification' | 'insurance' | 'registration' | 'repair' | 'parts' | 'service' | 'other';
+
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
 export type OcrStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'skipped';
 
 export type RecurrencePattern = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annually';
@@ -216,7 +219,7 @@ export type SummaryType = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly
 export interface ExpenseWithDetails extends Expense {
   category?: ExpenseCategory;
   attachments?: ExpenseAttachment[];
-  approval_request?: any; // Will be typed properly after DB migration
+  approval_request?: ExpenseApprovalRequest;
   created_by_user?: { display_name: string; email: string };
   approved_by_user?: { display_name: string; email: string };
 }
