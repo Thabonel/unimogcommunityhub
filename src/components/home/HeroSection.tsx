@@ -51,7 +51,7 @@ const HeroSection = () => {
             <Button size="lg" className="bg-amazon-orange hover:bg-amazon-orange/90 text-white w-full" asChild>
               <Link to="/shop">
                 <ShoppingBag className="mr-2 h-4 w-4" />
-                Unimog Shop
+                Recommended Gear
               </Link>
             </Button>
             <Button size="lg" className="bg-military-tan text-military-black hover:bg-military-tan/90 w-full" asChild>
