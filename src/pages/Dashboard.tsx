@@ -249,7 +249,7 @@ const Dashboard = () => {
                       <Link to="/shop" className="w-full sm:w-auto">
                         <Button variant="outline" size="default" className="w-full sm:w-auto font-semibold bg-red-600 hover:bg-red-700 border-red-500 text-white text-xs sm:text-sm px-2 sm:px-4">
                           <ShoppingBag className="h-4 w-4 shrink-0 sm:mr-2" />
-                          <span className="truncate">Shop</span>
+                          <span className="truncate">Gear</span>
                         </Button>
                       </Link>
                       <Link to="/showcase" className="w-full sm:w-auto">

@@ -64,7 +64,7 @@ const MarketplaceLayout = () => {
               >
                 <Link to="/shop">
                   <ShoppingBag size={16} />
-                  <span>Affiliate Shop</span>
+                  <span>Recommended Gear</span>
                 </Link>
               </Button>
               {hasActiveFilters && (
