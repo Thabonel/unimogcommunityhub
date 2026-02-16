@@ -29,7 +29,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Settings, Save, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Settings, Save, AlertTriangle } from 'lucide-react';
 
 interface ModelConfig {
   id: string;
@@ -46,9 +46,31 @@ interface ModelConfig {
 }
 
 const PROVIDERS = [
-  { value: 'openai', label: 'OpenAI', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'] },
-  { value: 'anthropic', label: 'Anthropic', models: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'] },
-  { value: 'google', label: 'Google', models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-exp'] },
+  {
+    value: 'anthropic',
+    label: 'Anthropic',
+    models: [
+      'claude-opus-4.6',           // 🔥 NEW: Feb 2026, hybrid reasoning, most capable
+      'claude-sonnet-4.5',         // 🔥 NEW: Best for agents & coding, everyday tasks
+      'claude-haiku-4.5',          // 🔥 NEW: Fastest, most cost-efficient, quick answers
+      'claude-3-5-sonnet-20241022', // Current production model
+      'claude-3-5-haiku-20241022',  // Current fast model
+      'claude-3-opus-20240229'       // Legacy but still powerful
+    ]
+  },
+  {
+    value: 'google',
+    label: 'Google',
+    models: [
+      'gemini-3-pro',              // 🔥 NEW: Most powerful (Nov 2025)
+      'gemini-3-deep-think',       // 🔥 NEW: Science/research (Feb 2026)
+      'gemini-3-flash',            // 🔥 NEW: Default app model, lightning speed
+      'gemini-2.5-flash-lite',     // 🔥 NEW: Fast, low-cost, high-performance
+      'gemini-1.5-pro',            // Current production model
+      'gemini-1.5-flash',          // Current fast model
+      'gemini-2.0-flash-exp'       // ⚠️ Deprecated (shutdown Mar 31, 2026)
+    ]
+  }
 ];
 
 const SERVICE_DESCRIPTIONS: Record<string, string> = {
@@ -56,6 +78,12 @@ const SERVICE_DESCRIPTIONS: Record<string, string> = {
   'barry_reranking': 'Scores search results for relevance (fast, cheap)',
   'barry_verification': 'Verifies page relevance before citing (fast, cheap)',
   'barry_main_response': 'Generates main response to users (quality matters)',
+  'barry_coding_assistance': 'Provides coding help and technical guidance (specialized)',
+  'barry_real_time_chat': 'Handles real-time voice conversations (low latency)',
+  'general_ai_tasks': 'General AI features across platform (balanced)',
+  'content_generation': 'Creates articles, documentation, marketing copy (creative)',
+  'image_analysis': 'Analyzes and describes uploaded images (multimodal)',
+  'translation': 'Translates content between languages (specialized)',
 };
 
 export function AIModelConfig() {
