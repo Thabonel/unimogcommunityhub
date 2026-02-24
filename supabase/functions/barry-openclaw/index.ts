@@ -46,19 +46,31 @@ CRITICAL RULES:
 5. When showing exploded views or diagrams, use markdown image syntax`;
 
 // Blocked topics for safety
+// Each entry must describe a genuinely dangerous action, not routine maintenance.
+// Routine procedures (remove fuel filter, change brakes) pass through with safety disclaimers.
 const BLOCKED_TOPICS = [
   'disable safety systems',
-  'bypass brake',
+  'bypass brake system',
+  'permanently disable brake',
   'remove airbag',
-  'modify emissions',
+  'modify emissions control',
+  'defeat emissions',
   'skip torque specifications',
-  'disable abs',
-  'bypass seatbelt'
+  'disable abs permanently',
+  'bypass seatbelt interlock',
+  'remove roll cage',
+  'disable pto safety switch',
+  'bypass hydraulic safety',
+  'disable exhaust brake permanently',
+  'remove safety guard',
+  'bypass safety interlock',
+  'defeat safety system'
 ];
 
 // Technical keywords for domain detection
 const TECHNICAL_KEYWORDS = new Set([
   'unimog', 'u435', 'u1300', 'u1300l', 'u1700', 'u1700l',
+  'u404', 'u416', 'u900', 'u1000', 'u1400', 'u1550', 'u1600', 'u1800', 'u1850', 'u2150', 'u2450', 'u3000', 'u4000', 'u4023', 'u5000', 'u5023',
   'portal', 'hub', 'axle', 'differential', 'transfer', 'gearbox',
   'torque', 'spec', 'specification', 'capacity', 'fluid',
   'oil', 'change', 'drain', 'fill', 'level',
@@ -69,7 +81,10 @@ const TECHNICAL_KEYWORDS = new Set([
   'remove', 'install', 'replace', 'adjust', 'repair',
   'diagram', 'exploded', 'view', 'illustration', 'schematic',
   'part', 'number', 'niin', 'nsn', 'rps',
-  'manual', 'workshop', 'procedure', 'steps'
+  'manual', 'workshop', 'procedure', 'steps',
+  'ecu', 'can-bus', 'canbus', 'obd', 'diagnostic', 'fault', 'sensor',
+  'edc', 'abs', 'module', 'relay', 'fuse', 'wiring', 'harness',
+  'alternator', 'starter', 'voltage', 'ampere', 'connector'
 ]);
 
 // Safety disclaimers
@@ -271,10 +286,11 @@ async function executeKnowledgeLookup(
 
     if (keywords.length === 0) return { found: false };
 
+    // Threshold lowered to 0.5 to increase cache utilization (WHE-117)
     const { data: kbEntries, error } = await supabaseAdmin
       .from('barry_knowledge_base')
       .select('*')
-      .gte('confidence_score', 0.7)
+      .gte('confidence_score', 0.5)
       .gte('validation_count', 1)
       .order('confidence_score', { ascending: false })
       .limit(20);
