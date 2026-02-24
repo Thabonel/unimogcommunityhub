@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp, ThumbsDown
+  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp, ThumbsDown, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -324,10 +324,14 @@ export function EnhancedBarryChat({
                       {/* Feedback Buttons - shown for assistant messages */}
                       {message.role === 'assistant' && (
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
-                          <div className={cn(
-                            "text-xs opacity-70"
-                          )}>
+                          <div className="flex items-center gap-2 text-xs opacity-70">
                             {message.timestamp && format(message.timestamp, 'HH:mm')}
+                            {message.fallbackUsed && (
+                              <span className="inline-flex items-center gap-1 text-amber-600" title="Response generated using backup system">
+                                <Info className="h-3 w-3" />
+                                <span>backup</span>
+                              </span>
+                            )}
                           </div>
                           <div className="flex gap-1">
                             <Button

@@ -28,6 +28,7 @@ export interface ChatMessage {
   timestamp: Date;
   manualReferences?: ManualReference[];
   usedOpenClaw?: boolean;
+  fallbackUsed?: boolean;
   executionTimeMs?: number;
   skillChain?: string[];
 }
@@ -325,6 +326,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         timestamp: new Date(),
         manualReferences: enrichedReferences,
         usedOpenClaw: response.usedOpenClaw,
+        fallbackUsed: response.fallbackUsed,
         executionTimeMs: response.execution_time_ms,
         skillChain: response.skill_chain
       };
