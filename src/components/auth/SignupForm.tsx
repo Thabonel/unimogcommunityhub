@@ -102,7 +102,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
             <FormItem>
               <FormLabel>{t('signup.email_label')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('signup.email_placeholder')} {...field} />
+                <Input type="email" autoComplete="email" inputMode="email" placeholder={t('signup.email_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -119,6 +119,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     placeholder={t('signup.password_placeholder')}
                     {...field}
                   />
@@ -155,6 +156,7 @@ const SignupForm = ({ onOAuthClick, planType, onSignupSuccess, onSignupError }: 
                 <div className="relative">
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     placeholder={t('signup.confirm_password_placeholder')}
                     {...field}
                   />

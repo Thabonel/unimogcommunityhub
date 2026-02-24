@@ -489,7 +489,7 @@ export default function VendorProfilePage() {
         {/* Image Lightbox Modal */}
         {selectedImage && (
           <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-            <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden">
+            <DialogContent className="max-w-[calc(100vw-2rem)] md:max-w-6xl max-h-[95vh] overflow-hidden">
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between">
                   <span>

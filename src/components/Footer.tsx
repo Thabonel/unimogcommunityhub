@@ -8,7 +8,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="border-t bg-gradient-to-b from-muted/30 to-muted/60 py-8">
+    <footer className="hidden md:block border-t bg-gradient-to-b from-muted/30 to-muted/60 py-8">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div className="space-y-4">

@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Track } from '@/types/track';
+import { useMobile } from '@/hooks/use-mobile';
 
 interface MapSidebarProps {
   isOpen: boolean;
@@ -15,33 +17,36 @@ interface MapSidebarProps {
   activeTrip: string | null;
   onTripSelect: (trip: TripCardProps) => void;
   onCreateTrip: () => void;
+  onClose?: () => void;
   importedTracks?: Track[];
 }
 
-const MapSidebar = ({ 
-  isOpen, 
-  filteredTrips, 
-  activeTrip, 
-  onTripSelect, 
+const MapSidebar = ({
+  isOpen,
+  filteredTrips,
+  activeTrip,
+  onTripSelect,
   onCreateTrip,
+  onClose,
   importedTracks = []
 }: MapSidebarProps) => {
+  const { isMobile } = useMobile();
+
   if (!isOpen) return null;
 
-  return (
-    <div className="absolute top-16 bottom-0 left-0 w-80 bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 z-10 shadow-lg rounded-tr-lg overflow-hidden">
-      <div className="p-4">
-        <Tabs defaultValue="trips">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="trips">
-              Saved Trips
-              <Badge variant="secondary" className="ml-2">{filteredTrips.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="tracks">
-              Imported Tracks
-              <Badge variant="secondary" className="ml-2">{importedTracks.length}</Badge>
-            </TabsTrigger>
-          </TabsList>
+  const sidebarContent = (
+    <div className="p-4">
+      <Tabs defaultValue="trips">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="trips">
+            Saved Trips
+            <Badge variant="secondary" className="ml-2">{filteredTrips.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="tracks">
+            Imported Tracks
+            <Badge variant="secondary" className="ml-2">{importedTracks.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
           
           <TabsContent value="trips" className="mt-0">
             <div className="flex space-x-2 mb-4">
@@ -146,6 +151,21 @@ const MapSidebar = ({
           </TabsContent>
         </Tabs>
       </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={(open) => { if (!open && onClose) onClose(); }}>
+        <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl p-0 pb-safe">
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <div className="absolute top-16 bottom-0 left-0 w-80 bg-white/90 backdrop-blur-sm dark:bg-gray-800/90 z-10 shadow-lg rounded-tr-lg overflow-hidden">
+      {sidebarContent}
     </div>
   );
 };

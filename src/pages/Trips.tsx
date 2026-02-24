@@ -95,7 +95,7 @@ const TripsContent = ({
     : [];
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
+    <div className="h-screen-dvh w-full overflow-hidden relative">
       {/* Back button moved to center top */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
         <Button
