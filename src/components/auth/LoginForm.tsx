@@ -66,7 +66,7 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
             <FormItem>
               <FormLabel>{t('login.email_label')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('login.email_placeholder')} {...field} />
+                <Input type="email" autoComplete="email" inputMode="email" placeholder={t('login.email_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,6 +83,7 @@ const LoginForm = ({ onLoginSuccess, onLoginError, isLoading, setIsLoading }: Lo
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder={t('login.password_placeholder')}
                     {...field}
                   />

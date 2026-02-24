@@ -43,6 +43,20 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
     }
   }, [messages]);
 
+  // Keep input visible when virtual keyboard opens on mobile
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const handleResize = () => {
+      const formEl = document.querySelector('[data-barry-input]');
+      if (formEl) {
+        formEl.scrollIntoView({ block: 'end', behavior: 'smooth' });
+      }
+    };
+    viewport.addEventListener('resize', handleResize);
+    return () => viewport.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || isLoading || !isAuthenticated) return;
@@ -70,7 +84,7 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
   if (!isAuthenticated) {
     return (
       <div className={cn("flex flex-col items-center justify-center", className)} style={{ height }}>
-        <Alert className="max-w-md">
+        <Alert className="max-w-md mx-4">
           <LogIn className="h-4 w-4" />
           <AlertDescription className="space-y-3">
             <p>You need to be logged in to chat with Barry.</p>
@@ -262,7 +276,7 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
       )}
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="border-t p-4">
+      <form onSubmit={handleSubmit} className="border-t p-4" data-barry-input>
         <div className="flex gap-2">
           <Textarea
             ref={textareaRef}
@@ -273,6 +287,7 @@ export function SecureBarryChat({ height = "600px", className, location }: Secur
             className="min-h-[60px] resize-none"
             disabled={isLoading}
             rows={2}
+            enterKeyHint="send"
           />
           <Button
             type="submit"

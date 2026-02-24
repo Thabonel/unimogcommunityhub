@@ -265,11 +265,11 @@ const Dashboard = () => {
             </Card>
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full mb-6">
-                <TabsTrigger value="activity">{t('dashboard:tabs.activity')}</TabsTrigger>
-                <TabsTrigger value="recommendations">{t('dashboard:tabs.recommendations')}</TabsTrigger>
-                <TabsTrigger value="traffic">{t('dashboard:tabs.traffic')}</TabsTrigger>
-                <TabsTrigger value="my-vehicles">{t('dashboard:tabs.my_vehicles')}</TabsTrigger>
+              <TabsList className="flex overflow-x-auto md:grid md:grid-cols-4 w-full mb-6 gap-1">
+                <TabsTrigger value="activity" className="whitespace-nowrap flex-shrink-0">{t('dashboard:tabs.activity')}</TabsTrigger>
+                <TabsTrigger value="recommendations" className="whitespace-nowrap flex-shrink-0">{t('dashboard:tabs.recommendations')}</TabsTrigger>
+                <TabsTrigger value="traffic" className="whitespace-nowrap flex-shrink-0">{t('dashboard:tabs.traffic')}</TabsTrigger>
+                <TabsTrigger value="my-vehicles" className="whitespace-nowrap flex-shrink-0">{t('dashboard:tabs.my_vehicles')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="activity" className="space-y-6">

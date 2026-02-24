@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, SlidersHorizontal } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { EventCard } from '@/components/events/EventCard';
@@ -17,6 +17,7 @@ const Events = () => {
   const { userData } = useProfile();
   const [filters, setFilters] = useState<EventFiltersType>({ upcoming_only: true });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const { data: events, isLoading, error } = useEvents(filters);
 
@@ -59,10 +60,22 @@ const Events = () => {
           </div>
         </div>
 
+        {/* Mobile filter toggle */}
+        <div className="lg:hidden mb-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+        </div>
+
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left: Filters */}
-          <div className="lg:col-span-1">
+          <div className={`lg:col-span-1 ${showMobileFilters ? '' : 'hidden lg:block'}`}>
             <EventFilters
               filters={filters}
               onFiltersChange={setFilters}

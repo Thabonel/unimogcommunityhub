@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { MobileTooltip } from '@/components/ui/mobile-tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
 import { TabbedBarryLayout } from '../knowledge/TabbedBarryLayout';
@@ -42,35 +42,30 @@ export function FloatingBarryButton() {
   return (
     <>
       {/* Floating Barry Button */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleBarryClick}
-              size="lg"
-              className={`rounded-full h-14 w-14 p-0 shadow-lg border-2 border-white transition-colors ${
-                isWISPage
-                  ? 'bg-military-green hover:bg-military-green/90'
-                  : 'bg-unimog-500 hover:bg-unimog-600'
-              }`}
-            >
-              <div className="relative w-10 h-10">
-                <picture>
-                  <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
-                  <img
-                    src={SITE_IMAGES.barryAvatarFallback}
-                    alt="Barry"
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                </picture>
-                <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
-              </div>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>{isWISPage ? 'Barry WIS Assistant' : 'Chat with Barry - AI Mechanic'}</p>
-          </TooltipContent>
-        </Tooltip>
+      <div className="fixed right-5 z-40 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 md:right-8">
+        <MobileTooltip content={isWISPage ? 'Barry WIS Assistant' : 'Chat with Barry - AI Mechanic'}>
+          <Button
+            onClick={handleBarryClick}
+            size="lg"
+            className={`rounded-full h-14 w-14 p-0 shadow-lg border-2 border-white transition-colors ${
+              isWISPage
+                ? 'bg-military-green hover:bg-military-green/90'
+                : 'bg-unimog-500 hover:bg-unimog-600'
+            }`}
+          >
+            <div className="relative w-10 h-10">
+              <picture>
+                <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                <img
+                  src={SITE_IMAGES.barryAvatarFallback}
+                  alt="Barry"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </picture>
+              <Wrench className="h-4 w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
+            </div>
+          </Button>
+        </MobileTooltip>
       </div>
 
       {/* Barry AI Chat Modal - Only show on non-WIS pages */}

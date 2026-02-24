@@ -95,7 +95,7 @@ export function FloatingActionButton({
     <div
       data-fab
       className={cn(
-        'fixed bottom-5 left-5 z-50',
+        'fixed left-5 z-40 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-5',
         className
       )}
     >

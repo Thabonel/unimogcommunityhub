@@ -56,34 +56,37 @@ const MarketplaceLayout = () => {
                 Buy, sell, and trade Unimog parts, accessories, and vehicles with fellow enthusiasts.
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 className="flex items-center gap-2"
                 asChild
+                aria-label="Recommended Gear"
               >
                 <Link to="/shop">
                   <ShoppingBag size={16} />
-                  <span>Recommended Gear</span>
+                  <span className="hidden sm:inline">Recommended Gear</span>
                 </Link>
               </Button>
               {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
-                  onClick={resetFilters} 
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
                   className="flex items-center gap-2 border-military-olive/30"
+                  aria-label="Clear filters"
                 >
                   <FilterX size={16} />
-                  <span>Clear filters</span>
+                  <span className="hidden sm:inline">Clear filters</span>
                 </Button>
               )}
-              <Button 
+              <Button
                 className="bg-military-olive text-white hover:bg-military-olive/90 flex items-center gap-2"
                 asChild
+                aria-label="Create Listing"
               >
                 <Link to="/marketplace/create-listing">
                   <Plus size={16} />
-                  <span>Create Listing</span>
+                  <span className="hidden sm:inline">Create Listing</span>
                 </Link>
               </Button>
             </div>
