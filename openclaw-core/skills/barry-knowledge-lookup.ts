@@ -79,11 +79,12 @@ export async function executeKnowledgeLookup(
     }
 
     // Search knowledge base for validated answers
-    // Only return entries with confidence > 0.7 and at least one validation
+    // Threshold lowered to 0.5 to increase cache utilization (WHE-117)
+    // Answers with 0.5-0.7 confidence are returned as "community-validated"
     const { data: kbEntries, error } = await supabaseAdmin
       .from('barry_knowledge_base')
       .select('*')
-      .gte('confidence_score', 0.7)
+      .gte('confidence_score', 0.5)
       .gte('validation_count', 1)
       .order('confidence_score', { ascending: false })
       .limit(20);
