@@ -4,19 +4,26 @@
  */
 
 // Blocked topics for safety filter
+// Each entry must describe a genuinely dangerous action, not routine maintenance.
+// Routine procedures (remove fuel filter, change brakes) should pass through
+// with safety disclaimers attached by the safety filter skill instead.
 export const BLOCKED_TOPICS = [
   'disable safety systems',
-  'bypass brake',
+  'bypass brake system',
+  'permanently disable brake',
   'remove airbag',
-  'modify emissions',
+  'modify emissions control',
+  'defeat emissions',
   'skip torque specifications',
-  'disable abs',
-  'bypass seatbelt',
+  'disable abs permanently',
+  'bypass seatbelt interlock',
   'remove roll cage',
-  'disable pto safety',
-  'bypass hydraulic',
-  'remove fuel filter',
-  'disable exhaust brake'
+  'disable pto safety switch',
+  'bypass hydraulic safety',
+  'disable exhaust brake permanently',
+  'remove safety guard',
+  'bypass safety interlock',
+  'defeat safety system'
 ];
 
 // Required safety disclaimers by topic
@@ -99,6 +106,7 @@ export const BLOCKED_TOOLS = [
 // Routing keywords for technical detection (subset from routing-keywords.json)
 export const TECHNICAL_KEYWORDS = new Set([
   'unimog', 'u435', 'u1300', 'u1300l', 'u1700', 'u1700l',
+  'u404', 'u416', 'u900', 'u1000', 'u1400', 'u1550', 'u1600', 'u1800', 'u1850', 'u2150', 'u2450', 'u3000', 'u4000', 'u4023', 'u5000', 'u5023',
   'portal', 'hub', 'axle', 'differential', 'transfer', 'gearbox',
   'torque', 'spec', 'specification', 'capacity', 'fluid',
   'oil', 'change', 'drain', 'fill', 'level',
@@ -109,7 +117,10 @@ export const TECHNICAL_KEYWORDS = new Set([
   'remove', 'install', 'replace', 'adjust', 'repair',
   'diagram', 'exploded', 'view', 'illustration', 'schematic',
   'part', 'number', 'niin', 'nsn', 'rps',
-  'manual', 'workshop', 'procedure', 'steps'
+  'manual', 'workshop', 'procedure', 'steps',
+  'ecu', 'can-bus', 'canbus', 'obd', 'diagnostic', 'fault', 'sensor',
+  'edc', 'abs', 'module', 'relay', 'fuse', 'wiring', 'harness',
+  'alternator', 'starter', 'voltage', 'ampere', 'connector'
 ]);
 
 // Feature flags

@@ -31,12 +31,19 @@ const VALID_PAGE_RANGES = {
 
 /**
  * Validate citation page numbers are within expected ranges
+ * Also rejects low-confidence generic citations (defense against fabrication)
  */
 function validatePageNumbers(citations: Citation[]): { valid: Citation[]; issues: string[] } {
   const valid: Citation[] = [];
   const issues: string[] = [];
 
   for (const citation of citations) {
+    // Reject low-confidence citations pointing to page 1 (likely fabricated)
+    if (citation.page_number === 1 && citation.confidence < 0.5) {
+      issues.push(`Rejected likely fabricated citation: page 1 with confidence ${citation.confidence}`);
+      continue;
+    }
+
     const range = VALID_PAGE_RANGES[citation.source];
     if (!range) {
       valid.push(citation);
