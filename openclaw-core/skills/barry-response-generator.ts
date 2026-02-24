@@ -205,14 +205,9 @@ export async function executeResponseGenerator(
     // Extract citations from response
     const citations = extractCitations(content, manual_context);
 
-    // If no citations found, add a default one with low confidence
+    // Log when no citations were found - do NOT fabricate citations
     if (citations.length === 0) {
-      citations.push({
-        source: 'manual',
-        title: 'U435 Workshop Manual',
-        page_number: 1,
-        confidence: 0.3
-      });
+      console.log('[ResponseGenerator] No citations extracted from response');
     }
 
     return {

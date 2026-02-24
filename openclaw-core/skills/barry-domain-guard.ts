@@ -59,13 +59,15 @@ const TASK_PATTERNS: Record<BarryTask, RegExp[]> = {
 };
 
 // Off-topic detection patterns
+// Note: "software" and "code" removed -- modern Unimogs have ECUs and diagnostic software.
+// Vehicle electronics queries (fault codes, CAN bus, diagnostic software) are legitimate.
 const OFF_TOPIC_PATTERNS = [
   /recipe|cook|food/i,
   /movie|music|entertainment/i,
   /politics|election|government/i,
-  /sports?|game|team/i,
+  /sports?|(?:video\s+)?game|team\s+score/i,
   /homework|essay|assignment/i,
-  /code|programming|software/i,
+  /(?:write|build)\s+(?:a\s+)?(?:website|app|program)/i,
   /relationship|dating|love/i
 ];
 
