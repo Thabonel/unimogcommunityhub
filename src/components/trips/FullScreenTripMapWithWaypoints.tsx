@@ -125,7 +125,15 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Set Barry page context with trip planning data
   useEffect(() => {
-    const relevantData: any = {
+    const relevantData: {
+      pageName: string;
+      currentRouteProfile: string;
+      hasWaypoints: boolean;
+      waypointCount: number;
+      hasPlannedRoute: boolean;
+      waypoints?: Array<{ position: number; coordinates: [number, number] }>;
+      routeInfo?: { distance?: number; duration?: number; profile: string };
+    } = {
       pageName: 'trip_planning',
       currentRouteProfile: routeProfile,
       hasWaypoints: waypoints.length > 0,
@@ -134,10 +142,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     };
 
     if (waypoints.length > 0) {
-      relevantData.waypoints = waypoints.map((wp, index) => ({
-        position: index + 1,
-        coordinates: wp.geometry?.coordinates || wp.center || [wp.lng, wp.lat]
-      }));
+      relevantData.waypoints = waypoints.map((wp, index) => {
+        // Safe coordinate extraction with fallbacks
+        let coordinates: [number, number] = [0, 0];
+
+        if (wp.geometry?.coordinates && Array.isArray(wp.geometry.coordinates) && wp.geometry.coordinates.length >= 2) {
+          coordinates = [wp.geometry.coordinates[0], wp.geometry.coordinates[1]];
+        } else if (wp.center && Array.isArray(wp.center) && wp.center.length >= 2) {
+          coordinates = [wp.center[0], wp.center[1]];
+        } else if (typeof wp.lng === 'number' && typeof wp.lat === 'number') {
+          coordinates = [wp.lng, wp.lat];
+        }
+
+        return {
+          position: index + 1,
+          coordinates
+        };
+      });
     }
 
     if (currentRoute) {

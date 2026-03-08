@@ -277,7 +277,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What should I prepare for this ${event.title} trip? Any route preparation tips?`)}
+                        onClick={() => openBarry(`What should I prepare for this ${event.title || 'trip'} trip? Any route preparation tips?`)}
                       >
                         Route preparation tips
                       </Button>
@@ -285,7 +285,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What gear should I bring for this ${event.title} trip? Any recommendations for off-road travel?`)}
+                        onClick={() => openBarry(`What gear should I bring for this ${event.title || 'trip'} trip? Any recommendations for off-road travel?`)}
                       >
                         Gear recommendations
                       </Button>
@@ -293,7 +293,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What weather considerations should I know about for this ${event.title} trip?`)}
+                        onClick={() => openBarry(`What weather considerations should I know about for this ${event.title || 'trip'} trip?`)}
                       >
                         Weather considerations
                       </Button>
@@ -304,7 +304,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What tools do I need for this ${event.title} working bee event?`)}
+                        onClick={() => openBarry(`What tools do I need for this ${event.title || 'working bee'} working bee event?`)}
                       >
                         Tools needed
                       </Button>
@@ -312,7 +312,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What safety guidelines should I follow for this ${event.title} working bee?`)}
+                        onClick={() => openBarry(`What safety guidelines should I follow for this ${event.title || 'working bee'} working bee?`)}
                       >
                         Safety guidelines
                       </Button>
@@ -320,7 +320,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`How should I prepare and plan for this ${event.title} working bee event?`)}
+                        onClick={() => openBarry(`How should I prepare and plan for this ${event.title || 'working bee'} working bee event?`)}
                       >
                         Project planning
                       </Button>
@@ -331,7 +331,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`How should I prepare for this ${event.title} event?`)}
+                        onClick={() => openBarry(`How should I prepare for this ${event.title || 'event'} event?`)}
                       >
                         Event preparation
                       </Button>
@@ -339,7 +339,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`What should I bring to this ${event.title} event?`)}
+                        onClick={() => openBarry(`What should I bring to this ${event.title || 'event'} event?`)}
                       >
                         What to bring
                       </Button>
@@ -347,7 +347,7 @@ export function EventDetailView() {
                         variant="outline"
                         size="sm"
                         className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
-                        onClick={() => openBarry(`Any logistics advice for this ${event.title} event?`)}
+                        onClick={() => openBarry(`Any logistics advice for this ${event.title || 'event'} event?`)}
                       >
                         Logistics help
                       </Button>
