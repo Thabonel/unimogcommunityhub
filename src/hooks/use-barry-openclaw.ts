@@ -219,6 +219,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
   const [conversations, setConversations] = useState<BarryOpenClawConversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [lastResponse, setLastResponse] = useState<HybridResponse | null>(null);
+  const [vehicleContext, setVehicleContext] = useState<string | null>(null);
   const { user } = useAuth();
   const { pageContext } = useBarry();
 
@@ -242,6 +243,45 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
     if (user?.id) {
       loadConversations();
     }
+  }, [user?.id]);
+
+  // Fetch vehicle data once when user is authenticated
+  useEffect(() => {
+    async function fetchVehicle() {
+      if (!user?.id) return;
+      try {
+        const { data: vehicles } = await supabase
+          .from('vehicles')
+          .select('model, year, name, current_odometer, odometer_unit, modifications, description, country, city')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (vehicles && vehicles.length > 0) {
+          const v = vehicles[0];
+          let ctx = `User's Unimog: ${v.model || 'Unknown'}`;
+          if (v.year) ctx += ` (${v.year})`;
+          if (v.name) ctx += ` - "${v.name}"`;
+          if (v.current_odometer) ctx += `. Odometer: ${v.current_odometer} ${v.odometer_unit || 'km'}`;
+          if (v.modifications) ctx += `. Modifications: ${v.modifications}`;
+          if (v.country) ctx += `. Location: ${v.city ? v.city + ', ' : ''}${v.country}`;
+          setVehicleContext(ctx);
+        } else {
+          // Fallback to profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('unimog_model')
+            .eq('id', user.id)
+            .single();
+          if (profile?.unimog_model) {
+            setVehicleContext(`User's Unimog: ${profile.unimog_model}`);
+          }
+        }
+      } catch (err) {
+        console.error('[Barry] Failed to fetch vehicle context:', err);
+      }
+    }
+    fetchVehicle();
   }, [user?.id]);
 
   const loadConversations = useCallback(async () => {
@@ -391,18 +431,31 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         content: m.content
       }));
 
-      // Add page context to the user message if available
+      // Add vehicle and page context to the user message
       let userMessageContent = message.trim();
+      let contextPrefix = '';
+
+      // Vehicle context (always present if user has a vehicle)
+      if (vehicleContext) {
+        contextPrefix += `[${vehicleContext}] `;
+      }
+
+      // Page context (from Phase 2)
       if (pageContext) {
-        let contextPrefix = `[Context: User is on ${pageContext.pageName} page`;
-        if (pageContext.pageTitle) contextPrefix += ` - ${pageContext.pageTitle}`;
+        let pageContextStr = `[Context: User is on ${pageContext.pageName} page`;
+        if (pageContext.pageTitle) pageContextStr += ` - ${pageContext.pageTitle}`;
         if (pageContext.relevantData) {
           const data = pageContext.relevantData;
-          if (data.userModel) contextPrefix += `. User's Unimog: ${data.userModel}`;
-          if (data.listingTitle) contextPrefix += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
-          if (data.upcomingEventCount) contextPrefix += `. ${data.upcomingEventCount} upcoming events`;
+          // Skip userModel since we now have full vehicle context
+          if (data.listingTitle) pageContextStr += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
+          if (data.upcomingEventCount) pageContextStr += `. ${data.upcomingEventCount} upcoming events`;
         }
-        contextPrefix += `] `;
+        pageContextStr += `] `;
+        contextPrefix += pageContextStr;
+      }
+
+      // Final message: contextPrefix + actual user message
+      if (contextPrefix) {
         userMessageContent = contextPrefix + userMessageContent;
       }
 
@@ -518,6 +571,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
     sendMessage,
     clearChat,
     retry,
+    vehicleContext,
     // Conversation persistence
     conversations,
     isLoadingConversations,

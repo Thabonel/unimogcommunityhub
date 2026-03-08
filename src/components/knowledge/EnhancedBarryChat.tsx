@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp, ThumbsDown, Info
+  Send, RotateCw, Trash2, AlertCircle, LogIn, ThumbsUp, ThumbsDown, Info, Car
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,7 +52,8 @@ export function EnhancedBarryChat({
     isAuthenticated,
     sendMessage,
     clearChat,
-    retry
+    retry,
+    vehicleContext
   } = useBarryOpenClaw({ location });
 
   // Auto-scroll to bottom when new messages arrive
@@ -253,7 +254,15 @@ export function EnhancedBarryChat({
         <Card className="flex flex-col h-full overflow-hidden">
             <CardHeader className="pb-2 px-3 flex-shrink-0">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Chat with Barry</CardTitle>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-base">Chat with Barry</CardTitle>
+                  {vehicleContext && (
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Car className="h-3 w-3" />
+                      <span>{vehicleContext.split(':')[1]?.split('.')[0]?.trim() || 'Your Unimog'}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {error && (
                     <Button
