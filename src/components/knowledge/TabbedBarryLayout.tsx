@@ -19,40 +19,72 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [latestReferences, setLatestReferences] = useState<ManualReference[]>([]);
   const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'manual'>('chat');
+  const [lastResponseContent, setLastResponseContent] = useState<string>('');
   const { isMobile } = useMobile();
 
   // Preload PDFs in background when Barry returns manual references
   usePdfPreloader(latestReferences);
 
+  // Extract the most prominent numeric answer value from Barry's response
+  // e.g. "400 Nm", "400 N.m", "400 N m" -> "400"
+  function extractHighlightTerm(responseContent: string): string | undefined {
+    if (!responseContent) return undefined;
+
+    // Look for numeric values with units (Nm, N.m, N m, mm, litres, bar, kg, etc.)
+    const unitPatterns = [
+      /(\d{2,5})\s*N[\.\s]*m/gi,       // 400 Nm, 400 N.m, 400 N m
+      /(\d{2,5})\s*ft[\.\s-]*lb/gi,    // 295 ft-lb
+      /(\d{1,3}(?:\.\d+)?)\s*(?:litres?|liters?|L)\b/gi,  // 12.5 litres
+      /(\d{2,5})\s*(?:bar|psi|kPa)\b/gi, // 350 bar
+      /(\d{1,5})\s*mm\b/gi,            // 25 mm
+      /(\d{1,5})\s*kg\b/gi,            // 500 kg
+    ];
+
+    for (const pattern of unitPatterns) {
+      const matches = [...responseContent.matchAll(pattern)];
+      if (matches.length > 0) {
+        // Return the first numeric value found (most likely the direct answer)
+        return matches[0][1];
+      }
+    }
+
+    return undefined;
+  }
+
   const handleCitationClick = (reference: ManualReference) => {
-    // Generate unique tab ID
     const tabId = `${reference.title}-${reference.pdf_page || reference.original_page}`;
+
+    // Extract highlight term from Barry's last response
+    const highlightTerm = extractHighlightTerm(lastResponseContent);
 
     // Check if tab already exists
     const existingTab = openPdfTabs.find(tab => tab.id === tabId);
     if (existingTab) {
-      // Tab exists, just switch to it
+      // Update searchHighlight if we have a new term
+      if (highlightTerm && existingTab.searchHighlight !== highlightTerm) {
+        setOpenPdfTabs(prev => prev.map(tab =>
+          tab.id === tabId ? { ...tab, searchHighlight: highlightTerm } : tab
+        ));
+      }
       setActiveTabId(tabId);
-      // On mobile, switch to manual tab when citation is clicked
       if (isMobile) {
         setMobileActiveTab('manual');
       }
       return;
     }
 
-    // Create new tab
+    // Create new tab with search highlight from Barry's answer
     const newTab: ManualTab = {
       id: tabId,
       manualTitle: reference.title,
       pageNumber: reference.pdf_page || reference.original_page,
-      storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url // Remove #page= fragment for viewer
+      storageUrl: reference.storage_url?.split('#')[0] || reference.storage_url,
+      searchHighlight: highlightTerm
     };
 
-    // Add tab and switch to it
     setOpenPdfTabs(prev => [...prev, newTab]);
     setActiveTabId(tabId);
 
-    // On mobile, switch to manual tab when citation is clicked
     if (isMobile) {
       setMobileActiveTab('manual');
     }
@@ -89,6 +121,7 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
               userModel={userModel}
               onCitationClick={handleCitationClick}
               onReferencesReceived={setLatestReferences}
+              onResponseContent={setLastResponseContent}
               className="h-full"
             />
           </TabsContent>
@@ -122,6 +155,7 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
             userModel={userModel}
             onCitationClick={handleCitationClick}
             onReferencesReceived={setLatestReferences}
+            onResponseContent={setLastResponseContent}
           />
         </ResizablePanel>
 
