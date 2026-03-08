@@ -11,10 +11,16 @@ interface BarryContextType {
   onWISAction?: (action: string, data?: any) => void;
   registerWISHandler: (handler: (action: string, data?: any) => void) => void;
   unregisterWISHandler: () => void;
-  // ADD:
+  // Page context:
   pageContext: PageContext | null;
   setPageContext: (context: PageContext) => void;
   clearPageContext: () => void;
+  // Chat control:
+  isBarryOpen: boolean;
+  openBarry: (initialMessage?: string) => void;
+  closeBarry: () => void;
+  pendingMessage: string | null;
+  clearPendingMessage: () => void;
 }
 
 const BarryContext = createContext<BarryContextType | undefined>(undefined);
@@ -22,6 +28,8 @@ const BarryContext = createContext<BarryContextType | undefined>(undefined);
 export function BarryProvider({ children }: { children: React.ReactNode }) {
   const [wisHandler, setWisHandler] = useState<((action: string, data?: any) => void) | undefined>();
   const [pageContext, setPageContextState] = useState<PageContext | null>(null);
+  const [isBarryOpen, setIsBarryOpen] = useState<boolean>(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   const registerWISHandler = useCallback((handler: (action: string, data?: any) => void) => {
     console.log('🤖 Registering WIS handler for Barry');
@@ -43,6 +51,24 @@ export function BarryProvider({ children }: { children: React.ReactNode }) {
     setPageContextState(null);
   }, []);
 
+  const openBarry = useCallback((initialMessage?: string) => {
+    console.log('🤖 Opening Barry with message:', initialMessage);
+    setIsBarryOpen(true);
+    if (initialMessage) {
+      setPendingMessage(initialMessage);
+    }
+  }, []);
+
+  const closeBarry = useCallback(() => {
+    console.log('🤖 Closing Barry');
+    setIsBarryOpen(false);
+    setPendingMessage(null);
+  }, []);
+
+  const clearPendingMessage = useCallback(() => {
+    setPendingMessage(null);
+  }, []);
+
   return (
     <BarryContext.Provider
       value={{
@@ -52,6 +78,11 @@ export function BarryProvider({ children }: { children: React.ReactNode }) {
         pageContext,
         setPageContext,
         clearPageContext,
+        isBarryOpen,
+        openBarry,
+        closeBarry,
+        pendingMessage,
+        clearPendingMessage,
       }}
     >
       {children}

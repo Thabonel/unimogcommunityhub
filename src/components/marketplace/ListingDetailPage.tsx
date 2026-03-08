@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, MapPin, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useListingDetail } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +14,7 @@ import { useBarry } from '@/contexts/BarryContext';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createConversation, sendMessage } from '@/services/messageService';
+import { SITE_IMAGES } from '@/config/images';
 
 export function ListingDetailPage() {
   const { t } = useTranslation('marketplace');
@@ -19,8 +22,9 @@ export function ListingDetailPage() {
   const { data: listing, isLoading, error } = useListingDetail(listingId);
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [barryQuestion, setBarryQuestion] = useState('');
   const { user } = useAuth();
-  const { setPageContext, clearPageContext } = useBarry();
+  const { setPageContext, clearPageContext, openBarry } = useBarry();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,6 +44,22 @@ export function ListingDetailPage() {
     }
     return () => clearPageContext();
   }, [listing?.id, setPageContext, clearPageContext]);
+
+  // Ask Barry with listing context
+  const handleAskBarry = (question: string) => {
+    if (!listing) return;
+
+    const contextualQuestion = `${question}
+
+About this listing:
+- Item: ${listing.title}
+- Price: $${listing.price?.toLocaleString() || 'N/A'}
+- Condition: ${listing.condition || 'Unknown'}
+- Location: ${listing.location || 'Unknown'}
+- Description: ${listing.description?.substring(0, 200) || 'No description'}${listing.description && listing.description.length > 200 ? '...' : ''}`;
+
+    openBarry(contextualQuestion);
+  };
 
   const handleSendMessage = async () => {
     if (!user) {
@@ -248,6 +268,89 @@ export function ListingDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Ask Barry Section */}
+            <Card className="mt-6 border-military-green/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <picture>
+                      <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                      <img
+                        src={SITE_IMAGES.barryAvatarFallback}
+                        alt="Barry the AI Mechanic"
+                        className="w-10 h-10 rounded-full border-2 border-military-green"
+                      />
+                    </picture>
+                  </div>
+                  <CardTitle className="text-base text-military-green">
+                    Ask Barry the AI Mechanic
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Get instant answers about this part from Barry, our AI mechanic with 45+ Unimog manuals.
+                </p>
+
+                {/* Quick Action Buttons */}
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-military-green text-military-green hover:bg-military-green hover:text-white"
+                    onClick={() => handleAskBarry("Will this fit my Unimog? What models is it compatible with?")}
+                  >
+                    Will this fit my Unimog?
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-military-green text-military-green hover:bg-military-green hover:text-white"
+                    onClick={() => handleAskBarry("How do I install this part? What tools and steps are needed?")}
+                  >
+                    How do I install this?
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-military-green text-military-green hover:bg-military-green hover:text-white"
+                    onClick={() => handleAskBarry("Is this a fair price for this part? What should I know about pricing?")}
+                  >
+                    Is this a fair price?
+                  </Button>
+                </div>
+
+                {/* Custom Question */}
+                <div className="space-y-2 pt-2 border-t">
+                  <Input
+                    value={barryQuestion}
+                    onChange={(e) => setBarryQuestion(e.target.value)}
+                    placeholder="Ask Barry anything about this part..."
+                    className="text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && barryQuestion.trim()) {
+                        handleAskBarry(barryQuestion);
+                        setBarryQuestion('');
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    className="w-full bg-military-green hover:bg-military-green/90"
+                    onClick={() => {
+                      if (barryQuestion.trim()) {
+                        handleAskBarry(barryQuestion);
+                        setBarryQuestion('');
+                      }
+                    }}
+                    disabled={!barryQuestion.trim()}
+                  >
+                    Ask Barry
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
