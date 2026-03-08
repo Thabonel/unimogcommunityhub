@@ -98,6 +98,48 @@ const SAFETY_DISCLAIMERS: Record<string, string> = {
   fuel_system: 'Work in well-ventilated area. No smoking or open flames.'
 };
 
+/**
+ * Strip context prefix brackets from user message to get clean search query.
+ * Frontend prepends [Vehicle: ...] [Context: ...] which pollutes search.
+ * Returns { cleanQuery, contextPrefix } so context can be passed to LLM separately.
+ */
+function stripContextPrefix(query: string): { cleanQuery: string; contextPrefix: string } {
+  let remaining = query.trim();
+  let contextPrefix = '';
+
+  // Extract all [...] prefixes from the start of the message
+  while (remaining.startsWith('[')) {
+    const closeBracket = remaining.indexOf(']');
+    if (closeBracket === -1) break;
+    contextPrefix += remaining.substring(0, closeBracket + 1) + ' ';
+    remaining = remaining.substring(closeBracket + 1).trim();
+  }
+
+  return {
+    cleanQuery: remaining || query, // Fallback to original if nothing left
+    contextPrefix: contextPrefix.trim()
+  };
+}
+
+/**
+ * Convert manual_title to storage filename.
+ * manual_title: "G603 Unimog all types Light Repair"
+ * storage name: "G603-Unimog-all-types-Light-Repair.pdf"
+ */
+function manualTitleToFilename(manualTitle: string): string {
+  if (!manualTitle) return '';
+  return manualTitle.replace(/\s+/g, '-') + '.pdf';
+}
+
+/**
+ * Build storage URL for a manual chunk
+ */
+function buildManualStorageUrl(manualTitle: string, pageNumber: number): string {
+  const filename = manualTitleToFilename(manualTitle);
+  if (!filename) return '';
+  return `${SUPABASE_URL}/storage/v1/object/public/manuals/${filename}#page=${pageNumber}`;
+}
+
 // Safety disclaimer triggers
 const SAFETY_TRIGGERS: Record<string, string[]> = {
   brake_work: ['brake', 'brakes', 'caliper', 'brake pad', 'brake fluid'],
@@ -367,10 +409,21 @@ async function executeManualSearch(
   expandedTerms?: string[]
 ): Promise<{ found: boolean; chunks: any[]; context: string }> {
   try {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+      'should', 'may', 'might', 'must', 'shall', 'can',
+      'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
+      'how', 'what', 'where', 'when', 'why', 'which', 'who', 'whom',
+      'my', 'your', 'his', 'her', 'its', 'our', 'their',
+      'i', 'me', 'you', 'he', 'she', 'it', 'we', 'they',
+      'this', 'that', 'these', 'those', 'not', 'but', 'and', 'or',
+      'about', 'tell', 'know', 'need', 'want', 'get', 'much', 'many'
+    ]);
     const keywords = query.toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 2);
+      .filter(w => w.length > 2 && !stopWords.has(w));
 
     if (keywords.length === 0) return { found: false, chunks: [], context: '' };
 
@@ -379,7 +432,6 @@ async function executeManualSearch(
       .from('manual_chunks')
       .select('*')
       .textSearch('content', keywords.join(' & '), { type: 'websearch', config: 'english' })
-      .ilike('manual_title', '%U435%')
       .limit(maxResults);
 
     let chunks = ftsResults || [];
@@ -401,7 +453,6 @@ async function executeManualSearch(
               .from('manual_chunks')
               .select('*')
               .ilike('content', `%${cleanTerm}%`)
-              .ilike('manual_title', '%U435%')
               .limit(maxResults);
 
             if (termResults) {
@@ -431,7 +482,6 @@ async function executeManualSearch(
           .from('manual_chunks')
           .select('*')
           .ilike('content', `%${keywords[0]}%`)
-          .ilike('manual_title', '%U435%')
           .limit(maxResults);
 
         chunks = ilikeResults || [];
@@ -970,13 +1020,18 @@ serve(async (req) => {
     const lastUserMessage = sanitizedMessages[sanitizedMessages.length - 1];
     const userQuery = sanitizeInput(lastUserMessage.content || '');
 
-    console.log(`[Barry-OpenClaw] Query: ${userQuery.substring(0, 100)}...`);
+    // Strip context prefix from search queries - frontend prepends [Vehicle: ...] [Context: ...]
+    const { cleanQuery, contextPrefix } = stripContextPrefix(userQuery);
+    console.log(`[Barry-OpenClaw] Clean query: ${cleanQuery.substring(0, 100)}`);
+    if (contextPrefix) {
+      console.log(`[Barry-OpenClaw] Context prefix: ${contextPrefix.substring(0, 100)}`);
+    }
 
     // ============ SKILL CHAIN EXECUTION ============
 
     // SKILL 1: Domain Guard
     executedSkills.push('domain-guard');
-    const domainResult = executeDomainGuard(userQuery);
+    const domainResult = executeDomainGuard(cleanQuery);
     console.log(`[Domain] ${domainResult.domain} - ${domainResult.task}`);
 
     if (!domainResult.is_allowed) {
@@ -992,7 +1047,7 @@ serve(async (req) => {
 
     // SKILL 2: Knowledge Base Lookup (instant answers)
     executedSkills.push('knowledge-lookup');
-    const kbResult = await executeKnowledgeLookup(supabaseAdmin, userQuery);
+    const kbResult = await executeKnowledgeLookup(supabaseAdmin, cleanQuery);
 
     if (kbResult.found && kbResult.content) {
       console.log(`[KB] Cache hit with confidence ${kbResult.confidence}`);
@@ -1010,10 +1065,10 @@ serve(async (req) => {
 
     // SKILL 2.5: Query Expander (Context Gatherer - Phase 1 of Barry AI Transformation)
     // Only run for technical queries that had a knowledge base cache MISS
-    let expandedTerms: string[] = [userQuery];
+    let expandedTerms: string[] = [cleanQuery];
     if (domainResult.domain === 'technical') {
       executedSkills.push('query-expander');
-      const expansionResult = await executeQueryExpander(userQuery);
+      const expansionResult = await executeQueryExpander(cleanQuery);
 
       if (expansionResult.found) {
         expandedTerms = expansionResult.expandedTerms;
@@ -1029,9 +1084,9 @@ serve(async (req) => {
     executedSkills.push('scraped-content-search');
 
     const [manualResult, rpsResult, scrapedResult] = await Promise.all([
-      executeManualSearch(supabaseAdmin, userQuery, 10, expandedTerms.length > 1 ? expandedTerms : undefined),
-      executeRPSSearch(supabaseAdmin, userQuery, expandedTerms.length > 1 ? expandedTerms : undefined),
-      executeScrapedContentSearch(supabaseAdmin, userQuery, 5)
+      executeManualSearch(supabaseAdmin, cleanQuery, 10, expandedTerms.length > 1 ? expandedTerms : undefined),
+      executeRPSSearch(supabaseAdmin, cleanQuery, expandedTerms.length > 1 ? expandedTerms : undefined),
+      executeScrapedContentSearch(supabaseAdmin, cleanQuery, 5)
     ]);
 
     console.log(`[Manual] Found ${manualResult.chunks.length} chunks`);
@@ -1076,7 +1131,7 @@ serve(async (req) => {
 
     // SKILL 6: Safety Filter
     executedSkills.push('safety-filter');
-    const safetyResult = executeSafetyFilter(userQuery, responseContent, domainResult.task);
+    const safetyResult = executeSafetyFilter(cleanQuery, responseContent, domainResult.task);
 
     // Build final response content
     let finalContent = safetyResult.content;
@@ -1095,12 +1150,14 @@ serve(async (req) => {
         addedPages.add(chunk.page_number);
         manualReferences.push({
           type: 'u435_openclaw',
-          title: chunk.section_title || 'Manual Entry',
+          title: chunk.section_title || chunk.manual_title || 'Manual Entry',
           page_number: chunk.page_number,
           original_page: chunk.page_number,
           pdf_page: chunk.page_number,
-          storage_url: chunk.storage_url || '',
-          manual_type: 'U435',
+          storage_url: buildManualStorageUrl(chunk.manual_title, chunk.page_number),
+          chapter_filename: manualTitleToFilename(chunk.manual_title),
+          filename: manualTitleToFilename(chunk.manual_title),
+          manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
           content_preview: chunk.content?.substring(0, 200)
         });
       }
@@ -1112,12 +1169,14 @@ serve(async (req) => {
         addedPages.add(chunk.page_number);
         manualReferences.push({
           type: 'u435_openclaw',
-          title: chunk.section_title || 'Manual Entry',
+          title: chunk.section_title || chunk.manual_title || 'Manual Entry',
           page_number: chunk.page_number,
           original_page: chunk.page_number,
           pdf_page: chunk.page_number,
-          storage_url: chunk.storage_url || '',
-          manual_type: 'U435',
+          storage_url: buildManualStorageUrl(chunk.manual_title, chunk.page_number),
+          chapter_filename: manualTitleToFilename(chunk.manual_title),
+          filename: manualTitleToFilename(chunk.manual_title),
+          manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
           content_preview: chunk.content?.substring(0, 200)
         });
       }
