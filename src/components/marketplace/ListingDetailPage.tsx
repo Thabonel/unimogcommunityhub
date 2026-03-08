@@ -24,16 +24,16 @@ export function ListingDetailPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (listing) {
+    if (listing && listing.title) {
       setPageContext({
         pageName: 'marketplace_listing',
-        pageTitle: `${listing.title}`,
+        pageTitle: listing.title,
         relevantData: {
           listingTitle: listing.title,
-          price: listing.price,
-          category: listing.category,
-          condition: listing.condition,
-          location: listing.location,
+          price: listing.price || 0,
+          category: listing.category || 'Unknown',
+          condition: listing.condition || 'Unknown',
+          location: listing.location || 'Unknown',
           description: listing.description?.substring(0, 200)
         }
       });

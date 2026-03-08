@@ -4,13 +4,11 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, FileText } from 'lucide-react';
-// import { Wrench } from 'lucide-react'; // COMMENTED OUT: Workshop Database disabled
 import { Link } from 'react-router-dom';
 import { RecommendationSubmissionDialog } from '@/components/knowledge/RecommendationSubmissionDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBarry } from '@/contexts/BarryContext';
 import { useProfile } from '@/hooks/profile';
-// import { FEATURES } from '@/config/features'; // COMMENTED OUT: Workshop Database disabled
 import { useTranslation } from 'react-i18next';
 
 const Knowledge = () => {
@@ -30,8 +28,7 @@ const Knowledge = () => {
     });
     return () => clearPageContext();
   }, [setPageContext, clearPageContext, userData?.unimogModel]);
-  
-  
+
   const layoutUser = userData ? {
     name: userData.name || user?.email?.split('@')[0] || 'User',
     avatarUrl: (userData.useVehiclePhotoAsProfile && userData.vehiclePhotoUrl) 
