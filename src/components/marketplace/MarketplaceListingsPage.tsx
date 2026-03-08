@@ -1,11 +1,11 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Package } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { MarketplaceSearch } from '@/components/marketplace/MarketplaceSearch';
 import { MarketplaceListingCard } from '@/components/marketplace/MarketplaceListingCard';
 import { AmazonProductCard } from '@/components/marketplace/AmazonProductCard';

@@ -47,18 +47,10 @@ export function FloatingBarryButton() {
 
   // Handle Barry button click - different behavior for WIS page
   const handleBarryClick = () => {
-    console.log('🤖 Barry clicked!', {
-      pathname: routerLocation.pathname,
-      isWISPage,
-      hasWISAction: !!onWISAction
-    });
-
     if (isWISPage && onWISAction) {
-      console.log('🤖 Activating Barry WIS mode');
       // On WIS page, trigger WIS integration
       onWISAction('activate_barry_mode');
     } else {
-      console.log('🤖 Showing Barry chat modal');
       // On other pages, show normal chat modal
       openBarry();
     }

@@ -32,27 +32,22 @@ export function BarryProvider({ children }: { children: React.ReactNode }) {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
   const registerWISHandler = useCallback((handler: (action: string, data?: any) => void) => {
-    console.log('🤖 Registering WIS handler for Barry');
     setWisHandler(() => handler);
   }, []);
 
   const unregisterWISHandler = useCallback(() => {
-    console.log('🤖 Unregistering WIS handler for Barry');
     setWisHandler(undefined);
   }, []);
 
   const setPageContext = useCallback((context: PageContext) => {
-    console.log('🤖 Setting Barry page context:', context);
     setPageContextState(context);
   }, []);
 
   const clearPageContext = useCallback(() => {
-    console.log('🤖 Clearing Barry page context');
     setPageContextState(null);
   }, []);
 
   const openBarry = useCallback((initialMessage?: string) => {
-    console.log('🤖 Opening Barry with message:', initialMessage);
     setIsBarryOpen(true);
     if (initialMessage) {
       setPendingMessage(initialMessage);
@@ -60,7 +55,6 @@ export function BarryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const closeBarry = useCallback(() => {
-    console.log('🤖 Closing Barry');
     setIsBarryOpen(false);
     setPendingMessage(null);
   }, []);
