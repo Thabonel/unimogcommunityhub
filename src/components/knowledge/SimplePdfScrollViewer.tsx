@@ -49,11 +49,14 @@ function highlightTextInPage(pageContainer: HTMLElement, searchTerm: string) {
       const highlight = document.createElement('span');
       highlight.className = 'barry-highlight';
       highlight.textContent = match;
-      highlight.style.backgroundColor = '#FFEB3B';
-      highlight.style.color = '#000';
+      highlight.style.backgroundColor = 'rgba(255, 235, 59, 0.85)';
+      highlight.style.color = 'transparent';
       highlight.style.borderRadius = '2px';
-      highlight.style.padding = '0 1px';
-      highlight.style.boxShadow = '0 0 0 1px rgba(255, 235, 59, 0.5)';
+      highlight.style.padding = '2px 1px';
+      highlight.style.margin = '-2px -1px';
+      highlight.style.boxShadow = '0 0 4px 2px rgba(255, 235, 59, 0.6)';
+      highlight.style.position = 'relative';
+      highlight.style.zIndex = '3';
       fragment.appendChild(highlight);
 
       if (after) fragment.appendChild(document.createTextNode(after));
