@@ -90,24 +90,24 @@ const Header = ({ isLoggedIn: propIsLoggedIn, user: propUser }: HeaderProps) => 
 
   return (
     <header className="sticky top-0 z-50 w-full bg-military-green shadow-md">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-4">
-          <MobileMenu 
-            isLoggedIn={isLoggedIn} 
-            onLogout={handleSignOut} 
+      <div className="container flex h-16 items-center justify-between min-w-0">
+        <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+          <MobileMenu
+            isLoggedIn={isLoggedIn}
+            onLogout={handleSignOut}
             onLogin={() => Promise.resolve(navigate('/login'))}
           />
           <Logo />
         </div>
-        
+
         {/* Only show navigation when logged in AND not on homepage */}
         {isLoggedIn && !isHomePage && (
-          <div className="hidden md:block">
+          <div className="hidden md:block flex-1 max-w-2xl mx-4">
             <MainNavigation isActive={(path) => location.pathname === path || location.pathname.startsWith(`${path}/`)} />
           </div>
         )}
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Language Selector */}
           <LanguageSelector size="sm" variant="ghost" />
 
