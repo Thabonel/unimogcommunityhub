@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Globe, TrendingUp, Eye, Heart, Search, Filter, Shuffle } from 'lucide-react';
+import { Globe, TrendingUp, Search, Filter, Shuffle } from 'lucide-react';
 import VehicleCard from '@/components/community/VehicleCard';
 import CountrySelector from '@/components/community/CountrySelector';
 import AddToShowcaseButton from '@/components/community/AddToShowcaseButton';
@@ -41,10 +41,9 @@ const Showroom = () => {
     totalLikes: 0
   });
 
-  const { 
-    fetchShowcaseVehicles, 
-    getGlobalStats, 
-    getCountryStats 
+  const {
+    fetchShowcaseVehicles,
+    getGlobalStats
   } = useVehicleShowcase();
 
   // Update URL params when filters change
