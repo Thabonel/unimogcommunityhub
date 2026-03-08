@@ -137,16 +137,25 @@ export async function executeKnowledgeLookup(
     let manualReferences: ManualReference[] = [];
     try {
       const refs = bestMatch.manual_references || [];
-      manualReferences = refs.map((ref: any) => ({
-        type: 'knowledge_base',
-        title: ref.manual_title || 'U435 Workshop Manual',
-        page_number: ref.page_number || 0,
-        original_page: ref.page_number || 0,
-        pdf_page: ref.pdf_page || ref.page_number || 0,
-        storage_url: ref.storage_url || '',
-        chapter_filename: ref.chapter_filename,
-        manual_type: 'U435'
-      }));
+      manualReferences = refs.map((ref: any) => {
+        // Ensure storage_url is properly set
+        let storageUrl = ref.storage_url;
+        if (!storageUrl && ref.chapter_filename) {
+          storageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${ref.chapter_filename}`;
+        }
+
+        return {
+          type: 'knowledge_base',
+          title: ref.manual_title || 'U435 Workshop Manual',
+          page_number: ref.page_number || 0,
+          original_page: ref.page_number || 0,
+          pdf_page: ref.pdf_page || ref.page_number || 0,
+          storage_url: storageUrl || '',
+          chapter_filename: ref.chapter_filename,
+          filename: ref.chapter_filename,
+          manual_type: 'U435'
+        };
+      });
     } catch (parseError) {
       console.warn('[KB Lookup] Error parsing manual references:', parseError);
     }
