@@ -30,6 +30,7 @@ import { runCompleteDiagnostics } from '@/utils/mapbox-diagnostics';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { EnhancedBarryChat } from '../knowledge/EnhancedBarryChat';
 import { SendToButton } from '../navigation/SendToButton';
+import { useBarry } from '@/contexts/BarryContext';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { ElevationProfile } from './ElevationProfile';
 import { MobileNavigationSheet } from './mobile/MobileNavigationSheet';
@@ -97,6 +98,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const { location } = useUserLocation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { setPageContext, clearPageContext } = useBarry();
 
   // Track map loaded state for plugin
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
@@ -120,6 +122,40 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [elevationData, setElevationData] = useState<any[]>([]);
   const [isAddingWaypoints, setIsAddingWaypoints] = useState(false);
+
+  // Set Barry page context with trip planning data
+  useEffect(() => {
+    const relevantData: any = {
+      pageName: 'trip_planning',
+      currentRouteProfile: routeProfile,
+      hasWaypoints: waypoints.length > 0,
+      waypointCount: waypoints.length,
+      hasPlannedRoute: !!currentRoute
+    };
+
+    if (waypoints.length > 0) {
+      relevantData.waypoints = waypoints.map((wp, index) => ({
+        position: index + 1,
+        coordinates: wp.geometry?.coordinates || wp.center || [wp.lng, wp.lat]
+      }));
+    }
+
+    if (currentRoute) {
+      relevantData.routeInfo = {
+        distance: currentRoute.distance,
+        duration: currentRoute.duration,
+        profile: routeProfile
+      };
+    }
+
+    setPageContext({
+      pageName: 'trip_planning',
+      pageTitle: 'Trip Planning & Navigation',
+      relevantData
+    });
+
+    return () => clearPageContext();
+  }, [waypoints, currentRoute, routeProfile, setPageContext, clearPageContext]);
 
   // Custom location search state (replaces plugin's broken autocomplete)
   const [selectedOrigin, setSelectedOrigin] = useState<GeocodingSuggestion | null>(null);
