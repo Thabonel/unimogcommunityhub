@@ -8,6 +8,7 @@ interface ViewerRouterProps {
   url: string;
   pageNumber?: number;
   manualTitle?: string;
+  searchHighlight?: string;
   onLoadSuccess?: () => void;
   onLoadError?: (error: Error) => void;
   className?: string;
@@ -17,6 +18,7 @@ export function ViewerRouter({
   url,
   pageNumber,
   manualTitle,
+  searchHighlight,
   onLoadSuccess,
   onLoadError,
   className = ''
@@ -40,7 +42,7 @@ export function ViewerRouter({
         <SimplePdfScrollViewer
           pdfUrl={url}
           initialPage={pageNumber}
-          manualTitle={manualTitle}
+          searchHighlight={searchHighlight}
           className={className}
         />
       );

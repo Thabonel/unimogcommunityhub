@@ -27,6 +27,7 @@ interface EnhancedBarryChatProps {
   userModel?: string | null;
   onCitationClick?: (reference: ManualReference) => void;
   onReferencesReceived?: (references: ManualReference[]) => void;
+  onResponseContent?: (content: string) => void;
 }
 
 export function EnhancedBarryChat({
@@ -34,7 +35,8 @@ export function EnhancedBarryChat({
   location,
   userModel,
   onCitationClick,
-  onReferencesReceived
+  onReferencesReceived,
+  onResponseContent
 }: EnhancedBarryChatProps) {
   const [input, setInput] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -73,6 +75,14 @@ export function EnhancedBarryChat({
       onReferencesReceived?.(lastMessage.manualReferences);
     }
   }, [messages, onReferencesReceived]);
+
+  // Pass latest assistant response content to parent for highlight extraction
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.content) {
+      onResponseContent?.(lastMessage.content);
+    }
+  }, [messages, onResponseContent]);
 
   // Auto-send pending message from context
   useEffect(() => {

@@ -10,6 +10,7 @@ export interface ManualTab {
   manualTitle: string;
   pageNumber: number;
   storageUrl: string;
+  searchHighlight?: string;
 }
 
 interface TabbedPdfViewerProps {
@@ -100,6 +101,7 @@ export function TabbedPdfViewer({
               url={tab.storageUrl}
               pageNumber={tab.pageNumber}
               manualTitle={tab.manualTitle}
+              searchHighlight={tab.searchHighlight}
               className="h-full"
             />
           </TabsContent>
