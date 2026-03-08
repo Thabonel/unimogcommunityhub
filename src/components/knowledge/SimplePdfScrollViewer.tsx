@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 
-// Configure PDF.js worker - use CDN with explicit HTTPS for reliability
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 interface SimplePdfScrollViewerProps {
@@ -22,26 +21,22 @@ export function SimplePdfScrollViewer({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // Debug logging for PDF URL
   React.useEffect(() => {
     console.log('SimplePdfScrollViewer: Loading PDF from URL:', pdfUrl);
     console.log('SimplePdfScrollViewer: Initial page:', initialPage);
   }, [pdfUrl, initialPage]);
 
-  // Set container width on mount and resize
   React.useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth - 32); // Account for padding
+        setContainerWidth(containerRef.current.offsetWidth - 32);
       }
     };
-
     updateWidth();
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
-  // Scroll to initial page after PDF loads
   React.useEffect(() => {
     if (numPages > 0 && initialPage > 0) {
       const pageElement = document.querySelector(`[data-page-number="${initialPage}"]`);
@@ -51,51 +46,38 @@ export function SimplePdfScrollViewer({
     }
   }, [numPages, initialPage]);
 
+  // Safety timeout: if PDF hasn't loaded in 20s, show error
+  React.useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        setError('PDF took too long to load. The file may not be available.');
+        setIsLoading(false);
+      }
+    }, 20000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
     setError(null);
     setIsLoading(false);
   }
 
-  function onDocumentLoadError(error: Error) {
-    console.error('PDF load error:', error);
-    console.error('PDF URL that failed:', pdfUrl);
-    console.error('Error details:', error.message, error.name);
-
-    // Test if URL is accessible
-    fetch(pdfUrl, { method: 'HEAD' })
-      .then(response => {
-        console.log('PDF URL HEAD check - Status:', response.status, 'OK:', response.ok);
-        if (!response.ok) {
-          console.error('PDF URL is not accessible - HTTP', response.status);
-        }
-      })
-      .catch(fetchError => {
-        console.error('PDF URL fetch test failed:', fetchError);
-      });
-
-    setError(`Failed to load PDF: ${error.message || 'Unknown error'}`);
+  function onDocumentLoadError(err: Error) {
+    console.error('PDF load error:', err.message, 'URL:', pdfUrl);
+    setError(`Failed to load PDF: ${err.message || 'File may not be available'}`);
     setIsLoading(false);
   }
 
   if (error) {
     return (
       <div className="flex items-center justify-center h-full p-8">
-        <div className="text-center text-destructive">
-          <p className="font-medium mb-2">Error Loading PDF</p>
-          <p className="text-sm">{error}</p>
-          <p className="text-xs mt-2 text-muted-foreground">URL: {pdfUrl}</p>
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-3" />
+          <p className="font-medium mb-2 text-foreground">PDF Not Available</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
         </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 min-h-[400px]">
-        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
-        <p className="text-lg font-medium text-muted-foreground">Loading manual...</p>
-        <p className="text-sm text-muted-foreground mt-2">This may take a moment for large files</p>
       </div>
     );
   }

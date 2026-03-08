@@ -132,12 +132,51 @@ function manualTitleToFilename(manualTitle: string): string {
 }
 
 /**
- * Build storage URL for a manual chunk
+ * Build storage URL for a manual chunk.
+ * Only returns a URL if the PDF file actually exists in storage.
+ * Pass availablePdfs set from getAvailablePdfFiles() to verify.
  */
-function buildManualStorageUrl(manualTitle: string, pageNumber: number): string {
+function buildManualStorageUrl(manualTitle: string, pageNumber: number, availablePdfs?: Set<string>): string {
   const filename = manualTitleToFilename(manualTitle);
   if (!filename) return '';
+  // If we have the availability set, only build URL for files that exist
+  if (availablePdfs && !availablePdfs.has(filename)) {
+    console.log(`[PDF] Skipping URL for missing file: ${filename}`);
+    return '';
+  }
   return `${SUPABASE_URL}/storage/v1/object/public/manuals/${filename}#page=${pageNumber}`;
+}
+
+/**
+ * Query storage.objects to get set of available PDF filenames in manuals bucket.
+ * Returns Set of filenames like "G603-Unimog-all-types-Light-Repair.pdf"
+ */
+async function getAvailablePdfFiles(supabaseAdmin: any): Promise<Set<string>> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('storage.objects')
+      .select('name')
+      .eq('bucket_id', 'manuals')
+      .like('name', '%.pdf');
+
+    if (error) {
+      // Fallback: try listing via storage API
+      const { data: listData, error: listError } = await supabaseAdmin.storage
+        .from('manuals')
+        .list('', { limit: 200 });
+
+      if (listError || !listData) {
+        console.warn('[PDF] Could not list storage files:', listError?.message || 'no data');
+        return new Set();
+      }
+      return new Set(listData.map((f: any) => f.name).filter((n: string) => n.endsWith('.pdf')));
+    }
+
+    return new Set((data || []).map((row: any) => row.name));
+  } catch (err) {
+    console.warn('[PDF] Error querying available files:', err);
+    return new Set();
+  }
 }
 
 // Safety disclaimer triggers
@@ -1078,16 +1117,18 @@ serve(async (req) => {
       }
     }
 
-    // SKILL 3, 4, 4b: Manual Search + RPS Search + Scraped Content (parallel context gathering)
+    // SKILL 3, 4, 4b: Manual Search + RPS Search + Scraped Content + PDF availability (parallel)
     executedSkills.push('manual-search');
     executedSkills.push('rps-search');
     executedSkills.push('scraped-content-search');
 
-    const [manualResult, rpsResult, scrapedResult] = await Promise.all([
+    const [manualResult, rpsResult, scrapedResult, availablePdfs] = await Promise.all([
       executeManualSearch(supabaseAdmin, cleanQuery, 10, expandedTerms.length > 1 ? expandedTerms : undefined),
       executeRPSSearch(supabaseAdmin, cleanQuery, expandedTerms.length > 1 ? expandedTerms : undefined),
-      executeScrapedContentSearch(supabaseAdmin, cleanQuery, 5)
+      executeScrapedContentSearch(supabaseAdmin, cleanQuery, 5),
+      getAvailablePdfFiles(supabaseAdmin)
     ]);
+    console.log(`[PDF] ${availablePdfs.size} PDFs available in storage`);
 
     console.log(`[Manual] Found ${manualResult.chunks.length} chunks`);
     console.log(`[RPS] Found ${rpsResult.illustrations.length} illustrations`);
@@ -1144,9 +1185,12 @@ serve(async (req) => {
     const manualReferences: ManualReference[] = [];
     const addedPages = new Set<number>();
 
-    // First add explicitly cited pages
+    // First add explicitly cited pages (only if PDF exists in storage)
     for (const chunk of manualResult.chunks) {
       if (citations.includes(chunk.page_number) && !addedPages.has(chunk.page_number)) {
+        const storageUrl = buildManualStorageUrl(chunk.manual_title, chunk.page_number, availablePdfs);
+        // Only add references that have a working PDF URL
+        if (!storageUrl) continue;
         addedPages.add(chunk.page_number);
         manualReferences.push({
           type: 'u435_openclaw',
@@ -1154,7 +1198,7 @@ serve(async (req) => {
           page_number: chunk.page_number,
           original_page: chunk.page_number,
           pdf_page: chunk.page_number,
-          storage_url: buildManualStorageUrl(chunk.manual_title, chunk.page_number),
+          storage_url: storageUrl,
           chapter_filename: manualTitleToFilename(chunk.manual_title),
           filename: manualTitleToFilename(chunk.manual_title),
           manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
@@ -1163,9 +1207,11 @@ serve(async (req) => {
       }
     }
 
-    // Then add other found pages (up to 5 total manual refs)
+    // Then add other found pages (up to 5 total manual refs, only with valid PDFs)
     for (const chunk of manualResult.chunks) {
       if (!addedPages.has(chunk.page_number) && manualReferences.length < 5) {
+        const storageUrl = buildManualStorageUrl(chunk.manual_title, chunk.page_number, availablePdfs);
+        if (!storageUrl) continue;
         addedPages.add(chunk.page_number);
         manualReferences.push({
           type: 'u435_openclaw',
@@ -1173,7 +1219,7 @@ serve(async (req) => {
           page_number: chunk.page_number,
           original_page: chunk.page_number,
           pdf_page: chunk.page_number,
-          storage_url: buildManualStorageUrl(chunk.manual_title, chunk.page_number),
+          storage_url: storageUrl,
           chapter_filename: manualTitleToFilename(chunk.manual_title),
           filename: manualTitleToFilename(chunk.manual_title),
           manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
