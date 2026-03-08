@@ -278,7 +278,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
           }
         }
       } catch (err) {
-        console.error('[Barry] Failed to fetch vehicle context:', err);
+        // Silently continue - vehicle context is optional for Barry functionality
       }
     }
     fetchVehicle();
@@ -442,16 +442,15 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
 
       // Page context (from Phase 2)
       if (pageContext) {
-        let pageContextStr = `[Context: User is on ${pageContext.pageName} page`;
-        if (pageContext.pageTitle) pageContextStr += ` - ${pageContext.pageTitle}`;
+        let pagePrefix = `[Context: User is on ${pageContext.pageName} page`;
+        if (pageContext.pageTitle) pagePrefix += ` - ${pageContext.pageTitle}`;
         if (pageContext.relevantData) {
           const data = pageContext.relevantData;
-          // Skip userModel since we now have full vehicle context
-          if (data.listingTitle) pageContextStr += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
-          if (data.upcomingEventCount) pageContextStr += `. ${data.upcomingEventCount} upcoming events`;
+          if (data.listingTitle) pagePrefix += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
+          if (data.upcomingEventCount) pagePrefix += `. ${data.upcomingEventCount} upcoming events`;
         }
-        pageContextStr += `] `;
-        contextPrefix += pageContextStr;
+        pagePrefix += `] `;
+        contextPrefix += pagePrefix;
       }
 
       // Final message: contextPrefix + actual user message
