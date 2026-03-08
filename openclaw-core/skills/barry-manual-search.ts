@@ -81,7 +81,8 @@ function extractKeywords(query: string): string[] {
 async function searchManualChunks(
   supabaseAdmin: any,
   query: string,
-  maxResults: number
+  maxResults: number,
+  expandedTerms?: string[]
 ): Promise<any[]> {
   const keywords = extractKeywords(query);
 
@@ -105,26 +106,63 @@ async function searchManualChunks(
       return ftsResults;
     }
 
-    // Fallback to ILIKE search
-    const { data: ilikeResults, error: ilikeError } = await supabaseAdmin
-      .from('manual_chunks')
-      .select('*')
-      .ilike('content', `%${keywords[0]}%`)
-      .ilike('manual_title', '%U435%')
-      .limit(maxResults);
+    // Fallback to ILIKE search - use OR logic if expanded terms available
+    const searchTerms = expandedTerms && expandedTerms.length > 1 ? expandedTerms : keywords;
+    let ilikeResults: any[] = [];
 
-    if (!ilikeError && ilikeResults) {
-      // Score and sort by relevance
+    if (expandedTerms && expandedTerms.length > 1) {
+      // OR logic search: find chunks matching ANY expanded term
+      const allResults: any[] = [];
+      const seenIds = new Set<string>();
+
+      for (const term of searchTerms) {
+        const cleanTerm = term.toLowerCase().trim();
+        if (cleanTerm.length > 2) {
+          const { data: termResults, error } = await supabaseAdmin
+            .from('manual_chunks')
+            .select('*')
+            .ilike('content', `%${cleanTerm}%`)
+            .ilike('manual_title', '%U435%')
+            .limit(maxResults);
+
+          if (!error && termResults) {
+            // Deduplicate by ID
+            for (const chunk of termResults) {
+              if (!seenIds.has(chunk.id)) {
+                seenIds.add(chunk.id);
+                allResults.push(chunk);
+              }
+            }
+          }
+        }
+      }
+
+      ilikeResults = allResults;
+    } else {
+      // Original AND logic for backward compatibility
+      const { data: andResults } = await supabaseAdmin
+        .from('manual_chunks')
+        .select('*')
+        .ilike('content', `%${keywords[0]}%`)
+        .ilike('manual_title', '%U435%')
+        .limit(maxResults);
+
+      ilikeResults = andResults || [];
+    }
+
+    if (ilikeResults.length > 0) {
+      // Score and sort by relevance (count of matching terms)
       return ilikeResults
         .map((chunk: any) => {
           let score = 0;
           const contentLower = chunk.content?.toLowerCase() || '';
-          for (const keyword of keywords) {
-            if (contentLower.includes(keyword)) score++;
+          for (const term of searchTerms) {
+            if (contentLower.includes(term.toLowerCase())) score++;
           }
-          return { ...chunk, relevance_score: score / keywords.length };
+          return { ...chunk, relevance_score: score / searchTerms.length };
         })
-        .sort((a: any, b: any) => b.relevance_score - a.relevance_score);
+        .sort((a: any, b: any) => b.relevance_score - a.relevance_score)
+        .slice(0, maxResults); // Limit final results
     }
 
     return [];
@@ -172,22 +210,27 @@ async function searchSpecifications(
  * Manual Search Skill - Main execution function
  */
 export async function executeManualSearch(
-  input: ManualSearchInput,
+  input: ManualSearchInput & { expanded_terms?: string[] },
   context: SkillExecutionContext
 ): Promise<SkillResult<ManualSearchOutput>> {
   const startTime = performance.now();
   const skillName = 'barry-manual-search';
 
   try {
-    const { query, task, max_results } = input;
+    const { query, task, max_results, expanded_terms } = input;
     const { supabaseAdmin } = context;
 
     // Extract keywords for targeted search
     const keywords = extractKeywords(query);
-    console.log(`[ManualSearch] Keywords: ${keywords.join(', ')}`);
+    const useExpansion = expanded_terms && expanded_terms.length > 1;
 
-    // Perform main search
-    const searchResults = await searchManualChunks(supabaseAdmin, query, max_results);
+    console.log(`[ManualSearch] Keywords: ${keywords.join(', ')}`);
+    if (useExpansion) {
+      console.log(`[ManualSearch] Expanded terms: ${expanded_terms.slice(0, 3).join(', ')}${expanded_terms.length > 3 ? '...' : ''}`);
+    }
+
+    // Perform main search with expanded terms
+    const searchResults = await searchManualChunks(supabaseAdmin, query, max_results, expanded_terms);
 
     // For specification queries, also search spec tables
     let specResults: any[] = [];
