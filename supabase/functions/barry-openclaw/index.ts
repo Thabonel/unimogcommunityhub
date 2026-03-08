@@ -466,45 +466,81 @@ async function executeManualSearch(
 
     if (keywords.length === 0) return { found: false, chunks: [], context: '' };
 
-    // Full-text search
-    const { data: ftsResults, error: ftsError } = await supabaseAdmin
+    // Detect if query is asking for specifications/values
+    const specTerms = ['torque', 'spec', 'specification', 'capacity', 'pressure', 'clearance', 'tolerance', 'weight', 'dimension', 'size', 'rating', 'limit', 'tension', 'tightening'];
+    const isSpecQuery = keywords.some(k => specTerms.some(s => k.includes(s) || s.includes(k)));
+    const componentTerms = keywords.filter(k => !specTerms.includes(k) && !['spec', 'specification', 'value', 'what'].includes(k));
+
+    // Run FTS and targeted spec search in parallel
+    const ftsPromise = supabaseAdmin
       .from('manual_chunks')
       .select('*')
       .textSearch('content', keywords.join(' & '), { type: 'websearch', config: 'english' })
       .limit(maxResults * 2);
 
-    let chunks = ftsResults || [];
-
-    // Boost chunks that contain actual spec values (numbers near keywords)
-    // FTS ranks narrative text higher than spec tables, so re-rank to prioritize
-    // chunks that contain actual numeric answers alongside the search terms
-    if (chunks.length > 1) {
-      const keyTerms = keywords.filter(k => !['spec', 'specification', 'torque', 'value', 'what'].includes(k));
-      chunks = chunks.map((chunk: any) => {
-        const contentLower = (chunk.content || '').toLowerCase();
-        let boost = 0;
-        // Boost if chunk contains a keyword immediately followed by a number (spec table pattern)
-        for (const term of keyTerms) {
-          // Pattern: "wheel nut ... 400" or "wheel nut M 22 X 1,5 400"
-          const termIdx = contentLower.indexOf(term);
-          if (termIdx >= 0) {
-            // Check for numbers within 100 chars of the keyword
-            const nearby = contentLower.substring(termIdx, termIdx + 100);
-            if (/\d{2,4}\s*n[\.\s]*m/i.test(nearby) || /\b\d{3,4}\b/.test(nearby)) {
-              boost += 3;
-            }
-          }
-        }
-        // Boost chunks that look like torque/spec tables
-        if (/tightening\s+torque/i.test(contentLower) || /\bN\s*m\b/.test(chunk.content || '')) {
-          boost += 2;
-        }
-        return { ...chunk, _boost: boost };
-      });
-      // Sort by boost (descending), then keep original order for ties
-      chunks.sort((a: any, b: any) => (b._boost || 0) - (a._boost || 0));
-      chunks = chunks.slice(0, maxResults);
+    // Targeted ILIKE search for spec tables: find chunks containing the component name + numeric patterns
+    // This catches dense spec tables that FTS ranks poorly
+    let specPromise: Promise<any> = Promise.resolve({ data: null });
+    if (isSpecQuery && componentTerms.length > 0) {
+      // Stem simple plurals for ILIKE matching (e.g. "nuts" -> "nut" matches "Wheel nut")
+      const stemmedTerms = componentTerms.map(t => t.replace(/s$/, ''));
+      console.log(`[ManualSearch] Spec query detected, targeted ILIKE for: ${stemmedTerms.join(', ')}`);
+      // Build chained ILIKE query - each component term must appear in content
+      let specQuery = supabaseAdmin.from('manual_chunks').select('*');
+      for (const term of stemmedTerms) {
+        specQuery = specQuery.ilike('content', `%${term}%`);
+      }
+      specPromise = specQuery.limit(maxResults * 2);
     }
+
+    const [ftsResponse, specResponse] = await Promise.all([ftsPromise, specPromise]);
+    const ftsResults = ftsResponse.data || [];
+    const specResults = specResponse.data || [];
+
+    // Merge results: spec ILIKE hits get highest priority if they contain numeric values
+    const seenIds = new Set<string>();
+    let chunks: any[] = [];
+
+    // Score and add spec results first (these are the ones FTS misses)
+    if (specResults.length > 0) {
+      const scoredSpec = specResults.map((chunk: any) => {
+        const contentLower = (chunk.content || '').toLowerCase();
+        let score = 0;
+        // Must contain at least one component term
+        for (const term of componentTerms) {
+          if (contentLower.includes(term)) score += 1;
+        }
+        // Strongly boost chunks with actual numeric values (spec table pattern)
+        if (/\d{2,4}\s*n[\.\s]*m/i.test(contentLower)) score += 5;
+        if (/\bN\s*m\b/.test(chunk.content || '')) score += 5;
+        if (/tightening\s+torque/i.test(contentLower)) score += 4;
+        if (/\b\d{3,4}\b/.test(contentLower)) score += 2;
+        // Boost if it looks like a spec table (multiple numbers on the page)
+        const numCount = (contentLower.match(/\b\d{2,4}\b/g) || []).length;
+        if (numCount >= 5) score += 3;
+        return { ...chunk, _specScore: score };
+      }).filter((c: any) => c._specScore >= 3);
+
+      scoredSpec.sort((a: any, b: any) => b._specScore - a._specScore);
+      for (const chunk of scoredSpec.slice(0, 5)) {
+        if (!seenIds.has(chunk.id)) {
+          seenIds.add(chunk.id);
+          chunks.push(chunk);
+        }
+      }
+      console.log(`[ManualSearch] Spec search: ${specResults.length} raw, ${chunks.length} scored above threshold`);
+    }
+
+    // Add FTS results (skip duplicates from spec search)
+    for (const chunk of ftsResults) {
+      if (!seenIds.has(chunk.id)) {
+        seenIds.add(chunk.id);
+        chunks.push(chunk);
+      }
+    }
+
+    // Trim to maxResults
+    chunks = chunks.slice(0, maxResults);
 
     // Fallback to ILIKE if FTS returns nothing - use OR logic with expanded terms
     if (chunks.length === 0) {
