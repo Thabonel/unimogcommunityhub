@@ -2646,7 +2646,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                   Barry - AI Mechanic with Manual Access
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Ask Barry about maintenance, repairs, or any technical questions about your Unimog
+                  Ask about route preparation, vehicle setup, or any technical questions
                 </p>
               </div>
             </div>
