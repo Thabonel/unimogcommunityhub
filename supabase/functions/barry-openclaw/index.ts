@@ -868,9 +868,16 @@ MANDATORY BEHAVIOR:
 2. For every technical answer, cite: "According to page X..." or "See page X for..."
 3. The user's interface DISPLAYS the cited pages automatically - they will SEE the PDF
 4. For RPS diagrams, include the markdown image - it renders in the chat
-5. Quote specific values (torque specs, capacities, steps) from the content
-6. NEVER say "I don't have access" or "I can't fetch" - you HAVE the data above
-7. Only say "not covered in my database" if no content above relates to the query`;
+5. NEVER say "I don't have access" or "I can't fetch" - you HAVE the data above
+6. Only say "not covered in my database" if no content above relates to the query
+
+CRITICAL - ANSWER DIRECTLY WITH SPECIFIC VALUES:
+- When the manual content contains specific numbers (torque values, capacities, measurements), STATE THEM IMMEDIATELY in your first sentence
+- Do NOT hedge, equivocate, or give ranges when the manual gives an exact number
+- Do NOT say "varies by model" or "check your manual" when the spec is RIGHT THERE in the content above
+- Example: If content says "Wheel nut M 22 X 1,5 400" then your answer MUST start with "Wheel nut torque is 400 Nm"
+- Extract exact values, part numbers, and measurements from the content and present them clearly
+- Lead with the answer, then add context and safety notes after`;
 
   // Build messages
   const messages = [
