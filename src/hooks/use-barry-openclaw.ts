@@ -394,8 +394,16 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
       // Add page context to the user message if available
       let userMessageContent = message.trim();
       if (pageContext) {
-        const contextHint = `[Page Context: User is currently on the ${pageContext.pageName} page.${pageContext.pageTitle ? ` ${pageContext.pageTitle}` : ''}${pageContext.relevantData ? ` ${JSON.stringify(pageContext.relevantData)}` : ''}]\n\n${userMessageContent}`;
-        userMessageContent = contextHint;
+        let contextPrefix = `[Context: User is on ${pageContext.pageName} page`;
+        if (pageContext.pageTitle) contextPrefix += ` - ${pageContext.pageTitle}`;
+        if (pageContext.relevantData) {
+          const data = pageContext.relevantData;
+          if (data.userModel) contextPrefix += `. User's Unimog: ${data.userModel}`;
+          if (data.listingTitle) contextPrefix += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
+          if (data.upcomingEventCount) contextPrefix += `. ${data.upcomingEventCount} upcoming events`;
+        }
+        contextPrefix += `] `;
+        userMessageContent = contextPrefix + userMessageContent;
       }
 
       // Call hybrid service
