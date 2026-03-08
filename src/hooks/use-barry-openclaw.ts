@@ -77,16 +77,24 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
             return baseRef;
           }
 
+          // Ensure storage_url is properly constructed
+          let storageUrl = ref.storage_url;
+          if (!storageUrl && (ref.filename || ref.chapter_filename)) {
+            const filename = ref.filename || ref.chapter_filename;
+            // Construct storage URL from Supabase public bucket
+            storageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${filename}`;
+          }
+
           let manualIdentifier = ref.filename || ref.chapter_filename;
-          if (!manualIdentifier && ref.storage_url) {
-            const urlParts = ref.storage_url.split('/');
+          if (!manualIdentifier && storageUrl) {
+            const urlParts = storageUrl.split('/');
             const lastPart = urlParts[urlParts.length - 1];
             const filename = lastPart.split('#')[0];
             manualIdentifier = filename.replace('.pdf', '');
           }
 
           if (!manualIdentifier) {
-            return baseRef;
+            return { ...baseRef, storage_url: storageUrl };
           }
 
           const { data: chunks, error } = await supabase
@@ -98,21 +106,28 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
             .maybeSingle();
 
           if (error || !chunks) {
-            return baseRef;
+            return { ...baseRef, storage_url: storageUrl };
           }
 
           return {
             ...baseRef,
+            storage_url: storageUrl,
             content: chunks.content,
             section_title: chunks.section_title,
             page_number: chunks.page_number || baseRef.page_number,
             page_image_url: chunks.page_image_url
           };
         } catch {
-          // Ensure page_number is set even on error
+          // Ensure page_number and storage_url are set even on error
+          let fallbackStorageUrl = ref.storage_url;
+          if (!fallbackStorageUrl && (ref.filename || ref.chapter_filename)) {
+            const filename = ref.filename || ref.chapter_filename;
+            fallbackStorageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${filename}`;
+          }
           return {
             ...ref,
-            page_number: ref.page_number || ref.pdf_page || ref.original_page || 0
+            page_number: ref.page_number || ref.pdf_page || ref.original_page || 0,
+            storage_url: fallbackStorageUrl
           };
         }
       })
@@ -120,13 +135,75 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
 
     return enrichedRefs;
   } catch {
-    // Ensure all refs have page_number even on total failure
-    return references.map(ref => ({
-      ...ref,
-      page_number: ref.page_number || ref.pdf_page || ref.original_page || 0
-    }));
+    // Ensure all refs have page_number and storage_url even on total failure
+    return references.map(ref => {
+      let fallbackStorageUrl = ref.storage_url;
+      if (!fallbackStorageUrl && (ref.filename || ref.chapter_filename)) {
+        const filename = ref.filename || ref.chapter_filename;
+        fallbackStorageUrl = `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${filename}`;
+      }
+      return {
+        ...ref,
+        page_number: ref.page_number || ref.pdf_page || ref.original_page || 0,
+        storage_url: fallbackStorageUrl
+      };
+    });
   }
 }
+
+// LocalStorage key for conversation persistence
+const CONVERSATION_STORAGE_KEY = 'barry-conversation-history';
+
+/**
+ * Save conversation to localStorage
+ */
+const saveConversationToStorage = (messages: ChatMessage[]) => {
+  try {
+    const serialized = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp.toISOString(),
+      manualReferences: msg.manualReferences,
+      usedOpenClaw: msg.usedOpenClaw,
+      fallbackUsed: msg.fallbackUsed,
+      executionTimeMs: msg.executionTimeMs,
+      skillChain: msg.skillChain
+    }));
+    localStorage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify(serialized));
+  } catch (error) {
+    console.warn('Failed to save conversation to localStorage:', error);
+  }
+};
+
+/**
+ * Load conversation from localStorage
+ */
+const loadConversationFromStorage = (): ChatMessage[] => {
+  try {
+    const stored = localStorage.getItem(CONVERSATION_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return parsed.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    }
+  } catch (error) {
+    console.warn('Failed to load conversation from localStorage:', error);
+  }
+  return [];
+};
+
+/**
+ * Clear conversation from localStorage
+ */
+const clearConversationFromStorage = () => {
+  try {
+    localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear conversation from localStorage:', error);
+  }
+};
 
 /**
  * Barry OpenClaw Hook
@@ -134,7 +211,7 @@ async function enrichManualReferences(references: ManualReference[]): Promise<Ma
 export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
   const { location, openclawPercentage, enableFallback } = options;
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadConversationFromStorage());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -152,6 +229,11 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
       });
     }
   }, [openclawPercentage, enableFallback]);
+
+  // Save conversation to localStorage whenever messages change
+  useEffect(() => {
+    saveConversationToStorage(messages);
+  }, [messages]);
 
   // Load past conversations on mount
   useEffect(() => {
@@ -177,7 +259,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         return;
       }
 
-      const parsedConversations = (data || []).map(conv => ({
+      const parsedConversations = (data || []).map((conv: any) => ({
         ...conv,
         messages: (conv.messages || []).map((msg: any) => ({
           ...msg,
@@ -283,6 +365,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
     setMessages([]);
     setError(null);
     setLastResponse(null);
+    clearConversationFromStorage();
   }, []);
 
   const sendMessage = useCallback(async (message: string) => {
@@ -359,6 +442,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
     setMessages([]);
     setError(null);
     setLastResponse(null);
+    clearConversationFromStorage();
   }, []);
 
   const retry = useCallback(async () => {
