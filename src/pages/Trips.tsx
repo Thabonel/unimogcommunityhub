@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBarry } from '@/contexts/BarryContext';
+import { useProfile } from '@/hooks/profile';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
 import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
@@ -21,11 +22,18 @@ const Trips = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { setPageContext, clearPageContext } = useBarry();
+  const { userData } = useProfile();
 
   useEffect(() => {
-    setPageContext({ pageName: 'trips', pageTitle: 'Trip Planning' });
+    setPageContext({
+      pageName: 'trips',
+      pageTitle: 'Trip Planning',
+      relevantData: {
+        userModel: userData?.unimogModel || undefined
+      }
+    });
     return () => clearPageContext();
-  }, [setPageContext, clearPageContext]);
+  }, [setPageContext, clearPageContext, userData?.unimogModel]);
 
   const handleOpenPlanner = () => {
     // Trip planning now handled directly in the map component

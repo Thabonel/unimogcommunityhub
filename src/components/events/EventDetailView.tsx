@@ -28,7 +28,9 @@ import { useEventDetails } from '@/hooks/use-events';
 import { EventRSVPButton } from './EventRSVPButton';
 import { EventParticipantList } from './EventParticipantList';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { useDeleteEvent } from '@/hooks/use-events';
+import { SITE_IMAGES } from '@/config/images';
 import type { EventType } from '@/services/events';
 
 const eventTypeConfig: Record<
@@ -46,10 +48,30 @@ export function EventDetailView() {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { setPageContext, clearPageContext, openBarry } = useBarry();
   const { data: event, isLoading, error } = useEventDetails(eventId);
   const deleteEvent = useDeleteEvent();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+
+  // Set Barry page context when event loads
+  useEffect(() => {
+    if (event) {
+      setPageContext({
+        pageName: 'event_detail',
+        pageTitle: event.title,
+        relevantData: {
+          eventTitle: event.title,
+          eventType: event.event_type,
+          eventDate: event.start_date,
+          eventLocation: event.location_name || event.location_address,
+          eventDescription: event.description?.substring(0, 200),
+          maxParticipants: event.max_participants
+        }
+      });
+    }
+    return () => clearPageContext();
+  }, [event?.id, setPageContext, clearPageContext]);
 
   // Initialize map if event has location
   useEffect(() => {
@@ -227,6 +249,113 @@ export function EventDetailView() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Ask Barry Card */}
+            <Card className="bg-gradient-to-r from-military-green/5 to-khaki-tan/5 border-military-green/30">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="relative">
+                    <picture>
+                      <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                      <img
+                        src={SITE_IMAGES.barryAvatarFallback}
+                        alt="Barry the AI Mechanic"
+                        className="w-8 h-8 rounded-full border border-military-green"
+                      />
+                    </picture>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-military-green">Ask Barry about this event</h3>
+                    <p className="text-xs text-muted-foreground">Get expert advice from our AI mechanic</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {event.event_type === 'trip' ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What should I prepare for this ${event.title} trip? Any route preparation tips?`)}
+                      >
+                        Route preparation tips
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What gear should I bring for this ${event.title} trip? Any recommendations for off-road travel?`)}
+                      >
+                        Gear recommendations
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What weather considerations should I know about for this ${event.title} trip?`)}
+                      >
+                        Weather considerations
+                      </Button>
+                    </>
+                  ) : event.event_type === 'working_bee' ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What tools do I need for this ${event.title} working bee event?`)}
+                      >
+                        Tools needed
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What safety guidelines should I follow for this ${event.title} working bee?`)}
+                      >
+                        Safety guidelines
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`How should I prepare and plan for this ${event.title} working bee event?`)}
+                      >
+                        Project planning
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`How should I prepare for this ${event.title} event?`)}
+                      >
+                        Event preparation
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`What should I bring to this ${event.title} event?`)}
+                      >
+                        What to bring
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                        onClick={() => openBarry(`Any logistics advice for this ${event.title} event?`)}
+                      >
+                        Logistics help
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Location & Map */}
             {(event.location_name || event.location_address) && (
