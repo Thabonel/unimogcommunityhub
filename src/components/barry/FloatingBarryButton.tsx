@@ -40,6 +40,12 @@ export function FloatingBarryButton() {
         return 'Search manuals with Barry - AI technical expert';
       case 'events':
         return 'Ask Barry about event preparation and gear recommendations';
+      case 'community':
+        return 'Ask Barry about Unimog community tips and advice';
+      case 'vehicle-showcase':
+        return 'Ask Barry about any vehicle in the Showroom';
+      case 'vehicle-detail':
+        return 'Ask Barry about this specific vehicle';
       default:
         return 'Chat with Barry - AI Mechanic';
     }
