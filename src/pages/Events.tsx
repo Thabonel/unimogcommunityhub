@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Calendar as CalendarIcon, SlidersHorizontal } from 'lucide-react';
 import Layout from '@/components/Layout';
@@ -8,16 +8,23 @@ import { EventFilters } from '@/components/events/EventFilters';
 import { EventCreationDialog } from '@/components/events/EventCreationDialog';
 import { useEvents } from '@/hooks/use-events';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { useProfile } from '@/hooks/profile';
 import type { EventFilters as EventFiltersType } from '@/services/events';
 
 const Events = () => {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
+  const { setPageContext, clearPageContext } = useBarry();
   const { userData } = useProfile();
   const [filters, setFilters] = useState<EventFiltersType>({ upcoming_only: true });
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  useEffect(() => {
+    setPageContext({ pageName: 'events', pageTitle: 'Events' });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext]);
 
   const { data: events, isLoading, error } = useEvents(filters);
 

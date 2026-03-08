@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RecommendationSubmissionDialog } from '@/components/knowledge/RecommendationSubmissionDialog';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { useProfile } from '@/hooks/profile';
 // import { FEATURES } from '@/config/features'; // COMMENTED OUT: Workshop Database disabled
 import { useTranslation } from 'react-i18next';
@@ -16,7 +17,13 @@ const Knowledge = () => {
   const { t } = useTranslation('knowledge');
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const { user } = useAuth();
+  const { setPageContext, clearPageContext } = useBarry();
   const { userData } = useProfile();
+
+  useEffect(() => {
+    setPageContext({ pageName: 'knowledge', pageTitle: 'Knowledge Base' });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext]);
   
   
   const layoutUser = userData ? {
