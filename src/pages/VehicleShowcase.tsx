@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { useProfile } from '@/hooks/profile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const Showroom = () => {
   const { user } = useAuth();
   const { userData } = useProfile();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { setPageContext, clearPageContext } = useBarry();
   
   // Filter states
   const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.get('country') || 'all');
@@ -66,6 +68,22 @@ const Showroom = () => {
   useEffect(() => {
     loadStats();
   }, []);
+
+  // Set Barry page context with showcase stats
+  useEffect(() => {
+    setPageContext({
+      pageName: 'vehicle-showcase',
+      pageTitle: 'The Showroom',
+      relevantData: {
+        totalVehicles: stats.totalVehicles,
+        totalCountries: stats.totalCountries,
+        selectedCountry,
+        modelFilter,
+        userModel: userData?.unimogModel
+      }
+    });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext, stats, selectedCountry, modelFilter, userData?.unimogModel]);
 
   const loadVehicles = async () => {
     setIsLoading(true);

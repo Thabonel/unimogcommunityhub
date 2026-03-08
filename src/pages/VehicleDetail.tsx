@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -36,6 +38,7 @@ import { toast } from '@/hooks/use-toast';
 import VehicleComments from '@/components/community/VehicleComments';
 import ReportModal from '@/components/community/ReportModal';
 import { UnimogOwnerBadge } from '@/components/community/UnimogOwnerBadge';
+import { SITE_IMAGES } from '@/config/images';
 
 const VehicleDetail = () => {
   const { userId, vehicleId } = useParams<{ userId: string; vehicleId: string }>();
@@ -49,10 +52,12 @@ const VehicleDetail = () => {
   const [showFullscreenGallery, setShowFullscreenGallery] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [customQuestion, setCustomQuestion] = useState('');
 
   const { toggleLike, isLiking } = useVehicleLikes();
   const { trackView } = useVehicleViews();
   const { fetchShowcaseVehicles } = useVehicleShowcase();
+  const { setPageContext, clearPageContext, openBarry } = useBarry();
 
   useEffect(() => {
     if (vehicleId) {
@@ -60,6 +65,27 @@ const VehicleDetail = () => {
       trackView(vehicleId);
     }
   }, [vehicleId]);
+
+  // Set Barry page context with vehicle details
+  useEffect(() => {
+    if (vehicle) {
+      setPageContext({
+        pageName: 'vehicle-detail',
+        pageTitle: `${vehicle.name} - ${vehicle.model}`,
+        relevantData: {
+          vehicleName: vehicle.name,
+          vehicleModel: vehicle.model,
+          vehicleYear: vehicle.year,
+          ownerName: vehicle.owner_name,
+          modifications: vehicle.modifications,
+          description: vehicle.description,
+          location: vehicle.profile_location || vehicle.country_code,
+          odometer: vehicle.current_odometer
+        }
+      });
+    }
+    return () => clearPageContext();
+  }, [vehicle, setPageContext, clearPageContext]);
 
   const loadVehicleDetail = async () => {
     if (!vehicleId || !userId) return;
@@ -482,6 +508,94 @@ const VehicleDetail = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Ask Barry About This Vehicle */}
+            <Card className="bg-gradient-to-r from-military-green/5 to-khaki-tan/5 border-military-green/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="relative">
+                    <picture>
+                      <source srcSet={SITE_IMAGES.barryAvatar} type="image/webp" />
+                      <img
+                        src={SITE_IMAGES.barryAvatarFallback}
+                        alt="Barry the AI Mechanic"
+                        className="w-6 h-6 rounded-full border border-military-green"
+                      />
+                    </picture>
+                  </div>
+                  <span className="text-base text-military-green">Ask Barry About This Vehicle</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Get expert advice from our AI mechanic about this specific vehicle
+                </p>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Quick Questions:</h4>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="justify-start text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                      onClick={() => openBarry(`What maintenance should I expect for a ${vehicle?.year || ''} ${vehicle?.model || 'Unimog'}?`)}
+                    >
+                      <Wrench className="w-3 h-3 mr-2" />
+                      Maintenance advice
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="justify-start text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                      onClick={() => openBarry(`What should I know about the ${vehicle?.model || 'Unimog'} model? Any common issues?`)}
+                    >
+                      <MessageCircle className="w-3 h-3 mr-2" />
+                      Model insights
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="justify-start text-xs border-military-green text-military-green hover:bg-military-green hover:text-white"
+                      onClick={() => openBarry(`Can you help me understand the specifications and capabilities of this ${vehicle?.model || 'Unimog'}?`)}
+                    >
+                      <Settings className="w-3 h-3 mr-2" />
+                      Specifications help
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Custom Question:</h4>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Ask anything about this vehicle..."
+                      value={customQuestion}
+                      onChange={(e) => setCustomQuestion(e.target.value)}
+                      className="text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && customQuestion.trim()) {
+                          openBarry(`About this ${vehicle?.year || ''} ${vehicle?.model || 'Unimog'}: ${customQuestion}`);
+                          setCustomQuestion('');
+                        }
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      className="bg-military-green hover:bg-military-green/90 text-white"
+                      onClick={() => {
+                        if (customQuestion.trim()) {
+                          openBarry(`About this ${vehicle?.year || ''} ${vehicle?.model || 'Unimog'}: ${customQuestion}`);
+                          setCustomQuestion('');
+                        }
+                      }}
+                      disabled={!customQuestion.trim()}
+                    >
+                      Ask
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Vehicle Details */}
             <Card>
