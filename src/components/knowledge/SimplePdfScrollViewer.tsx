@@ -22,6 +22,12 @@ export function SimplePdfScrollViewer({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  // Debug logging for PDF URL
+  React.useEffect(() => {
+    console.log('SimplePdfScrollViewer: Loading PDF from URL:', pdfUrl);
+    console.log('SimplePdfScrollViewer: Initial page:', initialPage);
+  }, [pdfUrl, initialPage]);
+
   // Set container width on mount and resize
   React.useEffect(() => {
     const updateWidth = () => {
@@ -55,6 +61,19 @@ export function SimplePdfScrollViewer({
     console.error('PDF load error:', error);
     console.error('PDF URL that failed:', pdfUrl);
     console.error('Error details:', error.message, error.name);
+
+    // Test if URL is accessible
+    fetch(pdfUrl, { method: 'HEAD' })
+      .then(response => {
+        console.log('PDF URL HEAD check - Status:', response.status, 'OK:', response.ok);
+        if (!response.ok) {
+          console.error('PDF URL is not accessible - HTTP', response.status);
+        }
+      })
+      .catch(fetchError => {
+        console.error('PDF URL fetch test failed:', fetchError);
+      });
+
     setError(`Failed to load PDF: ${error.message || 'Unknown error'}`);
     setIsLoading(false);
   }
@@ -65,7 +84,18 @@ export function SimplePdfScrollViewer({
         <div className="text-center text-destructive">
           <p className="font-medium mb-2">Error Loading PDF</p>
           <p className="text-sm">{error}</p>
+          <p className="text-xs mt-2 text-muted-foreground">URL: {pdfUrl}</p>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 min-h-[400px]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
+        <p className="text-lg font-medium text-muted-foreground">Loading manual...</p>
+        <p className="text-sm text-muted-foreground mt-2">This may take a moment for large files</p>
       </div>
     );
   }
@@ -78,11 +108,7 @@ export function SimplePdfScrollViewer({
     >
       <div className="p-4">
         <Document
-          file={{
-            url: pdfUrl,
-            httpHeaders: {},
-            withCredentials: false
-          }}
+          file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           options={{
