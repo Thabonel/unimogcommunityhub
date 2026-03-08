@@ -11,11 +11,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
-  Heart, 
-  Eye, 
-  MessageCircle, 
-  MapPin, 
-  Calendar,
+  Heart,
+  Eye,
+  MessageCircle,
+  MapPin,
   Settings,
   Share2,
   Flag,
@@ -23,7 +22,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Crown,
-  TrendingUp,
   User,
   Wrench,
   Camera
