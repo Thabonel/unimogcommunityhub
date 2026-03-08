@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, MapPin, MessageSquare } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { useListingDetail } from '@/hooks/use-marketplace';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createConversation, sendMessage } from '@/services/messageService';
@@ -19,8 +20,27 @@ export function ListingDetailPage() {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
+  const { setPageContext, clearPageContext } = useBarry();
   const navigate = useNavigate();
-  
+
+  useEffect(() => {
+    if (listing) {
+      setPageContext({
+        pageName: 'marketplace_listing',
+        pageTitle: `${listing.title}`,
+        relevantData: {
+          listingTitle: listing.title,
+          price: listing.price,
+          category: listing.category,
+          condition: listing.condition,
+          location: listing.location,
+          description: listing.description?.substring(0, 200)
+        }
+      });
+    }
+    return () => clearPageContext();
+  }, [listing?.id, setPageContext, clearPageContext]);
+
   const handleSendMessage = async () => {
     if (!user) {
       toast.error(t('messages.sign_in_required'));

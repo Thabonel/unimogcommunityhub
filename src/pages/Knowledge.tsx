@@ -21,9 +21,15 @@ const Knowledge = () => {
   const { userData } = useProfile();
 
   useEffect(() => {
-    setPageContext({ pageName: 'knowledge', pageTitle: 'Knowledge Base' });
+    setPageContext({
+      pageName: 'knowledge',
+      pageTitle: 'Knowledge Base',
+      relevantData: {
+        userModel: userData?.unimogModel || undefined
+      }
+    });
     return () => clearPageContext();
-  }, [setPageContext, clearPageContext]);
+  }, [setPageContext, clearPageContext, userData?.unimogModel]);
   
   
   const layoutUser = userData ? {

@@ -48,9 +48,16 @@ const Dashboard = () => {
   const [showQuickTripModal, setShowQuickTripModal] = useState(false);
 
   useEffect(() => {
-    setPageContext({ pageName: 'dashboard', pageTitle: 'Dashboard' });
+    setPageContext({
+      pageName: 'dashboard',
+      pageTitle: 'Dashboard',
+      relevantData: userData ? {
+        userModel: userData.unimogModel || 'Unknown',
+        userName: userData.name || 'User'
+      } : undefined
+    });
     return () => clearPageContext();
-  }, [setPageContext, clearPageContext]);
+  }, [setPageContext, clearPageContext, userData?.unimogModel, userData?.name]);
 
   // Get the tab from URL parameter, default to 'activity'
   const activeTab = searchParams.get('tab') || 'activity';

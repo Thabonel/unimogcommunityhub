@@ -21,12 +21,20 @@ const Events = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  useEffect(() => {
-    setPageContext({ pageName: 'events', pageTitle: 'Events' });
-    return () => clearPageContext();
-  }, [setPageContext, clearPageContext]);
-
   const { data: events, isLoading, error } = useEvents(filters);
+
+  useEffect(() => {
+    const eventCount = events?.length || 0;
+    setPageContext({
+      pageName: 'events',
+      pageTitle: 'Events',
+      relevantData: {
+        upcomingEventCount: eventCount,
+        userModel: userData?.unimogModel || undefined
+      }
+    });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext, events?.length, userData?.unimogModel]);
 
   // Build user data from profile and auth
   const layoutUser = userData ? {
