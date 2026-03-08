@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBarry } from '@/contexts/BarryContext';
-import { useProfile } from '@/hooks/profile';
+import { useProfile } from '@/hooks/use-profile';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
 import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
