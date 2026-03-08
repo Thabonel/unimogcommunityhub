@@ -11,8 +11,10 @@ export function BarryWrapper() {
   const [instanceId] = useState(() => `barry-${Date.now()}-${Math.random()}`);
   const [shouldRender, setShouldRender] = useState(false);
 
-  // Barry should appear on EVERY page
-  const shouldShowBarry = true;
+  // Hide Barry on pages that have built-in Barry (trip maps)
+  const hiddenPaths = ['/trips', '/explore-map'];
+  const shouldHideOnPage = hiddenPaths.some(path => location.pathname.startsWith(path));
+  const shouldShowBarry = !shouldHideOnPage;
 
   useEffect(() => {
     if (!shouldShowBarry) {
