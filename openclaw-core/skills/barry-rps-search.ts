@@ -212,14 +212,14 @@ async function searchRPSByComponent(
  * RPS Search Skill - Main execution function
  */
 export async function executeRPSSearch(
-  input: RPSSearchInput,
+  input: RPSSearchInput & { expanded_terms?: string[] },
   context: SkillExecutionContext
 ): Promise<SkillResult<RPSSearchOutput>> {
   const startTime = performance.now();
   const skillName = 'barry-rps-search';
 
   try {
-    const { query, component_name } = input;
+    const { query, component_name, expanded_terms } = input;
     const { supabaseAdmin } = context;
 
     // Detect component from query if not provided
@@ -239,9 +239,28 @@ export async function executeRPSSearch(
     }
 
     console.log(`[RPS] Searching for component: ${componentToSearch}`);
+    if (expanded_terms && expanded_terms.length > 1) {
+      console.log(`[RPS] Using expanded terms: ${expanded_terms.slice(0, 3).join(', ')}${expanded_terms.length > 3 ? '...' : ''}`);
+    }
 
-    // Search RPS database
-    const result = await searchRPSByComponent(supabaseAdmin, componentToSearch);
+    // Search RPS database using expanded terms if available
+    let result: { group: any; parts: any[] } | null = null;
+
+    // Try expanded terms first if available
+    if (expanded_terms && expanded_terms.length > 1) {
+      for (const term of expanded_terms) {
+        result = await searchRPSByComponent(supabaseAdmin, term);
+        if (result) {
+          console.log(`[RPS] Found match with expanded term: ${term}`);
+          break;
+        }
+      }
+    }
+
+    // Fallback to original component name if no expanded term matched
+    if (!result) {
+      result = await searchRPSByComponent(supabaseAdmin, componentToSearch);
+    }
 
     if (!result) {
       return {

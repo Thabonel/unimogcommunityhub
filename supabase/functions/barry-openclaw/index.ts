@@ -7,7 +7,8 @@
  * Skill Chain:
  * 1. Domain Guard - Block off-topic/dangerous queries
  * 2. Knowledge Lookup - Check validated KB for instant answers
- * 3. Manual Search + RPS Search - Gather context (in parallel)
+ * 2.5. Query Expander - Expand user terms to technical terminology (Phase 1)
+ * 3. Manual Search + RPS Search - Gather context with expanded terms (parallel)
  * 4. Response Generator - Generate cited response
  * 5. Safety Filter - Add disclaimers if needed
  * 6. Response Validator - Validate citations exist
@@ -344,7 +345,8 @@ async function executeKnowledgeLookup(
 async function executeManualSearch(
   supabaseAdmin: any,
   query: string,
-  maxResults: number = 10
+  maxResults: number = 10,
+  expandedTerms?: string[]
 ): Promise<{ found: boolean; chunks: any[]; context: string }> {
   try {
     const keywords = query.toLowerCase()
@@ -364,16 +366,58 @@ async function executeManualSearch(
 
     let chunks = ftsResults || [];
 
-    // Fallback to ILIKE if FTS returns nothing
+    // Fallback to ILIKE if FTS returns nothing - use OR logic with expanded terms
     if (chunks.length === 0) {
-      const { data: ilikeResults } = await supabaseAdmin
-        .from('manual_chunks')
-        .select('*')
-        .ilike('content', `%${keywords[0]}%`)
-        .ilike('manual_title', '%U435%')
-        .limit(maxResults);
+      const searchTerms = expandedTerms && expandedTerms.length > 1 ? expandedTerms : keywords;
+      const useOrLogic = expandedTerms && expandedTerms.length > 1;
 
-      chunks = ilikeResults || [];
+      if (useOrLogic) {
+        // OR logic: find chunks matching ANY expanded term
+        const allResults: any[] = [];
+        const seenIds = new Set<string>();
+
+        for (const term of searchTerms) {
+          const cleanTerm = term.toLowerCase().trim();
+          if (cleanTerm.length > 2) {
+            const { data: termResults } = await supabaseAdmin
+              .from('manual_chunks')
+              .select('*')
+              .ilike('content', `%${cleanTerm}%`)
+              .ilike('manual_title', '%U435%')
+              .limit(maxResults);
+
+            if (termResults) {
+              // Deduplicate by ID and add relevance score
+              for (const chunk of termResults) {
+                if (!seenIds.has(chunk.id)) {
+                  seenIds.add(chunk.id);
+                  const contentLower = chunk.content?.toLowerCase() || '';
+                  let score = 0;
+                  for (const searchTerm of searchTerms) {
+                    if (contentLower.includes(searchTerm.toLowerCase())) score++;
+                  }
+                  allResults.push({ ...chunk, relevance_score: score / searchTerms.length });
+                }
+              }
+            }
+          }
+        }
+
+        chunks = allResults
+          .sort((a: any, b: any) => b.relevance_score - a.relevance_score)
+          .slice(0, maxResults);
+
+      } else {
+        // Original AND logic for backward compatibility
+        const { data: ilikeResults } = await supabaseAdmin
+          .from('manual_chunks')
+          .select('*')
+          .ilike('content', `%${keywords[0]}%`)
+          .ilike('manual_title', '%U435%')
+          .limit(maxResults);
+
+        chunks = ilikeResults || [];
+      }
     }
 
     if (chunks.length === 0) return { found: false, chunks: [], context: '' };
@@ -395,7 +439,8 @@ async function executeManualSearch(
 // ============ SKILL 4: RPS SEARCH ============
 async function executeRPSSearch(
   supabaseAdmin: any,
-  query: string
+  query: string,
+  expandedTerms?: string[]
 ): Promise<{ found: boolean; illustrations: ManualReference[]; context: string }> {
   try {
     const queryLower = query.toLowerCase();
@@ -430,7 +475,17 @@ async function executeRPSSearch(
       'driveline': ['DRIVE LINE', 'DRIVELINE']
     };
 
-    const searchTerms = mappings[componentName] || [componentName.toUpperCase()];
+    // Use expanded terms if available, otherwise use hardcoded mappings
+    let searchTerms: string[];
+
+    if (expandedTerms && expandedTerms.length > 1) {
+      // Try each expanded term in addition to mapped terms
+      const mappedTerms = mappings[componentName] || [componentName.toUpperCase()];
+      searchTerms = [...expandedTerms, ...mappedTerms];
+      console.log(`[RPS] Searching ${searchTerms.length} expanded terms: ${searchTerms.slice(0, 3).join(', ')}...`);
+    } else {
+      searchTerms = mappings[componentName] || [componentName.toUpperCase()];
+    }
 
     for (const term of searchTerms) {
       const { data: groups } = await supabaseAdmin
@@ -569,6 +624,94 @@ async function executeScrapedContentSearch(
   } catch (error) {
     console.error('[ScrapedContent] Error:', error);
     return { found: false, trips: [], guides: [], context: '' };
+  }
+}
+
+// ============ SKILL 2.5: QUERY EXPANDER ============
+async function executeQueryExpander(query: string): Promise<{ found: boolean; expandedTerms: string[] }> {
+  if (!ANTHROPIC_API_KEY) {
+    console.warn('[QueryExpander] No API key, using fallback');
+    return { found: false, expandedTerms: [query] };
+  }
+
+  const prompt = `You are a Unimog technical terminology expert. Given this user question about a Unimog, return a JSON array of alternative search terms that workshop manuals and parts catalogs would use. Include German technical terms (like Lenkstockschalter), Mercedes part terminology, component assembly names, and common mechanic slang. Return ONLY the JSON array, nothing else.
+
+User question: "${query}"
+
+Example format: ["combination switch", "Lenkstockschalter", "turn signal lever", "indicator stalk", "column switch", "wiper switch assembly"]`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20250414',
+        max_tokens: 200,
+        temperature: 0.3,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content[0]?.text?.trim();
+
+    if (!content) {
+      throw new Error('Empty response');
+    }
+
+    // Clean and parse JSON response
+    const cleanedContent = content.replace(/```json\s*|\s*```/g, '').trim();
+    const expandedTerms = JSON.parse(cleanedContent);
+
+    if (!Array.isArray(expandedTerms)) {
+      throw new Error('Response is not an array');
+    }
+
+    const validTerms = expandedTerms
+      .filter(term => typeof term === 'string' && term.trim().length > 0)
+      .map(term => term.trim())
+      .slice(0, 15);
+
+    // Always include original query
+    const finalTerms = [query, ...validTerms.filter(term => term !== query)];
+
+    console.log(`[QueryExpander] Expanded ${finalTerms.length} terms: ${finalTerms.slice(0, 3).join(', ')}${finalTerms.length > 3 ? '...' : ''}`);
+    return { found: finalTerms.length > 1, expandedTerms: finalTerms };
+
+  } catch (error) {
+    console.warn(`[QueryExpander] Failed, using fallback:`, error);
+
+    // Fallback to hardcoded mappings
+    const fallbackMappings: Record<string, string[]> = {
+      'indicator': ['combination switch', 'turn signal', 'blinker', 'Lenkstockschalter', 'indicator stalk'],
+      'stalk': ['combination switch', 'column switch', 'Lenkstockschalter', 'switch assembly'],
+      'turbo': ['turbocharger', 'Turbolader', 'boost', 'compressor'],
+      'diff': ['differential', 'Differential', 'diff lock', 'Sperrventil'],
+      'portal': ['portal hub', 'wheel hub drives', 'Radnabe', 'hub assembly'],
+      'brake': ['brake system', 'Bremse', 'brake pad', 'caliper'],
+      'oil': ['engine oil', 'Motoröl', 'lubricant', 'hydraulic fluid'],
+      'pump': ['fuel pump', 'water pump', 'hydraulic pump', 'Pumpe']
+    };
+
+    const queryLower = query.toLowerCase();
+    const expandedTerms: string[] = [query];
+
+    for (const [userTerm, technicalTerms] of Object.entries(fallbackMappings)) {
+      if (queryLower.includes(userTerm)) {
+        expandedTerms.push(...technicalTerms);
+      }
+    }
+
+    const finalTerms = [...new Set(expandedTerms)].slice(0, 10);
+    return { found: finalTerms.length > 1, expandedTerms: finalTerms };
   }
 }
 
@@ -847,14 +990,29 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // SKILL 2.5: Query Expander (Context Gatherer - Phase 1 of Barry AI Transformation)
+    // Only run for technical queries that had a knowledge base cache MISS
+    let expandedTerms: string[] = [userQuery];
+    if (domainResult.domain === 'technical') {
+      executedSkills.push('query-expander');
+      const expansionResult = await executeQueryExpander(userQuery);
+
+      if (expansionResult.found) {
+        expandedTerms = expansionResult.expandedTerms;
+        console.log(`[QueryExpander] Will use ${expandedTerms.length} search terms`);
+      } else {
+        console.log(`[QueryExpander] Using original query only`);
+      }
+    }
+
     // SKILL 3, 4, 4b: Manual Search + RPS Search + Scraped Content (parallel context gathering)
     executedSkills.push('manual-search');
     executedSkills.push('rps-search');
     executedSkills.push('scraped-content-search');
 
     const [manualResult, rpsResult, scrapedResult] = await Promise.all([
-      executeManualSearch(supabaseAdmin, userQuery, 10),
-      executeRPSSearch(supabaseAdmin, userQuery),
+      executeManualSearch(supabaseAdmin, userQuery, 10, expandedTerms.length > 1 ? expandedTerms : undefined),
+      executeRPSSearch(supabaseAdmin, userQuery, expandedTerms.length > 1 ? expandedTerms : undefined),
       executeScrapedContentSearch(supabaseAdmin, userQuery, 5)
     ]);
 

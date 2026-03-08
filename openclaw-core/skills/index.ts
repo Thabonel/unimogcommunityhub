@@ -8,6 +8,7 @@ export { executeSafetyFilter } from './barry-safety-filter';
 export { executeManualSearch } from './barry-manual-search';
 export { executeRPSSearch } from './barry-rps-search';
 export { executeKnowledgeLookup } from './barry-knowledge-lookup';
+export { executeQueryExpander } from './barry-query-expander';
 export { executeResponseGenerator } from './barry-response-generator';
 export { executeResponseValidator } from './barry-response-validator';
 
