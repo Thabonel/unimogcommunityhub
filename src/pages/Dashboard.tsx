@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ShoppingCart, BookOpen, Map, Users, MessageSquare, Bell, Car, TrendingUp, Eye, ShoppingBag } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
 import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
@@ -38,7 +37,7 @@ const Dashboard = () => {
   const { t } = useTranslation(['dashboard', 'common']);
   const { user: authUser } = useAuth();
   const { setPageContext, clearPageContext } = useBarry();
-  const { userData, isLoading } = useProfile();
+  const { userData } = useProfile();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 

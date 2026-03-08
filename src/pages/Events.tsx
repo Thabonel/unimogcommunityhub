@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Plus, Calendar as CalendarIcon, SlidersHorizontal } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,6 @@ import { useProfile } from '@/hooks/profile';
 import type { EventFilters as EventFiltersType } from '@/services/events';
 
 const Events = () => {
-  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const { setPageContext, clearPageContext } = useBarry();
   const { userData } = useProfile();
