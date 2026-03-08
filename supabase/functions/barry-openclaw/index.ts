@@ -280,10 +280,20 @@ async function executeKnowledgeLookup(
   query: string
 ): Promise<{ found: boolean; content?: string; confidence?: number; manualReferences?: ManualReference[] }> {
   try {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+      'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+      'should', 'may', 'might', 'must', 'shall', 'can',
+      'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
+      'how', 'what', 'where', 'when', 'why', 'which', 'who', 'whom',
+      'my', 'your', 'his', 'her', 'its', 'our', 'their',
+      'i', 'me', 'you', 'he', 'she', 'it', 'we', 'they',
+      'this', 'that', 'these', 'those', 'not', 'but', 'and', 'or'
+    ]);
     const keywords = query.toLowerCase()
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 2);
+      .filter(w => w.length > 2 && !stopWords.has(w));
 
     if (keywords.length === 0) return { found: false };
 
@@ -319,15 +329,23 @@ async function executeKnowledgeLookup(
 
     console.log(`[KB] Found match: ${bestMatch.question_keywords.join(', ')}`);
 
-    const refs = (bestMatch.manual_references || []).map((ref: any) => ({
-      type: 'knowledge_base',
-      title: ref.manual_title || 'U435 Workshop Manual',
-      page_number: ref.page_number || 0,
-      original_page: ref.page_number || 0,
-      pdf_page: ref.pdf_page || ref.page_number || 0,
-      storage_url: ref.storage_url || '',
-      manual_type: 'U435'
-    }));
+    const refs = (bestMatch.manual_references || []).map((ref: any) => {
+      let storageUrl = ref.storage_url || '';
+      if (!storageUrl && ref.chapter_filename) {
+        storageUrl = `${SUPABASE_URL}/storage/v1/object/public/manuals/${ref.chapter_filename}`;
+      }
+      return {
+        type: 'knowledge_base',
+        title: ref.manual_title || 'U435 Workshop Manual',
+        page_number: ref.page_number || 0,
+        original_page: ref.page_number || 0,
+        pdf_page: ref.pdf_page || ref.page_number || 0,
+        storage_url: storageUrl,
+        chapter_filename: ref.chapter_filename,
+        filename: ref.chapter_filename,
+        manual_type: 'U435'
+      };
+    });
 
     return {
       found: true,
