@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,7 @@ import TrafficEmergencyDisplay from '@/components/user/TrafficEmergencyDisplay';
 import FiresNearMe from '@/components/dashboard/fires';
 import VehiclesTab from '@/components/profile/VehiclesTab';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { useProfile } from '@/hooks/profile';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { VehicleHeroBanner } from '@/components/dashboard/VehicleHeroBanner';
@@ -36,6 +37,7 @@ import {
 const Dashboard = () => {
   const { t } = useTranslation(['dashboard', 'common']);
   const { user: authUser } = useAuth();
+  const { setPageContext, clearPageContext } = useBarry();
   const { userData, isLoading } = useProfile();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -44,6 +46,11 @@ const Dashboard = () => {
   const [showQuickFuelModal, setShowQuickFuelModal] = useState(false);
   const [showQuickMaintenanceModal, setShowQuickMaintenanceModal] = useState(false);
   const [showQuickTripModal, setShowQuickTripModal] = useState(false);
+
+  useEffect(() => {
+    setPageContext({ pageName: 'dashboard', pageTitle: 'Dashboard' });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext]);
 
   // Get the tab from URL parameter, default to 'activity'
   const activeTab = searchParams.get('tab') || 'activity';

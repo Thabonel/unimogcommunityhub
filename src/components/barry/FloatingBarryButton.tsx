@@ -15,10 +15,36 @@ export function FloatingBarryButton() {
   const { location } = useUserLocation();
   const { userData } = useProfile();
   const routerLocation = useLocation();
-  const { onWISAction } = useBarry();
+  const { onWISAction, pageContext } = useBarry();
 
   // Detect if we're on the WIS page
   const isWISPage = routerLocation.pathname.includes('/knowledge/wis');
+
+  // Generate contextual tooltip based on current page
+  const getContextualTooltip = () => {
+    if (isWISPage) {
+      return 'Barry WIS Assistant';
+    }
+
+    if (!pageContext) {
+      return 'Chat with Barry - AI Mechanic';
+    }
+
+    switch (pageContext.pageName) {
+      case 'marketplace':
+        return 'Ask Barry about parts compatibility and installation';
+      case 'dashboard':
+        return 'Chat with Barry about your Unimog maintenance';
+      case 'trips':
+        return 'Ask Barry about route preparation and vehicle setup';
+      case 'knowledge':
+        return 'Search manuals with Barry - AI technical expert';
+      case 'events':
+        return 'Ask Barry about event preparation and gear recommendations';
+      default:
+        return 'Chat with Barry - AI Mechanic';
+    }
+  };
 
   // Handle Barry button click - different behavior for WIS page
   const handleBarryClick = () => {
@@ -43,7 +69,7 @@ export function FloatingBarryButton() {
     <>
       {/* Floating Barry Button */}
       <div className="fixed right-5 z-40 bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] md:bottom-8 md:right-8">
-        <MobileTooltip content={isWISPage ? 'Barry WIS Assistant' : 'Chat with Barry - AI Mechanic'}>
+        <MobileTooltip content={getContextualTooltip()}>
           <Button
             onClick={handleBarryClick}
             size="lg"

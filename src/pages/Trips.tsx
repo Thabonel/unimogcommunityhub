@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { Trip } from '@/types/trip';
 import { TripCardProps } from '@/components/trips/TripCard';
 import { TripsProvider, useTripsContext } from '@/contexts/TripsContext';
@@ -19,6 +20,12 @@ const Trips = () => {
   const { trackFeatureUse } = useAnalytics();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { setPageContext, clearPageContext } = useBarry();
+
+  useEffect(() => {
+    setPageContext({ pageName: 'trips', pageTitle: 'Trip Planning' });
+    return () => clearPageContext();
+  }, [setPageContext, clearPageContext]);
 
   const handleOpenPlanner = () => {
     // Trip planning now handled directly in the map component

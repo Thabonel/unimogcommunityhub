@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { supabase } from '@/lib/supabase-client';
 import {
   barryHybridService,
@@ -219,6 +220,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [lastResponse, setLastResponse] = useState<HybridResponse | null>(null);
   const { user } = useAuth();
+  const { pageContext } = useBarry();
 
   // Configure hybrid service on mount/option change
   useEffect(() => {
@@ -389,9 +391,16 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         content: m.content
       }));
 
+      // Add page context to the user message if available
+      let userMessageContent = message.trim();
+      if (pageContext) {
+        const contextHint = `[Page Context: User is currently on the ${pageContext.pageName} page.${pageContext.pageTitle ? ` ${pageContext.pageTitle}` : ''}${pageContext.relevantData ? ` ${JSON.stringify(pageContext.relevantData)}` : ''}]\n\n${userMessageContent}`;
+        userMessageContent = contextHint;
+      }
+
       // Call hybrid service
       const response = await barryHybridService.chat(
-        [...apiMessages, { role: 'user', content: message.trim() }],
+        [...apiMessages, { role: 'user', content: userMessageContent }],
         location,
         user?.id
       );
