@@ -471,9 +471,40 @@ async function executeManualSearch(
       .from('manual_chunks')
       .select('*')
       .textSearch('content', keywords.join(' & '), { type: 'websearch', config: 'english' })
-      .limit(maxResults);
+      .limit(maxResults * 2);
 
     let chunks = ftsResults || [];
+
+    // Boost chunks that contain actual spec values (numbers near keywords)
+    // FTS ranks narrative text higher than spec tables, so re-rank to prioritize
+    // chunks that contain actual numeric answers alongside the search terms
+    if (chunks.length > 1) {
+      const keyTerms = keywords.filter(k => !['spec', 'specification', 'torque', 'value', 'what'].includes(k));
+      chunks = chunks.map((chunk: any) => {
+        const contentLower = (chunk.content || '').toLowerCase();
+        let boost = 0;
+        // Boost if chunk contains a keyword immediately followed by a number (spec table pattern)
+        for (const term of keyTerms) {
+          // Pattern: "wheel nut ... 400" or "wheel nut M 22 X 1,5 400"
+          const termIdx = contentLower.indexOf(term);
+          if (termIdx >= 0) {
+            // Check for numbers within 100 chars of the keyword
+            const nearby = contentLower.substring(termIdx, termIdx + 100);
+            if (/\d{2,4}\s*n[\.\s]*m/i.test(nearby) || /\b\d{3,4}\b/.test(nearby)) {
+              boost += 3;
+            }
+          }
+        }
+        // Boost chunks that look like torque/spec tables
+        if (/tightening\s+torque/i.test(contentLower) || /\bN\s*m\b/.test(chunk.content || '')) {
+          boost += 2;
+        }
+        return { ...chunk, _boost: boost };
+      });
+      // Sort by boost (descending), then keep original order for ties
+      chunks.sort((a: any, b: any) => (b._boost || 0) - (a._boost || 0));
+      chunks = chunks.slice(0, maxResults);
+    }
 
     // Fallback to ILIKE if FTS returns nothing - use OR logic with expanded terms
     if (chunks.length === 0) {
