@@ -259,7 +259,10 @@ export function EnhancedBarryChat({
                   {vehicleContext && (
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <Car className="h-3 w-3" />
-                      <span>{vehicleContext.split(':')[1]?.split('.')[0]?.trim() || 'Your Unimog'}</span>
+                      <span>{(() => {
+                        const match = vehicleContext.match(/User's Unimog: ([^.]+)/);
+                        return match ? match[1].trim() : 'Your Unimog';
+                      })()}</span>
                     </div>
                   )}
                 </div>
