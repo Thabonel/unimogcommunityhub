@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MobileTooltip } from '@/components/ui/mobile-tooltip';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
@@ -11,11 +11,10 @@ import { useBarry } from '@/contexts/BarryContext';
 import { SITE_IMAGES } from '@/config/images';
 
 export function FloatingBarryButton() {
-  const [showBarryChat, setShowBarryChat] = useState(false);
   const { location } = useUserLocation();
   const { userData } = useProfile();
   const routerLocation = useLocation();
-  const { onWISAction, pageContext } = useBarry();
+  const { onWISAction, pageContext, isBarryOpen, openBarry, closeBarry } = useBarry();
 
   // Detect if we're on the WIS page
   const isWISPage = routerLocation.pathname.includes('/knowledge/wis');
@@ -61,7 +60,7 @@ export function FloatingBarryButton() {
     } else {
       console.log('🤖 Showing Barry chat modal');
       // On other pages, show normal chat modal
-      setShowBarryChat(true);
+      openBarry();
     }
   };
 
@@ -96,7 +95,7 @@ export function FloatingBarryButton() {
 
       {/* Barry AI Chat Modal - Only show on non-WIS pages */}
       {!isWISPage && (
-        <Dialog open={showBarryChat} onOpenChange={setShowBarryChat}>
+        <Dialog open={isBarryOpen} onOpenChange={(open) => open ? openBarry() : closeBarry()}>
         <DialogContent className="w-full max-w-full md:max-w-7xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col gap-0">
           <DialogHeader className="p-4 md:p-6 pb-3 md:pb-4 flex-shrink-0 border-b">
             <div className="flex items-center gap-2 md:gap-3">

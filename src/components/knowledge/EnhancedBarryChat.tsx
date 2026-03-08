@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBarry } from '@/contexts/BarryContext';
 import { toast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
 import { BarryUpgradePrompt } from '@/components/barry/BarryUpgradePrompt';
@@ -42,6 +43,7 @@ export function EnhancedBarryChat({
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const { user } = useAuth();
   const { hasActiveSubscription } = useSubscription();
+  const { pendingMessage, clearPendingMessage } = useBarry();
 
   const {
     messages,
@@ -70,6 +72,14 @@ export function EnhancedBarryChat({
       onReferencesReceived?.(lastMessage.manualReferences);
     }
   }, [messages, onReferencesReceived]);
+
+  // Auto-send pending message from context
+  useEffect(() => {
+    if (pendingMessage && !isLoading) {
+      sendMessage(pendingMessage);
+      clearPendingMessage();
+    }
+  }, [pendingMessage, isLoading, sendMessage, clearPendingMessage]);
 
   // Handle citation click - pass to parent callback or no-op
   const handleCitationClick = (reference: ManualReference) => {
