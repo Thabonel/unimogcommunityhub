@@ -8,8 +8,8 @@
  * 1. Domain Guard - Block off-topic/dangerous queries
  * 2. Knowledge Lookup - Check validated KB for instant answers
  * 2.5. Query Expander - Expand user terms to technical terminology (Phase 1)
- * 3. Manual Search + RPS Search - Gather context with expanded terms (parallel)
- * 4. Response Generator - Generate cited response
+ * 3. Manual Search + RPS Search + EPC Parts Search - Gather context (parallel)
+ * 4. Response Generator - Generate cited response with OEM part numbers
  * 5. Safety Filter - Add disclaimers if needed
  * 6. Response Validator - Validate citations exist
  */
@@ -81,7 +81,7 @@ const TECHNICAL_KEYWORDS = new Set([
   'seal', 'bearing', 'gasket', 'filter',
   'remove', 'install', 'replace', 'adjust', 'repair',
   'diagram', 'exploded', 'view', 'illustration', 'schematic',
-  'part', 'number', 'niin', 'nsn', 'rps',
+  'part', 'number', 'niin', 'nsn', 'rps', 'epc', 'oem',
   'manual', 'workshop', 'procedure', 'steps',
   'ecu', 'can-bus', 'canbus', 'obd', 'diagnostic', 'fault', 'sensor',
   'edc', 'abs', 'module', 'relay', 'fuse', 'wiring', 'harness',
@@ -801,6 +801,136 @@ async function executeScrapedContentSearch(
   }
 }
 
+// ============ SKILL 4c: EPC PARTS SEARCH ============
+async function executeEPCSearch(
+  supabaseAdmin: any,
+  query: string,
+  maxResults: number = 10
+): Promise<{ found: boolean; parts: any[]; context: string }> {
+  try {
+    const queryLower = query.toLowerCase();
+
+    // Detect parts-related queries
+    const isPartsQuery = /part\s*number|part\s*no|epc|catalog|replace|order|buy|source|supplier|oem/i.test(query)
+      || /\bA[-\s]?\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}\b/i.test(query);
+
+    // Also trigger for specific component queries that could benefit from part numbers
+    const componentTerms = ['brake', 'caliper', 'seal', 'gasket', 'filter', 'bearing', 'lamp',
+      'light', 'mirror', 'glass', 'wheel', 'tire', 'hub', 'axle', 'spring', 'shock',
+      'clutch', 'exhaust', 'starter', 'alternator', 'relay', 'fuse', 'sensor',
+      'pump', 'hose', 'belt', 'wiper', 'headlight', 'taillight', 'indicator'];
+    const hasComponent = componentTerms.some(t => queryLower.includes(t));
+
+    if (!isPartsQuery && !hasComponent) {
+      return { found: false, parts: [], context: '' };
+    }
+
+    // Extract Unimog model from query for filtering
+    let modelFilter: string | null = null;
+    const modelMatch = queryLower.match(/u\s*(\d{3,4}l?)/i);
+    if (modelMatch) {
+      modelFilter = modelMatch[1].toUpperCase();
+    }
+
+    // Extract keywords
+    const stopWords = new Set([
+      'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'for', 'on', 'with',
+      'at', 'by', 'from', 'as', 'how', 'what', 'where', 'when', 'why', 'which',
+      'my', 'your', 'i', 'me', 'you', 'part', 'number', 'parts', 'unimog'
+    ]);
+    const keywords = queryLower
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !stopWords.has(w));
+
+    if (keywords.length === 0) return { found: false, parts: [], context: '' };
+
+    let parts: any[] = [];
+
+    // Strategy 1: Direct part number lookup
+    const partNumberMatch = query.match(/A[-\s]?\d{3}[-\s]?\d{3}[-\s]?\d{2}[-\s]?\d{2}/i);
+    if (partNumberMatch) {
+      const normalized = partNumberMatch[0].replace(/\s+/g, '-').toUpperCase();
+      const { data } = await supabaseAdmin
+        .from('epc_parts')
+        .select('*')
+        .ilike('part_number', `%${normalized}%`)
+        .limit(maxResults);
+      parts = data || [];
+    }
+
+    // Strategy 2: Full-text search on descriptions
+    if (parts.length === 0) {
+      const searchTerms = keywords.filter(k => !['part', 'number', 'epc'].includes(k));
+      if (searchTerms.length > 0) {
+        const { data: ftsData } = await supabaseAdmin
+          .from('epc_parts')
+          .select('*')
+          .textSearch('description_en', searchTerms.join(' & '), { type: 'websearch', config: 'english' })
+          .limit(maxResults * 2);
+
+        parts = ftsData || [];
+      }
+    }
+
+    // Strategy 3: ILIKE fallback
+    if (parts.length === 0) {
+      const primaryTerm = keywords.find(k => componentTerms.includes(k)) || keywords[0];
+      if (primaryTerm) {
+        const { data: ilikeData } = await supabaseAdmin
+          .from('epc_parts')
+          .select('*')
+          .ilike('description_en', `%${primaryTerm}%`)
+          .limit(maxResults * 2);
+
+        parts = ilikeData || [];
+      }
+    }
+
+    // Filter by model if specified
+    if (modelFilter && parts.length > 0) {
+      const modelParts = parts.filter((p: any) =>
+        p.model_name?.toLowerCase().includes(modelFilter!.toLowerCase()) ||
+        p.model_code?.toLowerCase().includes(modelFilter!.toLowerCase())
+      );
+      if (modelParts.length > 0) parts = modelParts;
+    }
+
+    // Deduplicate by part number and limit results
+    const seen = new Set<string>();
+    parts = parts.filter((p: any) => {
+      if (seen.has(p.part_number)) return false;
+      seen.add(p.part_number);
+      return true;
+    }).slice(0, maxResults);
+
+    if (parts.length === 0) return { found: false, parts: [], context: '' };
+
+    // Build context string for Claude
+    let context = '\n=== EPC PARTS CATALOG (Mercedes Electronic Parts Catalog) ===\n';
+    context += 'The following are genuine Mercedes-Benz OEM part numbers from the EPC database:\n\n';
+
+    for (const part of parts) {
+      context += `Part: ${part.part_number}`;
+      if (part.description_en) context += ` - ${part.description_en}`;
+      if (part.description_de) context += ` (DE: ${part.description_de})`;
+      context += `\n  Category: ${part.category}`;
+      context += ` | Model: ${part.model_name || part.model_code}`;
+      if (part.group_code) context += ` | Group: ${part.group_code}`;
+      context += '\n';
+    }
+
+    context += '\nNote: These are OEM Mercedes-Benz part numbers. Always verify with your dealer before ordering.\n';
+
+    console.log(`[EPC] Found ${parts.length} parts`);
+
+    return { found: true, parts, context };
+  } catch (error) {
+    console.error('[EPC] Error:', error);
+    return { found: false, parts: [], context: '' };
+  }
+}
+
 // ============ SKILL 2.5: QUERY EXPANDER ============
 async function executeQueryExpander(query: string): Promise<{ found: boolean; expandedTerms: string[] }> {
   if (!ANTHROPIC_API_KEY) {
@@ -908,7 +1038,8 @@ async function executeResponseGenerator(
 You have DIRECT ACCESS to:
 1. The actual U435 Workshop Manual database (official Unimog documentation)
 2. RPS Parts System with exploded view illustrations
-3. Community-scraped trip reports and repair guides from Unimog forums and sites
+3. Mercedes EPC (Electronic Parts Catalog) with 12,500+ genuine OEM part numbers for Unimog models
+4. Community-scraped trip reports and repair guides from Unimog forums and sites
 
 The content below is REAL data - not hypothetical or placeholder data.
 
@@ -935,8 +1066,9 @@ MANDATORY BEHAVIOR:
 2. For every technical answer, cite: "According to page X..." or "See page X for..."
 3. The user's interface DISPLAYS the cited pages automatically - they will SEE the PDF
 4. For RPS diagrams, include the markdown image - it renders in the chat
-5. NEVER say "I don't have access" or "I can't fetch" - you HAVE the data above
-6. Only say "not covered in my database" if no content above relates to the query
+5. When EPC part numbers are available, ALWAYS include them (e.g., "OEM part number: A-000-420-46-83")
+6. NEVER say "I don't have access" or "I can't fetch" - you HAVE the data above
+7. Only say "not covered in my database" if no content above relates to the query
 
 CRITICAL - ANSWER DIRECTLY WITH SPECIFIC VALUES:
 - When the manual content contains specific numbers (torque values, capacities, measurements), STATE THEM IMMEDIATELY in your first sentence
@@ -1191,15 +1323,17 @@ serve(async (req) => {
       }
     }
 
-    // SKILL 3, 4, 4b: Manual Search + RPS Search + Scraped Content + PDF availability (parallel)
+    // SKILL 3, 4, 4b, 4c: Manual Search + RPS Search + Scraped Content + EPC Parts + PDF availability (parallel)
     executedSkills.push('manual-search');
     executedSkills.push('rps-search');
     executedSkills.push('scraped-content-search');
+    executedSkills.push('epc-search');
 
-    const [manualResult, rpsResult, scrapedResult, availablePdfs] = await Promise.all([
+    const [manualResult, rpsResult, scrapedResult, epcResult, availablePdfs] = await Promise.all([
       executeManualSearch(supabaseAdmin, cleanQuery, 10, expandedTerms.length > 1 ? expandedTerms : undefined),
       executeRPSSearch(supabaseAdmin, cleanQuery, expandedTerms.length > 1 ? expandedTerms : undefined),
       executeScrapedContentSearch(supabaseAdmin, cleanQuery, 5),
+      executeEPCSearch(supabaseAdmin, cleanQuery, 10),
       getAvailablePdfFiles(supabaseAdmin)
     ]);
     console.log(`[PDF] ${availablePdfs.size} PDFs available in storage`);
@@ -1207,14 +1341,18 @@ serve(async (req) => {
     console.log(`[Manual] Found ${manualResult.chunks.length} chunks`);
     console.log(`[RPS] Found ${rpsResult.illustrations.length} illustrations`);
     console.log(`[Scraped] Found ${scrapedResult.trips.length} trips, ${scrapedResult.guides.length} guides`);
+    console.log(`[EPC] Found ${epcResult.parts.length} parts`);
 
-    // Combine context - prioritize official manuals, supplement with community content
+    // Combine context - prioritize official manuals, supplement with EPC parts and community content
     let combinedContext = '';
     if (manualResult.found) {
       combinedContext += manualResult.context;
     }
     if (rpsResult.found) {
       combinedContext += rpsResult.context;
+    }
+    if (epcResult.found) {
+      combinedContext += epcResult.context;
     }
     if (scrapedResult.found) {
       combinedContext += scrapedResult.context;
