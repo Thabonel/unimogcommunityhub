@@ -55,6 +55,12 @@ const TASK_PATTERNS: Record<BarryTask, RegExp[]> = {
     /will\s+it\s+rain/i,
     /conditions?\s+(?:for|today|tomorrow)/i
   ],
+  pricing: [
+    /price\s+of|cost\s+of|how\s+much\s+(?:does|is)|expensive/i,
+    /fuel\s+price|gas\s+price|diesel\s+price|petrol\s+price/i,
+    /price.*near\s+me|cost.*near\s+me/i,
+    /where.*cheap|cheapest.*fuel|best.*price/i
+  ],
   other: []
 };
 
@@ -85,9 +91,27 @@ function checkDangerousTopics(query: string): string | null {
 }
 
 /**
- * Check if query is technical/Unimog-related
+ * Check if query is about pricing/costs
+ */
+function isPricingQuery(query: string): boolean {
+  const patterns = TASK_PATTERNS.pricing || [];
+  for (const pattern of patterns) {
+    if (pattern.test(query)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if query is technical/Unimog-related (excluding pricing)
  */
 function isTechnicalQuery(query: string): boolean {
+  // If it's a pricing query, don't classify as technical
+  if (isPricingQuery(query)) {
+    return false;
+  }
+
   const queryLower = query.toLowerCase();
   const words = queryLower.split(/\s+/);
 
@@ -162,6 +186,22 @@ export async function executeDomainGuard(
           task: 'other',
           reason: `Blocked dangerous topic: ${dangerousTopic}`,
           redirect_message: DANGEROUS_BLOCK_MESSAGE
+        },
+        executionTimeMs: performance.now() - startTime,
+        skillName
+      };
+    }
+
+    // Check for pricing queries first
+    if (isPricingQuery(query)) {
+      return {
+        success: true,
+        data: {
+          is_allowed: false,
+          domain: 'off_topic',
+          task: 'pricing',
+          reason: 'Pricing query detected - not in my expertise',
+          redirect_message: `I'm Barry, your Unimog technical expert! I'm focused on mechanical repairs, maintenance procedures, and parts identification. For fuel prices and cost information, I'd recommend checking local fuel station apps or websites like GasBuddy. Is there something about your Unimog's technical systems I can help with instead?`
         },
         executionTimeMs: performance.now() - startTime,
         skillName

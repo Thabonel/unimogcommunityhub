@@ -1025,7 +1025,8 @@ async function executeResponseGenerator(
   task: string,
   manualContext: string,
   rpsContext: string,
-  conversationHistory: ChatMessage[]
+  conversationHistory: ChatMessage[],
+  userContext?: string
 ): Promise<{ content: string; citations: number[] }> {
   if (!ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY not configured');
@@ -1033,6 +1034,12 @@ async function executeResponseGenerator(
 
   // Build system prompt with clear instructions about real manual access
   let systemPrompt = BARRY_PERSONA;
+
+  // Only include user context for technical queries
+  if (userContext && ['procedure', 'troubleshoot', 'specifications', 'parts_lookup', 'exploded_view'].includes(task)) {
+    systemPrompt += `\n\n=== USER VEHICLE CONTEXT ===\n`;
+    systemPrompt += `${userContext}\n`;
+  }
 
   systemPrompt += `\n\n=== IMPORTANT: YOU HAVE REAL DATA ACCESS ===
 You have DIRECT ACCESS to:
@@ -1373,11 +1380,12 @@ serve(async (req) => {
     // SKILL 5: Response Generator
     executedSkills.push('response-generator');
     const { content: responseContent, citations } = await executeResponseGenerator(
-      userQuery,
+      cleanQuery,
       domainResult.task,
       manualResult.context,
       rpsResult.context,
-      sanitizedMessages.slice(0, -1) // Exclude current message from history (sanitized)
+      sanitizedMessages.slice(0, -1), // Exclude current message from history (sanitized)
+      contextPrefix // User context from frontend (vehicle info, etc.)
     );
 
     console.log(`[Generator] Response length: ${responseContent.length}, Citations: ${citations.join(', ')}`);
@@ -1412,7 +1420,6 @@ serve(async (req) => {
           pdf_page: chunk.page_number,
           storage_url: storageUrl,
           chapter_filename: manualTitleToFilename(chunk.manual_title),
-          filename: manualTitleToFilename(chunk.manual_title),
           manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
           content_preview: chunk.content?.substring(0, 200)
         });
@@ -1433,7 +1440,6 @@ serve(async (req) => {
           pdf_page: chunk.page_number,
           storage_url: storageUrl,
           chapter_filename: manualTitleToFilename(chunk.manual_title),
-          filename: manualTitleToFilename(chunk.manual_title),
           manual_type: chunk.manual_title?.startsWith('G6') ? 'G-series' : 'U435',
           content_preview: chunk.content?.substring(0, 200)
         });
