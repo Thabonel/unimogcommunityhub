@@ -18,9 +18,16 @@ import { BARRY_PERSONA, MODEL_CONFIG } from '../config/barry-config';
 function buildSystemPrompt(
   task: string,
   manualContext: string,
-  rpsContext?: string
+  rpsContext?: string,
+  userContext?: string
 ): string {
   let prompt = BARRY_PERSONA;
+
+  // Only include user vehicle context for technical queries
+  if (userContext && ['procedure', 'troubleshoot', 'specifications', 'parts_lookup'].includes(task)) {
+    prompt += `\n\n=== USER VEHICLE CONTEXT ===\n`;
+    prompt += `${userContext}\n`;
+  }
 
   prompt += `\n\n=== KNOWLEDGE CONTEXT ===\n`;
   prompt += `You have access to the following information from the U435 Workshop Manual:\n\n`;

@@ -23,6 +23,7 @@ export const BarryTaskSchema = z.enum([
   'parts_lookup',   // Finding part numbers
   'specifications', // Torque specs, fluid capacities
   'weather',        // Weather-related queries
+  'pricing',        // Price-related queries
   'other'           // General assistance
 ]);
 
