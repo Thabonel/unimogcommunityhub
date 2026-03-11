@@ -397,7 +397,7 @@ async function executeKnowledgeLookup(
       const entryKeywords = (entry.question_keywords || []).map((k: string) => k.toLowerCase());
       let matches = 0;
       for (const qk of keywords) {
-        if (entryKeywords.some((ek: string) => ek.includes(qk) || qk.includes(ek))) matches++;
+        if (entryKeywords.includes(qk)) matches++;
       }
       const score = matches / keywords.length;
       if (score > bestScore && score >= 0.5) {
