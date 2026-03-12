@@ -7,13 +7,18 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://ydevatqwkoccxhtejdor.supabase.co'
-const supabaseAnonKey = '<JWT_TOKEN>'
+const supabaseUrl = process.env.VITE_SUPABASE_URL
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY')
+  process.exit(1)
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 async function testBarryPdfLinks() {
-  console.log('🧪 Testing Barry AI PDF Link Generation')
+  console.log('Testing Barry AI PDF Link Generation')
   console.log('=' .repeat(60))
 
   const testQueries = [
@@ -24,18 +29,18 @@ async function testBarryPdfLinks() {
     },
     {
       query: "differential parts diagram",
-      expectedPage: null, // RPS pages vary
+      expectedPage: null,
       expectedManual: "RPS Catalog"
     },
     {
       query: "U1700L oil change procedure",
-      expectedPage: null, // Need to find correct page
+      expectedPage: null,
       expectedManual: "U1700L U435 Workshop Manual"
     }
   ]
 
   for (const test of testQueries) {
-    console.log(`\\n🔍 Testing: "${test.query}"`)
+    console.log(`\nTesting: "${test.query}"`)
     console.log('-'.repeat(50))
 
     try {
@@ -52,12 +57,12 @@ async function testBarryPdfLinks() {
       })
 
       if (error) {
-        console.error('❌ Error calling Barry:', error)
+        console.error('Error calling Barry:', error)
         continue
       }
 
-      console.log('📝 Response:', data.content.substring(0, 200) + '...')
-      console.log('🔗 Manual References:')
+      console.log('Response:', data.content.substring(0, 200) + '...')
+      console.log('Manual References:')
 
       if (data.manualReferences && data.manualReferences.length > 0) {
         data.manualReferences.forEach((ref, index) => {
@@ -67,38 +72,35 @@ async function testBarryPdfLinks() {
           console.log(`     Type: ${ref.type}`)
 
           if (ref.storage_url) {
-            console.log('     ✅ PDF URL Generated')
+            console.log('     PDF URL Generated')
 
-            // Check if it's the expected page
             if (test.expectedPage && ref.page_number === test.expectedPage) {
-              console.log(`     🎯 Expected page ${test.expectedPage} found!`)
+              console.log(`     Expected page ${test.expectedPage} found`)
             }
 
-            // Verify URL format
             if (ref.storage_url.includes('manuals/') && ref.storage_url.includes('#page=')) {
-              console.log('     ✅ URL format is correct')
+              console.log('     URL format correct')
             } else {
-              console.log('     ⚠️  URL format needs review')
+              console.log('     URL format needs review')
             }
           } else {
-            console.log('     ❌ No PDF URL')
+            console.log('     No PDF URL')
           }
           console.log()
         })
       } else {
-        console.log('  ❌ No manual references returned')
+        console.log('  No manual references returned')
       }
 
-      console.log('📊 Knowledge Mode:', data.knowledgeMode)
-      console.log('📊 Search Results:', data.searchResultCount)
+      console.log('Knowledge Mode:', data.knowledgeMode)
+      console.log('Search Results:', data.searchResultCount)
 
     } catch (err) {
-      console.error('❌ Test error:', err.message)
+      console.error('Test error:', err.message)
     }
   }
 
-  // Test the direct URL generation function
-  console.log('\\n🧪 Testing Direct URL Generation Function')
+  console.log('\nTesting Direct URL Generation Function')
   console.log('=' .repeat(60))
 
   const urlTests = [
@@ -114,13 +116,13 @@ async function testBarryPdfLinks() {
       })
 
       if (error) {
-        console.error(`❌ Error generating URL for ${test.manual}:`, error)
+        console.error(`Error generating URL for ${test.manual}:`, error)
       } else {
-        console.log(`✅ ${test.manual} page ${test.page}:`)
+        console.log(`${test.manual} page ${test.page}:`)
         console.log(`   ${data}`)
       }
     } catch (err) {
-      console.error('❌ URL generation error:', err.message)
+      console.error('URL generation error:', err.message)
     }
   }
 }
