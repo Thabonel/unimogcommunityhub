@@ -1476,21 +1476,32 @@ async function checkKnowledgeBase(supabaseAdmin: any, query: string): Promise<{
 
         // Build manual references with proper PDF URLs
         const manualReferences = await Promise.all(pages.map(async (pageNum: number) => {
-          // For U435 pages, use the chapter navigation system
+          // BARRY AI ENHANCEMENT: Generate dynamic PDF URL using new database function
+          const { data: dynamicPdfUrl, error: pdfError } = await supabaseAdmin.rpc('generate_pdf_url', {
+            manual_title_param: manual,
+            page_number_param: pageNum
+          });
+
+          if (pdfError) {
+            console.warn(`[KB PDF URL] Error generating URL for ${manual} page ${pageNum}:`, pdfError);
+          }
+
+          // For U435 pages, use the chapter navigation system as fallback
           if (manual === 'U435' || manual.includes('U435')) {
             const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
-            if (chapterInfo) {
+            if (chapterInfo || dynamicPdfUrl) {
               return {
                 type: 'kb_validated',
                 title: section || `Page ${pageNum}`,
                 manual_title: manual,
                 page_number: pageNum,
                 original_page: pageNum,
-                pdf_page: chapterInfo.pdfPage,
+                pdf_page: chapterInfo?.pdfPage || pageNum,
                 section_title: section,
-                storage_url: chapterInfo.url,
-                chapter_filename: chapterInfo.filename,
-                source: 'knowledge_base'
+                storage_url: dynamicPdfUrl || chapterInfo?.url, // Prefer dynamic URL, fallback to chapter
+                chapter_filename: chapterInfo?.filename || null,
+                source: 'knowledge_base',
+                pdf_verified: true // Knowledge base entries are pre-verified
               };
             }
           }
@@ -2497,26 +2508,39 @@ Always cite specific page numbers and PDF files in your response.`;
               // Look up chapter PDF URLs for each result
               const allReferences = await Promise.all(
                 filtered.map(async (chunk: any) => {
+                  // BARRY AI ENHANCEMENT: Generate dynamic PDF URL using new database function
+                  const { data: dynamicPdfUrl, error: pdfError } = await supabaseAdmin.rpc('generate_pdf_url', {
+                    manual_title_param: chunk.manual_title,
+                    page_number_param: chunk.page_number
+                  });
+
+                  if (pdfError) {
+                    console.warn(`[PDF URL] Error generating URL for ${chunk.manual_title} page ${chunk.page_number}:`, pdfError);
+                  }
+
                   const chapterInfo = await getChapterPdfUrl(supabaseAdmin, chunk.page_number);
                   // Skip pages without valid chapter mapping (e.g., pages 615-650 have no Part 21 PDF)
-                  if (!chapterInfo) {
-                    console.log(`[Content Search] Skipping page ${chunk.page_number} - no chapter PDF mapping`);
+                  if (!chapterInfo && !dynamicPdfUrl) {
+                    console.log(`[Content Search] Skipping page ${chunk.page_number} - no chapter PDF mapping and no dynamic URL`);
                     return null;
                   }
+
                   return {
                     type: 'u435_content_search',
                     title: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
                     page_number: chunk.page_number || 0,
                     original_page: chunk.page_number || 0,
-                    pdf_page: chapterInfo.pdfPage,
-                    storage_url: chapterInfo.url,
-                    chapter_filename: chapterInfo.filename,
+                    pdf_page: chapterInfo?.pdfPage || chunk.page_number,
+                    storage_url: dynamicPdfUrl || chapterInfo?.url, // Prefer dynamic URL, fallback to chapter
+                    chapter_filename: chapterInfo?.filename || null,
                     system_category: chunk.section_title?.toLowerCase().includes('torque') ? 'specifications' : 'procedures',
                     has_safety_warning: false,
                     match_type: 'content_search_fallback',
                     match_score: 0.8,
                     manual_type: 'U435',
-                    content_preview: chunk.content?.substring(0, 300) || ''
+                    content_preview: chunk.content?.substring(0, 300) || '',
+                    pdf_verified: chunk.pdf_verified || false,
+                    manual_title: chunk.manual_title
                   };
                 })
               );
