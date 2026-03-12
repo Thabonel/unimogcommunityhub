@@ -26,16 +26,28 @@ export const useRecentActivity = () => {
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(3)
-            .then(res => res.error ? { data: [] } : res),
+            .then(res => {
+              if (res.error) {
+                console.warn('[Dashboard] Posts table query failed (table may not exist):', res.error.message);
+                return { data: [] };
+              }
+              return res;
+            }),
 
           // Recent marketplace listings (may have FK issues)
           supabase
             .from('marketplace_listings')
             .select('id, title, created_at')
-            .eq('seller_id', user.id)
+            .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(2)
-            .then(res => res.error ? { data: [] } : res),
+            .then(res => {
+              if (res.error) {
+                console.warn('[Dashboard] Marketplace listings query failed:', res.error.message);
+                return { data: [] };
+              }
+              return res;
+            }),
 
           // Recent knowledge contributions (table may not exist)
           supabase
@@ -44,7 +56,13 @@ export const useRecentActivity = () => {
             .eq('author_id', user.id)
             .order('created_at', { ascending: false })
             .limit(2)
-            .then(res => res.error ? { data: [] } : res)
+            .then(res => {
+              if (res.error) {
+                console.warn('[Dashboard] Articles table query failed (table may not exist):', res.error.message);
+                return { data: [] };
+              }
+              return res;
+            })
         ]);
 
         // Combine and format
@@ -98,7 +116,7 @@ export const useUpcomingTrips = () => {
           start_date,
           end_date,
           difficulty,
-          trip_participants!inner(user_id)
+          trip_participants(user_id)
         `)
         .gte('start_date', new Date().toISOString())
         .order('start_date', { ascending: true })
@@ -151,9 +169,8 @@ export const useRecommendedItems = () => {
         // Try to fetch items with FK join, fall back to simple query if it fails
         let { data, error } = await supabase
           .from('marketplace_listings')
-          .select('id, title, price, seller_id, profiles!seller_id(name)')
+          .select('id, title, price, user_id, profiles(name)')
           .eq('status', 'active')
-          .or(profile?.unimog_model ? `compatible_models.cs.{${profile.unimog_model}}` : 'id.neq.0')
           .order('created_at', { ascending: false })
           .limit(6);
 
@@ -161,9 +178,8 @@ export const useRecommendedItems = () => {
         if (error) {
           ({ data, error } = await supabase
             .from('marketplace_listings')
-            .select('id, title, price, seller_id')
+            .select('id, title, price, user_id')
             .eq('status', 'active')
-            .or(profile?.unimog_model ? `compatible_models.cs.{${profile.unimog_model}}` : 'id.neq.0')
             .order('created_at', { ascending: false })
             .limit(6));
         }
@@ -238,7 +254,7 @@ export const useRecentMessages = () => {
             content,
             created_at,
             sender_id,
-            profiles!sender_id(name)
+            profiles(name)
           `)
           .eq('recipient_id', user.id)
           .order('created_at', { ascending: false })
