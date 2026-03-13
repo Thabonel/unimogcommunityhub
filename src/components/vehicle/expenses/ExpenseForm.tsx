@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarIcon, DollarSign, AlertCircle } from 'lucide-react';
+import { CalendarIcon, DollarSign, AlertCircle, Bot, CheckCircle } from 'lucide-react';
+import { useExpenseInvoiceUpload } from '@/hooks/useExpenses';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [ocrData, setOcrData] = useState<any>(null);
+  const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+  const [ocrSuccess, setOcrSuccess] = useState(false);
+
+  const { uploadInvoice, uploadProgress, isProcessing } = useExpenseInvoiceUpload();
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
@@ -112,6 +118,49 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
       notes: initialValues?.notes || '',
     },
   });
+
+  // Handle OCR processing when files are added
+  const handleFilesChange = async (files: File[]) => {
+    setUploadFiles(files);
+
+    // If a receipt/invoice file is uploaded, try OCR processing
+    const receiptFile = files.find(file =>
+      file.type === 'application/pdf' || file.type.startsWith('image/')
+    );
+
+    if (receiptFile && !ocrSuccess) {
+      setIsOcrProcessing(true);
+      setOcrData(null);
+
+      try {
+        const result = await uploadInvoice(receiptFile, 'google_vision');
+
+        if (result.ocrResult.success && result.ocrResult.invoiceData) {
+          const data = result.ocrResult.invoiceData;
+          setOcrData(data);
+          setOcrSuccess(true);
+
+          // Auto-populate form fields with OCR data
+          if (data.totalAmount) {
+            form.setValue('amount', data.totalAmount);
+          }
+          if (data.vendorName) {
+            form.setValue('description', `${data.vendorName} - ${data.invoiceNumber || 'Receipt'}`);
+          }
+          if (data.invoiceDate) {
+            form.setValue('expense_date', new Date(data.invoiceDate));
+          }
+          if (data.currency) {
+            form.setValue('currency', data.currency);
+          }
+        }
+      } catch (error) {
+        console.warn('OCR processing failed, allowing manual entry:', error);
+      } finally {
+        setIsOcrProcessing(false);
+      }
+    }
+  };
 
   const handleSubmit = async (data: ExpenseFormValues) => {
     if (!isUpdate && uploadFiles.length === 0) {
@@ -340,14 +389,39 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             />
 
             {!isUpdate && (
-              <div>
+              <div className="space-y-4">
                 <FormLabel className="mb-3 block">
                   Upload Receipts/Invoices
                 </FormLabel>
+
+                {/* OCR Status Display */}
+                {isOcrProcessing && (
+                  <Alert>
+                    <Bot className="h-4 w-4 animate-spin" />
+                    <AlertDescription>
+                      Reading receipt automatically... ({uploadProgress}%)
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {ocrSuccess && ocrData && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      Receipt read successfully! Form fields have been auto-filled.
+                      <br />
+                      <span className="text-sm text-green-600">
+                        Vendor: {ocrData.vendorName} • Amount: {ocrData.currency} {ocrData.totalAmount}
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <ReceiptUploadZone
                   files={uploadFiles}
-                  onFilesChange={setUploadFiles}
+                  onFilesChange={handleFilesChange}
                   maxFiles={10}
+                  disabled={isOcrProcessing}
                 />
               </div>
             )}
@@ -362,12 +436,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? 'Processing...'
-                : isUpdate
-                  ? 'Update Expense'
-                  : 'Record Expense'}
+            <Button type="submit" disabled={isSubmitting || isOcrProcessing}>
+              {isOcrProcessing
+                ? 'Reading Receipt...'
+                : isSubmitting
+                  ? 'Processing...'
+                  : isUpdate
+                    ? 'Update Expense'
+                    : 'Record Expense'}
             </Button>
           </CardFooter>
         </form>
