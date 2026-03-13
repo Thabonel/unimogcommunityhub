@@ -202,29 +202,61 @@ export class ExpenseService {
     file: File,
     ocrProvider: 'google_vision' | 'unstructured' = 'google_vision'
   ): Promise<{ documentUrl: string; ocrResult: OCRProcessingResult }> {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('ocrProvider', ocrProvider)
-
     const token = await this.getAuthToken()
 
+    // Upload file directly to Supabase storage
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) {
+      throw new Error('User not authenticated')
+    }
+
+    const filename = `${user.user.id}/${Date.now()}-${file.name}`
+    const { error: uploadError } = await supabase.storage
+      .from('expense-documents')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+
+    if (uploadError) {
+      throw new Error(`Upload failed: ${uploadError.message}`)
+    }
+
+    // Get public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('expense-documents')
+      .getPublicUrl(filename)
+
+    // Call the working process-invoice-ocr function directly
+    const documentType = file.type === 'application/pdf' ? 'pdf' : 'image'
+
     const response = await fetch(
-      `${this.baseUrl}/functions/v1/expenses-api/upload-and-process`,
+      `${this.baseUrl}/functions/v1/process-invoice-ocr`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: formData
+        body: JSON.stringify({
+          documentUrl: publicUrl,
+          documentType,
+          ocrProvider
+        })
       }
     )
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || `Upload failed: ${response.status}`)
+      throw new Error(error.error || `OCR processing failed: ${response.status}`)
     }
 
-    return response.json()
+    const ocrResult = await response.json()
+
+    return {
+      documentUrl: publicUrl,
+      ocrResult
+    }
   }
 
   static async listExpenses(
