@@ -210,7 +210,7 @@ async function handleUploadAndProcess(req: Request, supabase: any, userId: strin
   }
 
   const filename = `${userId}/${Date.now()}-${file.name}`
-  const bucketName = 'expense-documents'
+  const bucketName = 'expense-receipts'
 
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from(bucketName)
@@ -223,9 +223,15 @@ async function handleUploadAndProcess(req: Request, supabase: any, userId: strin
     throw new Error(`Upload failed: ${uploadError.message}`)
   }
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
     .from(bucketName)
-    .getPublicUrl(filename)
+    .createSignedUrl(filename, 3600)
+
+  if (signedUrlError || !signedUrlData?.signedUrl) {
+    throw new Error(`Failed to create signed URL: ${signedUrlError?.message}`)
+  }
+
+  const publicUrl = signedUrlData.signedUrl
 
   const documentType = file.type === 'application/pdf' ? 'pdf' : 'image'
   const ocrProvider = formData.get('ocrProvider') as string || 'google_vision'

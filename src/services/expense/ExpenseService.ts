@@ -212,7 +212,7 @@ export class ExpenseService {
 
     const filename = `${user.user.id}/${Date.now()}-${file.name}`
     const { error: uploadError } = await supabase.storage
-      .from('expense-documents')
+      .from('expense-receipts')
       .upload(filename, file, {
         cacheControl: '3600',
         upsert: false
@@ -222,10 +222,16 @@ export class ExpenseService {
       throw new Error(`Upload failed: ${uploadError.message}`)
     }
 
-    // Get public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage
-      .from('expense-documents')
-      .getPublicUrl(filename)
+    // Get signed URL for the uploaded file (private bucket)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from('expense-receipts')
+      .createSignedUrl(filename, 3600)
+
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      throw new Error(`Failed to create signed URL: ${signedUrlError?.message}`)
+    }
+
+    const publicUrl = signedUrlData.signedUrl
 
     // Call the working process-invoice-ocr function directly
     const documentType = file.type === 'application/pdf' ? 'pdf' : 'image'
