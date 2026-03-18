@@ -231,7 +231,7 @@ export class ExpenseService {
       throw new Error(`Failed to create signed URL: ${signedUrlError?.message}`)
     }
 
-    const publicUrl = signedUrlData.signedUrl
+    const documentUrl = signedUrlData.signedUrl
 
     // Call the working process-invoice-ocr function directly
     const documentType = file.type === 'application/pdf' ? 'pdf' : 'image'
@@ -245,7 +245,7 @@ export class ExpenseService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          documentUrl: publicUrl,
+          documentUrl,
           documentType,
           ocrProvider
         })
@@ -253,14 +253,14 @@ export class ExpenseService {
     )
 
     if (!response.ok) {
-      const error = await response.json()
+      const error = await response.json().catch(() => ({}))
       throw new Error(error.error || `OCR processing failed: ${response.status}`)
     }
 
     const ocrResult = await response.json()
 
     return {
-      documentUrl: publicUrl,
+      documentUrl,
       ocrResult
     }
   }
