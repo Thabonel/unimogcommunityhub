@@ -42,6 +42,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Vehicle } from '@/hooks/vehicle-maintenance/types';
 import { ExpenseCategory, ExpenseFormValues } from './types';
+import type { OCRProcessingResult } from '@/services/expense/ExpenseService';
 import { ReceiptUploadZone } from './ReceiptUploadZone';
 
 const expenseCategories: ExpenseCategory[] = [
@@ -100,11 +101,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [ocrData, setOcrData] = useState<any>(null);
+  const [ocrData, setOcrData] = useState<OCRProcessingResult['invoiceData'] | null>(null);
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [ocrSuccess, setOcrSuccess] = useState(false);
 
-  const { uploadInvoice, uploadProgress, isProcessing } = useExpenseInvoiceUpload();
+  const { uploadInvoice, uploadProgress } = useExpenseInvoiceUpload();
 
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
