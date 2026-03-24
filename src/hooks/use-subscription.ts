@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { SUBSCRIPTION_CONFIG } from '@/lib/constants';
 
 interface Subscription {
   id: string;
@@ -79,7 +80,10 @@ export function useSubscription() {
               .from('user_subscriptions')
               .insert([{
                 user_id: user.id,
-                subscription_status: 'inactive',
+                subscription_type: SUBSCRIPTION_CONFIG.DEFAULT_FREE_TIER,
+                subscription_status: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? 'active' : 'inactive',
+                is_free_access: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM,
+                free_access_reason: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? SUBSCRIPTION_CONFIG.FREE_ACCESS_REASON : null,
                 is_verified: false
               }])
               .select()
@@ -109,7 +113,10 @@ export function useSubscription() {
             .from('user_subscriptions')
             .insert([{
               user_id: user.id,
-              subscription_status: 'inactive',
+              subscription_type: SUBSCRIPTION_CONFIG.DEFAULT_FREE_TIER,
+              subscription_status: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? 'active' : 'inactive',
+              is_free_access: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM,
+              free_access_reason: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? SUBSCRIPTION_CONFIG.FREE_ACCESS_REASON : null,
               is_verified: false
             }])
             .select()
@@ -123,9 +130,9 @@ export function useSubscription() {
           // Set the newly created subscription
           const formattedSubscription: Subscription = {
             id: newData.id,
-            isActive: false,
-            subscriptionLevel: 'free',
-            level: 'free',
+            isActive: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM,
+            subscriptionLevel: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? 'standard' : 'free',
+            level: SUBSCRIPTION_CONFIG.AUTO_GRANT_PREMIUM ? 'standard' : 'free',
             expiresAt: null,
             stripeCustomerId: null,
             stripeSessionId: null,

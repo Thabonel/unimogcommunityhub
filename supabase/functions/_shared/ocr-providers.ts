@@ -145,6 +145,234 @@ export class AWSTextractOCR {
   }
 }
 
+// Claude Vision OCR integration for fuel receipts with dual tank support
+export class ClaudeVisionOCR {
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  async processDocument(imageData: Blob): Promise<OCRResult> {
+    const base64Image = await this.blobToBase64(imageData);
+    const mediaType = this.getMediaType(imageData.type);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mediaType,
+                  data: base64Image
+                }
+              },
+              {
+                type: 'text',
+                text: this.getFuelReceiptPrompt()
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude Vision API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content?.[0]?.text;
+
+    if (!content) {
+      return {
+        text: '',
+        confidence: 0,
+        blocks: []
+      };
+    }
+
+    // Parse structured response
+    try {
+      const parsedData = this.parseClaudeResponse(content);
+      return {
+        text: content,
+        confidence: parsedData.confidence || 85,
+        blocks: this.createOCRBlocks(parsedData),
+        metadata: {
+          provider: 'claude_vision',
+          fuel_data: parsedData
+        }
+      };
+    } catch (parseError: any) {
+      // Fallback to raw text if structured parsing fails
+      return {
+        text: content,
+        confidence: 70,
+        blocks: [],
+        metadata: {
+          provider: 'claude_vision',
+          parse_error: parseError?.message || 'Unknown parse error'
+        }
+      };
+    }
+  }
+
+  private getFuelReceiptPrompt(): string {
+    return `Analyze this fuel receipt or dashboard photo. Extract the following information and respond in JSON format:
+
+{
+  "receipt_type": "fuel_receipt" | "dashboard_photo" | "combined",
+  "station_name": "string (gas station name)",
+  "date": "YYYY-MM-DD",
+  "time": "HH:MM",
+  "fuel_entries": [
+    {
+      "fuel_type": "Premium Diesel" | "Regular Diesel" | "Diesel" | "Gasoline",
+      "volume_liters": number,
+      "price_per_liter": number,
+      "total_amount": number,
+      "tank_number": 1 | 2 | null
+    }
+  ],
+  "combined_totals": {
+    "total_volume_liters": number,
+    "total_amount": number,
+    "blended_price_per_liter": number
+  },
+  "odometer_reading": number | null,
+  "confidence": number (0-100)
+}
+
+Important rules:
+1. For dual tank Unimog trucks, combine multiple fuel entries into totals
+2. Calculate blended price per liter: total_amount / total_volume_liters
+3. If you see dashboard, extract odometer reading from display
+4. If multiple fuel types (Premium + Regular Diesel), combine them
+5. Be precise with numbers - fuel receipts need exact calculations
+6. Return confidence based on text clarity and completeness`;
+  }
+
+  private parseClaudeResponse(content: string): any {
+    // Extract JSON from Claude's response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No JSON found in Claude response');
+    }
+
+    const jsonData = JSON.parse(jsonMatch[0]);
+
+    // Validate required fields
+    if (!jsonData.fuel_entries || !Array.isArray(jsonData.fuel_entries)) {
+      throw new Error('Missing fuel_entries in response');
+    }
+
+    return jsonData;
+  }
+
+  private createOCRBlocks(fuelData: any): OCRBlock[] {
+    const blocks: OCRBlock[] = [];
+
+    // Create blocks for each fuel entry
+    fuelData.fuel_entries?.forEach((entry: any, index: number) => {
+      blocks.push({
+        text: `${entry.fuel_type}: ${entry.volume_liters}L @ $${entry.price_per_liter}/L = $${entry.total_amount}`,
+        confidence: fuelData.confidence || 85,
+        type: 'text'
+      });
+    });
+
+    // Add combined totals block
+    if (fuelData.combined_totals) {
+      blocks.push({
+        text: `Total: ${fuelData.combined_totals.total_volume_liters}L = $${fuelData.combined_totals.total_amount} (avg $${fuelData.combined_totals.blended_price_per_liter}/L)`,
+        confidence: fuelData.confidence || 85,
+        type: 'text'
+      });
+    }
+
+    // Add odometer if available
+    if (fuelData.odometer_reading) {
+      blocks.push({
+        text: `Odometer: ${fuelData.odometer_reading} km`,
+        confidence: fuelData.confidence || 85,
+        type: 'number'
+      });
+    }
+
+    return blocks;
+  }
+
+  private getMediaType(blobType: string): string {
+    // Map blob types to Claude-supported media types
+    switch (blobType) {
+      case 'image/jpeg':
+      case 'image/jpg':
+        return 'image/jpeg';
+      case 'image/png':
+        return 'image/png';
+      case 'image/gif':
+        return 'image/gif';
+      case 'image/webp':
+        return 'image/webp';
+      default:
+        // Default to JPEG for unknown types
+        return 'image/jpeg';
+    }
+  }
+
+  private async blobToBase64(blob: Blob): Promise<string> {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  // Parse fuel receipt data into Invoice format for compatibility
+  parseFuelReceipt(ocrResult: OCRResult): InvoiceData {
+    const fuelData = ocrResult.metadata?.fuel_data;
+    if (!fuelData) {
+      throw new Error('No fuel data found in OCR result');
+    }
+
+    const invoice: InvoiceData = {
+      vendorName: fuelData.station_name || 'Unknown Station',
+      invoiceDate: fuelData.date,
+      totalAmount: fuelData.combined_totals?.total_amount || 0,
+      currency: 'CAD', // Assume Canadian dollars for Unimog receipts
+      confidence: fuelData.confidence || 85,
+      lineItems: []
+    };
+
+    // Convert fuel entries to line items
+    if (fuelData.fuel_entries) {
+      invoice.lineItems = fuelData.fuel_entries.map((entry: any, index: number) => ({
+        description: `${entry.fuel_type} - Tank ${entry.tank_number || index + 1}`,
+        quantity: entry.volume_liters,
+        unitPrice: entry.price_per_liter,
+        lineTotal: entry.total_amount
+      }));
+    }
+
+    return invoice;
+  }
+}
+
 // Unstructured.io API (already used in VIN verification)
 export class UnstructuredOCR {
   private apiKey: string;
