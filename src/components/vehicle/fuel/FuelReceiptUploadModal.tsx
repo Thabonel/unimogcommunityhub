@@ -21,32 +21,24 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Camera,
-  Upload,
   FileText,
   CheckCircle2,
   AlertCircle,
   Fuel,
   Car,
-  RotateCw,
   Save,
   X,
-  Eye,
   Loader2,
-  ArrowLeft,
-  ArrowRight
+  ArrowLeft
 } from 'lucide-react';
 import { Vehicle } from '@/hooks/vehicle-maintenance/types';
-import { FuelLogFormValues } from './FuelLogForm';
 import { CameraCapture } from '../expenses/CameraCapture';
 import { ReceiptUploadZone } from '../expenses/ReceiptUploadZone';
-import { FuelReceiptParser, FuelReceiptData } from '@/services/fuel-receipt-parser';
+import { FuelReceiptParser, FuelReceiptData, CombinedTotals } from '@/services/fuel-receipt-parser';
 import { ExtractedData } from '@/services/vehicle-ocr-service';
 import { supabase } from '@/lib/supabase-client';
-import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 // Modal step types
@@ -56,7 +48,6 @@ interface FuelReceiptUploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vehicles: Vehicle[];
-  userId: string;
   onReceiptProcessed: (fuelData: FuelReceiptData, vehicleId: string) => void;
 }
 
@@ -77,10 +68,8 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
   open,
   onOpenChange,
   vehicles,
-  userId,
   onReceiptProcessed
 }) => {
-  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState<ModalStep>('capture');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -239,7 +228,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       setIsProcessing(true);
 
       // Call the parent handler to save the fuel data
-      await onReceiptProcessed(fuelData, selectedVehicle);
+      onReceiptProcessed(fuelData, selectedVehicle);
 
       setCurrentStep('complete');
 
@@ -263,7 +252,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
   };
 
   // Update edited fuel data
-  const updateFuelData = (field: string, value: any) => {
+  const updateFuelData = (field: keyof FuelReceiptData, value: string | number | CombinedTotals) => {
     if (editedFuelData) {
       setEditedFuelData({
         ...editedFuelData,

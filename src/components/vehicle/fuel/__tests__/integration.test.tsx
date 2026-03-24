@@ -43,7 +43,6 @@ describe('Fuel Receipt Upload Modal Integration', () => {
       open: true,
       onOpenChange: (open: boolean) => {},
       vehicles: [],
-      userId: 'test-id',
       onReceiptProcessed: (fuelData: any, vehicleId: string) => Promise.resolve()
     };
 
