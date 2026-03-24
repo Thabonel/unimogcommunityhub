@@ -8,18 +8,21 @@ import { FuelLog } from '@/hooks/vehicle-maintenance/types';
 import FuelDashboardCard from './FuelDashboardCard';
 import FuelLogForm, { FuelLogFormValues } from './FuelLogForm';
 import FuelLogDetailsCard from './FuelLogDetailsCard';
+import { FuelReceiptUploadModal } from './FuelReceiptUploadModal';
+import { FuelReceiptData, FuelReceiptParser } from '@/services/fuel-receipt-parser';
 
 interface FuelTrackingTabContentProps {
   isOffline?: boolean;
 }
 
-type ViewState = 'dashboard' | 'add' | 'edit' | 'details' | 'upload';
+type ViewState = 'dashboard' | 'add' | 'edit' | 'details';
 
 const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentProps) => {
   const { user } = useAuth();
   const [viewState, setViewState] = useState<ViewState>('dashboard');
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<FuelLog | undefined>(undefined);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const { fuelLogs, isLoading, error, fetchFuelLogs, addFuelLog, updateFuelLog, deleteFuelLog } = useFuelLogs();
   const { vehicles, isLoading: isLoadingVehicles } = useVehicles(user?.id);
 
@@ -83,8 +86,27 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
   }, []);
 
   const handleUploadReceipt = useCallback(() => {
-    setViewState('upload');
+    setUploadModalOpen(true);
   }, []);
+
+  const handleReceiptProcessed = useCallback(async (fuelData: FuelReceiptData, vehicleId: string) => {
+    try {
+      // Convert fuel receipt data to fuel log form values
+      const formValues = FuelReceiptParser.convertToFuelLogValues(fuelData, vehicleId);
+
+      // Add the fuel log using existing handler
+      await handleAddFuelLog(formValues);
+
+      // Close modal and show success toast
+      setUploadModalOpen(false);
+      toast.success('Receipt processed and fuel data added successfully!');
+
+    } catch (error) {
+      console.error('Failed to process receipt:', error);
+      toast.error('Failed to save fuel data from receipt');
+      throw error; // Re-throw so modal can handle the error state
+    }
+  }, [handleAddFuelLog]);
 
   const getVehicleName = useCallback((id: string) => {
     if (!vehicles || vehicles.length === 0) return 'Loading Vehicle...';
@@ -145,17 +167,6 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         />
       )}
 
-      {viewState === 'upload' && (
-        <div className="bg-muted/30 border border-dashed rounded-lg p-8 text-center">
-          <p className="text-muted-foreground mb-4">Upload Receipt Modal - Coming in Task 5</p>
-          <button
-            onClick={() => setViewState('dashboard')}
-            className="text-primary hover:underline"
-          >
-            ← Back to Dashboard
-          </button>
-        </div>
-      )}
 
       {viewState === 'details' && (
         <FuelLogDetailsCard
@@ -171,6 +182,15 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
           }}
         />
       )}
+
+      {/* Fuel Receipt Upload Modal */}
+      <FuelReceiptUploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        vehicles={vehicles || []}
+        userId={user?.id || ''}
+        onReceiptProcessed={handleReceiptProcessed}
+      />
     </div>
   );
 };
