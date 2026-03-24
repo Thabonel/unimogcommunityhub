@@ -15,7 +15,7 @@ interface FuelTrackingTabContentProps {
   isOffline?: boolean;
 }
 
-type ViewState = 'dashboard' | 'add' | 'edit' | 'details';
+type ViewState = 'dashboard' | 'add' | 'edit' | 'details' | 'upload';
 
 const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentProps) => {
   const { user } = useAuth();
@@ -188,7 +188,6 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
         vehicles={vehicles || []}
-        userId={user?.id || ''}
         onReceiptProcessed={handleReceiptProcessed}
       />
     </div>

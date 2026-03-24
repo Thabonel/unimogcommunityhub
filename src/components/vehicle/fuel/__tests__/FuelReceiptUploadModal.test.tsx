@@ -92,7 +92,8 @@ describe('FuelReceiptUploadModal', () => {
       year: '2010',
       vin: 'TEST123456',
       license_plate: 'UNI-001',
-      color: 'Military Green',
+      current_odometer: 100000,
+      odometer_unit: 'km',
       created_at: '2026-01-01',
       updated_at: '2026-01-01'
     },
@@ -104,7 +105,8 @@ describe('FuelReceiptUploadModal', () => {
       year: '1995',
       vin: 'TEST654321',
       license_plate: 'UNI-002',
-      color: 'Sand Beige',
+      current_odometer: 80000,
+      odometer_unit: 'km',
       created_at: '2026-01-01',
       updated_at: '2026-01-01'
     }
@@ -114,7 +116,6 @@ describe('FuelReceiptUploadModal', () => {
     open: true,
     onOpenChange: vi.fn(),
     vehicles: mockVehicles,
-    userId: 'test-user-id',
     onReceiptProcessed: vi.fn()
   };
 
