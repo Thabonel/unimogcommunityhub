@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Fuel, Plus, AlertCircle, ChevronRight, TrendingUp, Droplet, Receipt, Ban, Edit } from 'lucide-react';
+import { Fuel, Plus, AlertCircle, ChevronRight, TrendingUp, Droplet, Receipt, Ban, Edit, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Card,
@@ -40,6 +40,7 @@ type FuelLogWithEfficiency = FuelLog & {
 interface FuelDashboardCardProps {
   vehicleId?: string;
   onAddFuelLog: () => void;
+  onUploadReceipt: () => void;
   onViewDetails: (id: string) => void;
   onEditFuelLog: (log: FuelLog) => void;
 }
@@ -47,6 +48,7 @@ interface FuelDashboardCardProps {
 const FuelDashboardCard = ({
   vehicleId,
   onAddFuelLog,
+  onUploadReceipt,
   onViewDetails,
   onEditFuelLog
 }: FuelDashboardCardProps) => {
@@ -170,7 +172,7 @@ const FuelDashboardCard = ({
       </p>
       <Button onClick={onAddFuelLog}>
         <Plus className="h-4 w-4 mr-2" />
-        Add Fuel Log
+        Manual Entry
       </Button>
     </div>
   );
@@ -188,10 +190,16 @@ const FuelDashboardCard = ({
               Track your fuel consumption and costs over time
             </CardDescription>
           </div>
-          <Button onClick={onAddFuelLog}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Fuel Log
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={onAddFuelLog} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Manual Entry
+            </Button>
+            <Button onClick={onUploadReceipt}>
+              <Camera className="h-4 w-4 mr-2" />
+              Upload Receipt
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
