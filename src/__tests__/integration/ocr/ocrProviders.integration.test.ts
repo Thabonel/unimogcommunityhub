@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   ClaudeVisionOCR,
-  GoogleVisionOCR,
-  UnstructuredOCR,
-  InvoiceParser
+  GoogleVisionOCR
 } from '../../../../supabase/functions/_shared/ocr-providers';
 
 // Mock environment variables for integration tests
