@@ -28,7 +28,7 @@ interface InvoiceProcessingResponse {
   error?: string;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -91,6 +91,11 @@ serve(async (req) => {
         .eq('id', currentExpenseId)
     }
 
+    // Ensure currentExpenseId is defined at this point
+    if (!currentExpenseId) {
+      throw new Error('Failed to obtain expense ID')
+    }
+
     const { data: queueItem, error: queueError } = await supabase
       .from('ocr_processing_queue')
       .insert({
@@ -126,6 +131,15 @@ serve(async (req) => {
         const ocr = new GoogleVisionOCR(googleApiKey)
         ocrResult = await ocr.processDocument(documentBlob)
         console.log(`[Invoice OCR] Google Vision OCR complete, confidence: ${ocrResult.confidence}%`)
+      } else if (ocrProvider === 'claude_vision') {
+        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
+        if (!anthropicApiKey) {
+          throw new Error('Anthropic API key not configured')
+        }
+
+        const ocr = new ClaudeVisionOCR(anthropicApiKey)
+        ocrResult = await ocr.processDocument(documentBlob)
+        console.log(`[Invoice OCR] Claude Vision OCR complete, confidence: ${ocrResult.confidence}%`)
       } else {
         const unstructuredApiKey = Deno.env.get('UNSTRUCTURED_API_KEY')
         if (!unstructuredApiKey) {
@@ -136,15 +150,6 @@ serve(async (req) => {
         const filename = documentUrl.split('/').pop() || 'document.pdf'
         ocrResult = await ocr.processDocument(documentBlob, filename)
         console.log(`[Invoice OCR] Unstructured OCR complete, confidence: ${ocrResult.confidence}%`)
-      } else if (ocrProvider === 'claude_vision') {
-        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
-        if (!anthropicApiKey) {
-          throw new Error('Anthropic API key not configured')
-        }
-
-        const ocr = new ClaudeVisionOCR(anthropicApiKey)
-        ocrResult = await ocr.processDocument(documentBlob)
-        console.log(`[Invoice OCR] Claude Vision OCR complete, confidence: ${ocrResult.confidence}%`)
       }
     } catch (ocrError: any) {
       console.error('[Invoice OCR] OCR processing failed:', ocrError)
@@ -254,7 +259,7 @@ serve(async (req) => {
     if (invoiceData.lineItems && invoiceData.lineItems.length > 0) {
       console.log(`[Invoice OCR] Inserting ${invoiceData.lineItems.length} line items...`)
 
-      const lineItemsData = invoiceData.lineItems.map((item, index) => ({
+      const lineItemsData = invoiceData.lineItems.map((item: any, index: number) => ({
         expense_id: currentExpenseId,
         item_description: item.description,
         quantity: item.quantity,
