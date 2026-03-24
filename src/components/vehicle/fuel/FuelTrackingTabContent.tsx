@@ -14,7 +14,7 @@ interface FuelTrackingTabContentProps {
   isOffline?: boolean;
 }
 
-type ViewState = 'dashboard' | 'add' | 'edit' | 'details';
+type ViewState = 'dashboard' | 'add' | 'edit' | 'details' | 'upload';
 
 const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentProps) => {
   const { user } = useAuth();
@@ -83,6 +83,10 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
     setViewState('edit');
   }, []);
 
+  const handleUploadReceipt = useCallback(() => {
+    setViewState('upload');
+  }, []);
+
   const getVehicleName = useCallback((id: string) => {
     if (!vehicles || vehicles.length === 0) return 'Loading Vehicle...';
     const vehicle = vehicles.find(v => v.id === id);
@@ -118,6 +122,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
       {viewState === 'dashboard' && (
         <FuelDashboardCard
           onAddFuelLog={() => setViewState('add')}
+          onUploadReceipt={handleUploadReceipt}
           onViewDetails={handleViewDetails}
           onEditFuelLog={handleEditLogFromDashboard}
         />
@@ -139,6 +144,18 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
           isUpdate={true}
           onCancel={() => setViewState('details')}
         />
+      )}
+
+      {viewState === 'upload' && (
+        <div className="bg-muted/30 border border-dashed rounded-lg p-8 text-center">
+          <p className="text-muted-foreground mb-4">Upload Receipt Modal - Coming in Task 5</p>
+          <button
+            onClick={() => setViewState('dashboard')}
+            className="text-primary hover:underline"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
       )}
 
       {viewState === 'details' && (
