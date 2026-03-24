@@ -133,13 +133,13 @@ export class AWSTextractOCR {
     this.region = region;
   }
 
-  async processDocument(imageData: Blob): Promise<OCRResult> {
+  async processDocument(_imageData: Blob): Promise<OCRResult> {
     // Textract requires AWS SDK - placeholder for implementation
     // In production, use AWS SDK or API Gateway
     throw new Error('AWS Textract integration requires AWS SDK setup');
   }
 
-  async analyzeExpense(imageData: Blob): Promise<InvoiceData> {
+  async analyzeExpense(_imageData: Blob): Promise<InvoiceData> {
     // Textract's AnalyzeExpense API specifically for invoices/receipts
     throw new Error('AWS Textract AnalyzeExpense requires AWS SDK setup');
   }
@@ -165,7 +165,7 @@ export class ClaudeVisionOCR {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 2000,
         messages: [
           {
@@ -343,6 +343,28 @@ Important rules:
     return btoa(binary);
   }
 
+  private extractCurrencyFromData(fuelData: any): string | undefined {
+    // Try to detect currency from fuel data
+    if (fuelData.currency) {
+      return fuelData.currency;
+    }
+
+    // Look for currency symbols in station name or other text
+    const textContent = [
+      fuelData.station_name,
+      ...(fuelData.fuel_entries?.map((entry: any) => `${entry.fuel_type} ${entry.price_per_liter} ${entry.total_amount}`) || [])
+    ].join(' ').toLowerCase();
+
+    if (textContent.includes('€') || textContent.includes('eur')) return 'EUR';
+    if (textContent.includes('£') || textContent.includes('gbp')) return 'GBP';
+    if (textContent.includes('$') && (textContent.includes('usd') || textContent.includes('us'))) return 'USD';
+    if (textContent.includes('$') && (textContent.includes('aud') || textContent.includes('au'))) return 'AUD';
+    if (textContent.includes('¥') || textContent.includes('jpy')) return 'JPY';
+
+    // If no specific currency detected, return undefined to use fallback
+    return undefined;
+  }
+
   // Parse fuel receipt data into Invoice format for compatibility
   parseFuelReceipt(ocrResult: OCRResult): InvoiceData {
     const fuelData = ocrResult.metadata?.fuel_data;
@@ -354,7 +376,7 @@ Important rules:
       vendorName: fuelData.station_name || 'Unknown Station',
       invoiceDate: fuelData.date,
       totalAmount: fuelData.combined_totals?.total_amount || 0,
-      currency: 'CAD', // Assume Canadian dollars for Unimog receipts
+      currency: this.extractCurrencyFromData(fuelData) || 'CAD',
       confidence: fuelData.confidence || 85,
       lineItems: []
     };
@@ -381,7 +403,7 @@ export class UnstructuredOCR {
     this.apiKey = apiKey;
   }
 
-  async processDocument(imageData: Blob, filename: string = 'document.pdf'): Promise<OCRResult> {
+  async processDocument(imageData: Blob, filename = 'document.pdf'): Promise<OCRResult> {
     const formData = new FormData();
     formData.append('files', imageData, filename);
     formData.append('strategy', 'ocr_only');
