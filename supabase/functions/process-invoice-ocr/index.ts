@@ -5,6 +5,7 @@ import { getUserIdFromAuth, getClientIP } from '../_shared/security.ts'
 import {
   GoogleVisionOCR,
   UnstructuredOCR,
+  ClaudeVisionOCR,
   InvoiceParser,
   VendorRecognition,
   CategorySuggestion,
@@ -14,7 +15,7 @@ import {
 interface InvoiceProcessingRequest {
   documentUrl: string;
   documentType: 'pdf' | 'image' | 'photo' | 'scan';
-  ocrProvider?: 'google_vision' | 'unstructured';
+  ocrProvider?: 'google_vision' | 'unstructured' | 'claude_vision';
   expenseId?: string;
 }
 
@@ -135,6 +136,15 @@ serve(async (req) => {
         const filename = documentUrl.split('/').pop() || 'document.pdf'
         ocrResult = await ocr.processDocument(documentBlob, filename)
         console.log(`[Invoice OCR] Unstructured OCR complete, confidence: ${ocrResult.confidence}%`)
+      } else if (ocrProvider === 'claude_vision') {
+        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
+        if (!anthropicApiKey) {
+          throw new Error('Anthropic API key not configured')
+        }
+
+        const ocr = new ClaudeVisionOCR(anthropicApiKey)
+        ocrResult = await ocr.processDocument(documentBlob)
+        console.log(`[Invoice OCR] Claude Vision OCR complete, confidence: ${ocrResult.confidence}%`)
       }
     } catch (ocrError: any) {
       console.error('[Invoice OCR] OCR processing failed:', ocrError)
@@ -283,7 +293,8 @@ serve(async (req) => {
         endpoint: 'process-invoice-ocr',
         request_count: 1,
         pages_processed: 1,
-        cost_estimate: ocrProvider === 'google_vision' ? 0.0015 : 0.001,
+        cost_estimate: ocrProvider === 'google_vision' ? 0.0015 :
+                       ocrProvider === 'claude_vision' ? 0.004 : 0.001,
         metadata: { expense_id: currentExpenseId }
       })
 

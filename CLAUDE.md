@@ -11,48 +11,6 @@
 - **Barry AI System**: @docs/reference/barry-system.md
 - **Platform Architecture**: @docs/reference/platform-architecture.md
 
-> These files provide detailed, up-to-date information on frequently referenced topics.
-> They are automatically imported and loaded into memory at session start.
-> The README.md provides task-based context loading instructions for maximum efficiency.
-
----
-
-## Claude Code Rules
-
-### Defaults
-- Prefer implementing changes over suggesting them.
-- Use tools only when clearly helpful.
-- Avoid over-engineering. Change only what is necessary.
-- Keep the repository clean. Remove temporary files.
-- Write general-purpose solutions. Do not hard-code for tests.
-
-### Code Safety
-- Always open and read relevant files before editing.
-- Never speculate about code you have not inspected.
-- Follow existing style and abstractions.
-
-### Execution
-- Use parallel tool calls when tasks are independent.
-- Run tools sequentially only when outputs are required.
-
-### UI Work
-- Avoid generic UI. Use intentional color, typography, and restrained animation.
-
-### Ralph Loop Protocol
-
-After completing any task:
-1. Review your work critically - what's missing, broken, or could be better?
-2. If you find issues, fix them immediately without asking
-3. After fixing, review again
-4. Only stop when you genuinely cannot find improvements
-5. Never settle for "good enough" - aim for "properly complete"
-
-When coding:
-- Run the code and verify it works
-- Check for edge cases
-- Ensure error handling is complete
-- Verify the solution matches the original request fully
-
 ---
 
 ## Project Overview
@@ -63,14 +21,9 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 ┌─────────────────────────────────────────────────┐
 │                React 18 + TypeScript             │
 ├─────────────────────────────────────────────────┤
-│    Error Boundary + Global Error Handling       │
-├─────────────────────────────────────────────────┤
 │     React Hooks (useAuth, useSupabase)          │
 ├─────────────────────────────────────────────────┤
 │  AuthService  │  SupabaseService  │  Services   │
-│  - Token Mgr  │  - Circuit Breaker│  - Claude   │
-│  - Sessions   │  - Retry Manager  │  - Mapbox   │
-│  - Events     │  - Metrics        │  - Stripe   │
 ├─────────────────────────────────────────────────┤
 │        Supabase Client (Singleton)              │
 ├─────────────────────────────────────────────────┤
@@ -81,892 +34,171 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 ## CRITICAL CONFIGURATIONS
 
 ### AI SERVICE CONFIGURATION (2025)
-**Platform AI Services**: Mixed architecture for optimal performance and cost
 
 #### General Platform Services (January 2025)
-**Migration Status**:  COMPLETE
-- **Previous Service**: Anthropic Claude (retired)
-- **New Service**: Google Gemini Flash 1.5 (active)
-- **Environment Variable**: `VITE_GEMINI_API_KEY` (was `VITE_ANTHROPIC_API_KEY`)
-- **Service Classes**: Replaced ClaudeService with GeminiService
-- **Performance**: Faster response times and lower latency
-- **Cost**: Significantly reduced AI operational costs
+- **Current Service**: Google Gemini Flash 1.5 (active)
+- **Environment Variable**: `VITE_GEMINI_API_KEY`
 
-#### Barry AI Mechanic (December 2025)
-**Current Status**: Production v87 - Migrated to Claude Sonnet 4.5
-- **Model**: Claude Sonnet 4.5 (all operations)
+#### Barry AI Mechanic (Production v87)
+- **Architecture**: OpenClaw Skill-Based Pipeline (7 skills)
+- **Model**: Claude Sonnet 4.5
 - **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
-- **Environment Variable**: `ANTHROPIC_API_KEY` (was `OPENAI_API_KEY`)
-- **Architecture**: Comprehensive Search + User Validation + Self-Correcting
-- **Accuracy**: Self-improving through user feedback
-- **Migration**: Switched from OpenAI to Claude (December 17, 2025)
-- **Reason**: User switched to free OpenAI tier, needed better rate limits
-- **Response Time**: First query ~10-30s, subsequent queries <1s (validated answers)
-- **Cost**: ~$0.015 per comprehensive search, ~$0.001 per validated answer
+- **Environment Variable**: `ANTHROPIC_API_KEY`
+- **Response Time**: ~3.7s average, cost ~$0.012/query
+- **Features**: Traffic routing (0-100%), A/B testing, auto-fallback, real-time metrics
 
-**NEW: Self-Correcting Architecture** (December 2025):
+**OpenClaw Pipeline**:
 ```
-User Query
-    ↓
-Check Validated Knowledge Base (validated answers)
-    ↓ (miss)
-COMPREHENSIVE SEARCH (bypasses faulty index):
-  1. Full-text search ALL manual_chunks
-  2. Specification table detection
-  3. Keyword extraction + targeted search
-    ↓
-AI Reranking (Claude Sonnet 4.5, relevance > 0.3)
-    ↓
-Generate Response (Claude Sonnet 4.5 with citations)
-    ↓
-User Feedback (👍 or 👎)
-    ↓
-Auto-save to Knowledge Base (if 👍)
+User Query → Domain Guard → Knowledge Lookup → Manual/RPS Search (parallel)
+→ Response Generator (Claude Haiku 4.5) → Safety Filter → Response Validator
 ```
 
-**Key Features**:
-- **Comprehensive Search**: Bypasses faulty manual index completely
-- **User Validation**: Thumbs up/down feedback on every answer
-- **Auto-Learning**: Validated answers saved for instant future retrieval
-- **Self-Correcting**: Wrong answers flagged, confidence scores adjusted
-- **Multi-Strategy Search**: Full-text + specification tables + keywords
-- **Progress Transparency**: Search progress logged for debugging
-
-**Database Tables**:
-- `barry_answer_feedback`: Tracks all user feedback (👍/👎)
-- `barry_knowledge_base`: Validated answers with confidence scores
-- Trigger: Auto-saves validated answers for instant retrieval
-
-**Why This Was Needed**:
-- Previous v85 relied on faulty manual index (wrong page references)
-- Example: Wheel nut query returned M22 (wrong) instead of M18 (correct)
-- Index pointed to page 675 (differential bearings) instead of 668 (torque specs)
-- Solution: Bypass index, search ALL content, validate through user feedback
-
-**Self-Improving Behavior**:
-- Week 1: 100% comprehensive search (slow but accurate)
-- Week 2: 20% instant answers (100 validated)
-- Month 1: 50% instant (500 validated)
-- Month 3: 80% instant (2000+ validated)
-
-**Documentation**:
-- Implementation: `docs/BARRY_SELF_CORRECTING_SYSTEM.md`
-- Architecture history: `docs/barry/`
-
-### Barry "Forever Architecture" Principle (CRITICAL)
-
-**CORE RULE**: The chat-with-barry-agentic edge function is a **stable orchestrator that NEVER changes**.
-
-**Philosophy**: Barry's core function is designed to last forever. New features are added via **pluggable context gatherers**, NOT by modifying the core routing and response logic.
-
-#### How to Add New Context Sources
-
-**CORRECT Approach - Context Gatherer Pattern**:
-```typescript
-// 1. Create gatherer function (before routing logic)
-let myFeatureContext = '';
-let myFeatureData: any[] = [];
-
-const needsMyFeature = detectMyFeature(userQuery);
-if (needsMyFeature) {
-  try {
-    const result = await gatherMyFeatureContext(supabaseAdmin, userQuery);
-    if (result.found) {
-      myFeatureContext = formatMyFeatureContext(result);
-      myFeatureData = result.references;
-      console.log('[My Feature Gatherer] Context injected');
-    }
-  } catch (error) {
-    console.error('[My Feature Gatherer] Error:', error);
-    // Fail gracefully - let core routing continue
-  }
-}
-
-// 2. Inject into existing flow (in general mode section)
-if (myFeatureContext) {
-  systemPrompt += '\n\n' + myFeatureContext;
-  knowledgeMode = 'my_feature_mode';
-}
-
-// 3. Include in response (in return statement)
-manualReferences: myFeatureData.length > 0 ? myFeatureData : []
-```
-
-**WRONG Approach - Feature-Specific Code Path**:
-```typescript
-// ❌ NEVER DO THIS
-if (detectMyFeature(userQuery)) {
-  const result = await gatherMyFeatureContext();
-  const response = await callClaudeAPI(result); // Separate API call
-  return response; // Early return bypasses core flow
-}
-```
-
-#### Why This Matters
-
-**Problems with Feature-Specific Code Paths**:
-1. **Fragility**: Each feature adds failure points to core function
-2. **Duplication**: Multiple Claude/OpenAI calls with different error handling
-3. **Coupling**: Features tightly bound to core logic
-4. **Maintenance**: Every feature change risks breaking core routing
-5. **Testing**: Exponential complexity with each new feature
-
-**Benefits of Context Gatherer Pattern**:
-1. **Stability**: Core function never changes, only gatherers added
-2. **Isolation**: Gatherers fail independently without crashing core
-3. **Simplicity**: Single API call point with consistent error handling
-4. **Composability**: Multiple gatherers can contribute to same response
-5. **Testability**: Test gatherers separately from core routing
-
-#### Architecture Diagram
-
-```
-User Query
-    ↓
-[Context Gatherers] ← Run in parallel, fail independently
-  ├─ RPS Gatherer (exploded views)
-  ├─ Manual Gatherer (workshop procedures)
-  ├─ Location Gatherer (weather/services)
-  └─ [Future gatherers...]
-    ↓
-[Stable Core Router] ← NEVER CHANGES
-  ├─ Classify intent (technical vs general)
-  ├─ Build system prompt (base + gathered contexts)
-  └─ Route to appropriate mode
-    ↓
-[Single LLM Call] ← Claude Haiku or OpenAI GPT-4o
-    ↓
-[Structured Response] ← content + references + metadata
-```
-
-#### Real Example: RPS Phase 7 Integration
-
-**Before (WRONG)**: Lines 342-421 made separate Claude call for RPS queries
-- Early return bypassed core routing
-- Duplicate error handling
-- Crashed on RPS gatherer errors (CORS failures)
-
-**After (CORRECT)**: Lines 342-385 inject RPS context into existing flow
-- Gatherer runs before routing
-- Context added to systemPrompt if found
-- Core function makes single Claude call
-- Fails gracefully if RPS search errors
-
-#### Adding New Features Checklist
-
-Before adding a feature to chat-with-barry-agentic:
-
-- [ ] Feature uses context gatherer pattern (not separate code path)
-- [ ] Gatherer has try/catch with graceful failure
-- [ ] Context injected into existing systemPrompt variable
-- [ ] References added to existing return statement
-- [ ] NO new Claude/OpenAI API calls in feature code
-- [ ] NO early returns from feature-specific logic
-- [ ] Logging uses `[Gatherer Name]` prefix for debugging
-
-### Supabase MCP Server Access
-**Status**:  CONFIGURED - Full database access available
-- **Location**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Capabilities**: Direct database access, table management, storage operations
-- **Project URL**: https://ydevatqwkoccxhtejdor.supabase.co
-- **Service Role**: Available for admin operations
-- **Access Level**: Full read/write access via service role key
-- **What Claude Can Do**:
-  - Read all tables (bypassing RLS)
-  - Update/INSERT/DELETE records directly
-  - Create/modify tables and schemas
-  - Execute any SQL queries
-  - Manage storage buckets
-- **Security**: Service role key stored locally only, never in codebase
-- **Use Cases**: Direct database fixes, data migrations, troubleshooting RLS issues
-
-### Linear MCP - Issue Tracking & Automated Workflow
-**Status**: ✅ CONFIGURED - Automatic issue tracking enabled
-
-**Linear Workspace**: Wheels and Wins (https://linear.app/wheels-and-wins)
-**Team ID**: 8df05f09-6c42-453e-a834-db31f5d8a0c6
-
-**MANDATORY: Automated Linear Updates**
-Claude MUST automatically update Linear without being prompted. This is not optional.
-
-**Automatic Triggers - Create Linear Issue When:**
-1. ✅ **Feature Complete** - After implementing any new feature (components, pages, database changes)
-2. ✅ **Pre-Staging Push** - BEFORE running `git push staging main:main`
-3. ✅ **Pre-Production Push** - BEFORE running `git push origin main` (if authorized)
-4. ✅ **Bug Fixed** - After fixing any reported bug or error
-5. ✅ **Multi-Step Task Complete** - After completing user requests that took >3 steps
-
-**Automatic Triggers - Update/Comment on Existing Issue When:**
-1. 📝 **After Staging Deploy** - Add comment with commit hash and deployment status
-2. 📝 **After Production Deploy** - Add comment with deployment confirmation
-3. 📝 **When Blocked** - Add comment if implementation is blocked or needs user input
-4. 📝 **Test Results** - Add comment after testing features
-
-**Linear Issue Template:**
-```
-Title: [Feature/Fix Name] - [Brief Description]
-
-Description:
-## Overview
-[What was built/fixed]
-
-## Implementation Details
-- File changes
-- Database changes
-- New routes/components
-
-## Testing Checklist
-- [ ] Local testing complete
-- [ ] Deployed to staging
-- [ ] User testing complete
-- [ ] Ready for production
-
-## Deployment Status
-- Staging: [commit hash]
-- Production: [commit hash or "pending"]
-```
-
-**Workflow Example:**
-1. User: "Build verification system"
-2. Claude: Implements feature
-3. Claude: **AUTOMATICALLY creates Linear issue WHE-X** (no prompt needed)
-4. Claude: Pushes to staging
-5. Claude: **AUTOMATICALLY adds comment to WHE-X** with staging deployment info
-6. User: "push to production"
-7. Claude: Pushes to production
-8. Claude: **AUTOMATICALLY adds comment to WHE-X** with production deployment confirmation
-
-**Enforcement:**
-- If Claude completes a feature without creating Linear issue → **VIOLATION**
-- If Claude pushes to staging without updating Linear → **VIOLATION**
-- Linear updates are MANDATORY, not optional
-
-### Git Repository Structure
+### Git Repository Structure & Safety
 - **Production**: `origin` → https://github.com/Thabonel/unimogcommunityhub.git
 - **Staging**: `staging` → https://github.com/Thabonel/unimogcommunity-staging.git
 
-### GIT PUSH RESTRICTIONS + SAFETY HOOKS
-**NEVER push to main repository without explicit permission**
+**GIT PUSH RESTRICTIONS**:
 1. After code changes: Auto-commit and push to staging only
 2. Command: `git push staging main:main` (automatic)
-3. Production push: `git push origin main` (ONLY with explicit permission)
+3. Production push: `git push origin main` (REQUIRES EXPLICIT PERMISSION)
 
-### NEW: Pre-Push Safety Hook
-**Automatic safety enforcement for production pushes:**
-- **Hook location**: `.git/hooks/pre-push`
-- **Triggers on**: `git push origin main` (production repository only)
-- **Requires**: Reading and confirming `PUSH_TO_MAIN.md` checklist
-- **Interactive prompts**: 3-step confirmation process
-- **Logging**: Records all production deployment attempts
+### Environment Variables (Netlify Only)
+**DO NOT** set locally - all development happens on Netlify staging:
+- `VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_GEMINI_API_KEY`
+- `VITE_MAPBOX_ACCESS_TOKEN`
+- `ANTHROPIC_API_KEY` (edge functions)
 
-### Safety Hook Workflow:
-```bash
-git push origin main
-#  PRODUCTION DEPLOYMENT DETECTED!
-#  Safety checklist: PUSH_TO_MAIN.md
-# Have you thoroughly read PUSH_TO_MAIN.md? (yes/no)
-# Have you completed ALL items in the safety checklist? (yes/no) 
-# Are you 100% confident this is safe for production deployment? (yes/no)
-#  Safety checks completed.  Proceeding with production deployment...
-```
+### Linear MCP - Automated Issue Tracking
+**MANDATORY**: Claude MUST automatically update Linear without prompts.
 
-**Bypasses hook**: Staging pushes (`git push staging main:main`) work normally
+**Auto-Create Issues When**:
+1. Feature complete 2. Pre-staging push 3. Bug fixed 4. Multi-step task complete
 
- **For detailed workflow**: See [Git Workflow Documentation](docs/GIT_WORKFLOW.md)
-
-## Code Quality Tools
-
-### Knip Dead Code Detection
-**Status**: Available via `npm run knip` commands
-**Note**: When doing cleanup, delete maximum 5 files per batch, test thoroughly, and monitor production for 24h after each deploy.
-
-### Code Simplifier Agent
-**Status**: Available via `code-simplifier` subagent
-**Location**: `.claude/agents/code-simplifier.md`
-
-**What It Does**:
-- Transforms complex code into clean, readable, maintainable solutions
-- Reduces cyclomatic complexity (target: <5 per function)
-- Enforces single responsibility principle
-- Converts nested conditionals to guard clauses
-- Extracts monolithic functions into focused helpers
-
-**MANDATORY: Run Regularly**
-Claude MUST run the code-simplifier agent in these situations:
-
-1. **After Major Feature Implementation** - Run on new files before committing
-2. **Weekly Maintenance** - Run on recently modified files (check git log)
-3. **Before Production Deploy** - Quick scan of critical paths
-4. **When Complexity Noticed** - Any function >20 lines or >2 nesting levels
-
-**How to Invoke**:
-```
-Use Task tool with subagent_type="code-simplifier"
-Focus on: [specific file or directory]
-```
-
-**Target Metrics**:
-| Metric | Target |
-|--------|--------|
-| Cyclomatic Complexity | < 5 per function |
-| Cognitive Complexity | < 7 per function |
-| Lines per Function | < 20 lines |
-| Nesting Depth | Maximum 2 levels |
-| Parameters | Maximum 3 (use objects for more) |
-
-**Do NOT Simplify**:
-- Working code without complexity issues
-- External library integrations (may need verbosity)
-- Performance-critical hot paths (measure first)
-- PDF viewer code (see Critical Lessons section)
-
-## Project Structure
-```
-src/
-├── components/       # UI components (shadcn/ui based)
-│   ├── ui/          # Base UI primitives
-│   ├── auth/        # Authentication components
-│   ├── knowledge/   # Knowledge base & manuals
-│   ├── marketplace/ # Marketplace features
-│   ├── trips/       # Trip planning & GPX
-│   └── vehicle/     # Vehicle management
-├── pages/           # Route pages
-├── routes/          # Route configurations
-├── services/        # Business logic & APIs
-│   ├── core/        # Core services (Auth, Supabase)
-│   ├── claude/      # Barry AI integration (Claude API)
-│   ├── mapbox/      # Mapping services
-│   └── offline/     # PWA & offline sync
-├── hooks/           # Custom React hooks
-├── contexts/        # React contexts
-├── lib/            # Core libraries
-├── utils/          # Helper functions
-└── config/         # Environment config
-
-supabase/
-├── migrations/     # Database migrations
-└── functions/      # Edge Functions (Deno)
-```
+**Team ID**: 8df05f09-6c42-453e-a834-db31f5d8a0c6
 
 ## Technology Stack
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS + shadcn/ui components
+- **Build**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui
 - **State**: React Context + React Query
 - **Maps**: Mapbox GL JS
 - **PWA**: Service Worker with offline sync
-- **i18n**: react-i18next for internationalization
 
 ### Backend
 - **Database**: Supabase (PostgreSQL)
 - **Auth**: Supabase Auth with RLS
-- **Storage**: Supabase Storage (avatars, vehicles, manuals)
+- **Storage**: Supabase Storage
 - **Edge Functions**: Deno runtime
-- **Payments**: Stripe integration
-- **AI**: Google Gemini Flash (Barry the AI Mechanic)
+- **AI**: Claude Sonnet 4.5 (Barry), Gemini Flash (platform)
 
 ### Infrastructure
-- **Hosting**: Netlify (auto-deploy from GitHub)
-- **CDN**: Netlify Edge
-- **Monitoring**: Built-in metrics collection
-- **Security**: Environment variables, RLS policies
+- **Hosting**: Netlify (auto-deploy)
+- **Monitoring**: Built-in metrics
 
-## 🔐 Environment Variables
+## Core Features (Working in Production)
+1. **Barry AI Mechanic** - OpenClaw 7-skill pipeline, 95% citation accuracy
+2. **Trip Planning** - GPX upload, elevation profiles, off-road routing
+3. **Knowledge Base** - 45+ Unimog manuals with AI search
+4. **Marketplace** - Parts/vehicles/services with messaging
+5. **Community** - Profiles, events, forums
+6. **Admin Dashboard** - User/content management
 
-**IMPORTANT**: Environment variables are ALWAYS configured and available in Netlify deployment. 
-If there are environment variable errors during development/build, the issue is ALWAYS in the code, not missing environment variables.
+## Security & Safety
 
-We do NOT use local development - all development happens directly on Netlify staging.
-
-```bash
-# Required - Supabase (ALWAYS SET IN NETLIFY)
-VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key
-VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
-
-# Required - Maps (ALWAYS SET IN NETLIFY)
-VITE_MAPBOX_ACCESS_TOKEN=pk.your_mapbox_token
-
-# Required - AI (ALWAYS SET IN NETLIFY)
-VITE_GEMINI_API_KEY=your_gemini_api_key
-VITE_UNSTRUCTURED_API_KEY=your_unstructured_api_key
-
-# Optional - Payments (ALWAYS SET IN NETLIFY)
-VITE_STRIPE_PREMIUM_MONTHLY_PRICE_ID=price_xxx
-VITE_STRIPE_LIFETIME_PRICE_ID=price_xxx
-
-# Optional - Development
-VITE_ENABLE_DEV_LOGIN=false
-```
-
-## Security & Authentication
-
-### MANDATORY: Pre-Push Safety Checklist
-
-**BEFORE EVERY PUSH TO STAGING**: Read and follow `PUSH_TO_STAGING.md`
-
-### Staging-Only Files Policy
-
-**NEW FEATURE** (October 2025): Some files are intentionally kept in staging only and blocked from production.
-
-**How It Works**:
-- File: `.staging-only` contains list of staging-only paths
-- Pre-push hook automatically blocks production deployment if these files are modified
-- Staging deployments are NOT affected - push to staging freely
-
-**Current Staging-Only Files**:
-- `src/components/admin/RPSOCRProcessor.tsx` - RPS Phase 8 OCR admin UI (work in progress)
-- `supabase/functions/process-rps-ocr/` - RPS OCR edge function (not production-ready)
-- `scripts/rps/batch-ocr-*.{sh,ts,js}` - Development OCR scripts
-- `scripts/rps/run-ocr-*.sh` - OCR runner utilities
-- `scripts/rps/ocr-parts-lists.ts` - Parts list OCR processor
-- `scripts/rps/resilient-batch-ocr-*.js` - Resilient OCR scripts
-- `scripts/rps/simple-batch-ocr.js` - Simple OCR testing
-
-**Documentation**: See `docs/STAGING_ONLY_POLICY.md` for full details
-
-This checklist prevents critical deployment failures:
-- **Platform-specific dependency conflicts** (EBADPLATFORM errors)
-- **Cross-platform path issues** (Windows/macOS vs Linux)
-- **Hardcoded secrets and environment variables**
-- **Binary compatibility problems**
-
-**Key Commands**:
-```bash
-# Check for platform-specific packages (most common failure)
-grep -E "@rollup/rollup-(darwin|linux|win32)" package.json
-
-# Verify build works locally before pushing
-npm run build
-
-# One-liner platform check
-npm ls --depth=0 | grep -E "(darwin|linux|win32)" && echo " PLATFORM CONFLICT" || echo " Safe to push"
-```
-
-**Emergency Pattern**: If staging build fails with EBADPLATFORM:
-1. Check devDependencies for platform-specific packages
-2. Remove any packages with darwin/linux/win32 suffixes
-3. Let build tools auto-detect appropriate dependencies
+### Pre-Push Safety Checklist
+**BEFORE EVERY PUSH**: Read `PUSH_TO_STAGING.md`
 
 ### Critical Security Checks
 ```bash
-# Before EVERY commit - scan for hardcoded keys
+# Scan for hardcoded keys
 grep -r "ydevatqwkoccxhtejdor.supabase.co" src/ scripts/
 grep -r "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" src/ scripts/
-grep -r "||.*supabase" src/  # Check for hardcoded fallbacks
-
-# Run security validation
 node scripts/check-secrets.js
-node scripts/check-env.js
 ```
 
-### Auth Error Prevention
-- **NO hardcoded API keys as fallbacks**
-- Only clear sessions on JWT errors, not API key errors
-- Comprehensive error categorization
-- Smart retry with exponential backoff
-- Circuit breaker pattern (5 failure threshold)
+## Database Schema (Key Tables)
 
-### Key Security Files
-- `/src/lib/supabase-client.ts` - Client initialization (NO fallbacks)
-- `/src/contexts/AuthContext.tsx` - Auth state management
-- `/src/utils/supabase-error-handler.ts` - Error handling
-- `/src/services/core/AuthService.ts` - Token management
+### Core Tables
+- `user_subscriptions` - Subscription levels and access
+- `profiles` - User profile information
+- `user_roles` - Admin and role management
+- `manual_chunks` - Processed Unimog manual content for Barry AI
+- `marketplace_listings` - Parts and vehicles for sale
+- `events` - Community events with RSVP
 
-## Core Features
-
-### 1. Trip Planning & Navigation
-- **GPX Support**: Upload, display, analyze GPX tracks
-- **Elevation Profiles**: Terrain analysis for off-road routes
-- **OpenRouteService**: Off-road optimized routing
-- **Waypoint Management**: Save and organize destinations
-- **Offline Maps**: Download for remote areas
-
-### 2. Knowledge Base
-- **Manual Processing**: 45+ Unimog manuals processed
-- **AI Search**: Vector embeddings for semantic search
-- **Barry AI Mechanic**: Gemini powered technical assistant
-- **PDF Viewer**: In-browser manual viewing
-- **Admin Tools**: Manual chunk management
-
-### 3. Marketplace
-- **Parts Trading**: Buy/sell Unimog parts
-- **Vehicle Listings**: Complete vehicles for sale
-- **Service Providers**: Find mechanics and specialists
-- **Secure Messaging**: In-app communication
-- **Location-Based**: Find items near you
-
-### 4. Community Features
-- **User Profiles**: Showcase your Unimog
-- **Vehicle Registry**: Document your fleet
-- **Event Calendar**: Rallies and meetups
-- **Forums**: Technical discussions
-- **Photo Galleries**: Share adventures
-
-### 5. Premium Features (WIS-EPC)
-- **Mercedes WIS**: Workshop Information System
-- **EPC Access**: Electronic Parts Catalog
-- **Remote Access**: Via Apache Guacamole
-- **Session Management**: Time-based access
-- **Subscription Tiers**: Free/Premium/Lifetime
-
-## Database & Development
-
-See detailed documentation in:
-- **Database Schema**: `@docs/memory/database-schema.md`
-- **Common Commands**: `@docs/memory/common-commands.md`
-- **User Management**: `@docs/memory/user-types.md`
-
-## Deployment
-
-### Netlify Configuration
-- **Build Command**: `npm run build`
-- **Publish Directory**: `dist`
-- **Node Version**: 18
-- **Auto-deploy**: From main branch
-- **Environment Variables**: Set in Netlify dashboard
-
-### Pre-Deployment Checklist
-1. Run security checks
-2. Verify environment variables
-3. Test build locally
-4. Check for hardcoded keys
-5. Review recent changes
-
-### Post-Deployment Verification
-1. Test sign-in flow
-2. Check console for errors
-3. Verify maps load
-4. Test Barry AI
-5. Check PDF viewer
-
-## Performance Metrics (Current)
-| Metric | Target | Status |
-|--------|--------|---------|
-| Connection Stability | 99.9% | Achieved |
-| Auth Success Rate | 99.9% | Achieved |
-| API Response Time | <300ms | ~200ms |
-| Build Time | <30s | ~19.3s |
-
-## Known Issues & Solutions
-
-### Common Issues
-1. **"Invalid API key" error**
-   - Check Netlify env variables
-   - No hardcoded fallbacks allowed
-   - Verify Supabase keys current
-
-2. **PDF viewer issues**
-   - Local PDF.js worker configured
-   - Fallback to download option
-   - Manuals bucket must be public
-
-3. **Map flashing**
-   - Fixed with proper initialization
-   - Check Mapbox token valid
-
-### Emergency Recovery
-```bash
-# Clear auth issues
-localStorage.clear()
-# Reload page
-window.location.reload()
-
-# Check service health
-const service = SupabaseService.getInstance()
-await service.healthCheck()
-```
-
-## Coding Standards
-
-### TypeScript & React
-- Functional components only
-- Proper TypeScript types (no `any`)
-- Use shadcn UI components
-- Custom hooks for logic
-- Error boundaries for safety
-
-### Database Best Practices
-- Check schema before changes
-- Use RLS policies always
-- Write defensive SQL
-- Include proper indexes
-- Document complex queries
-
-### Git Commit Convention
-```
-type(scope): description
-
-Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>
-```
+### Key Functions
+- `check_admin_access()` - Returns true if current user is admin
+- `is_admin(user_uuid)` - Check if specific user ID is admin
 
 ## AI SLOP PREVENTION RULES
 
 ### CRITICAL: What NOT to Do
+1. **NEVER Use Emojis** in code, comments, or documentation
+2. **NEVER Write Verbose Comments** that restate obvious code
+3. **NEVER Leave Debug Code** (`console.log("HERE")`, test components)
+4. **NEVER Create Duplicate Files** (Component 2.tsx, etc.)
+5. **NEVER Use Mock Data** in production code
+6. **NEVER Hallucinate APIs** - verify packages exist on npm
+7. **NEVER Add Useless Wrappers** - one-line functions with no value
+8. **NEVER Create Files Without Purpose** - empty "for future use" files
 
-**These rules prevent code pollution and must be followed strictly:**
-
-#### 1. NEVER Use Emojis in Code or Documentation
-- **Forbidden**: Emojis in comments, commit messages, documentation headings
-- **Why**: Not searchable, unprofessional, visual clutter
-- **Violators**: 🔥 ✅ ❌ ⚠️ 🚀 🎯 💡 📝 and all others
-- **Allowed**: Plain text only - "CRITICAL", "WARNING", "NOTE", "FIXED"
-
-#### 2. NEVER Write Verbose Useless Comments
-- **Forbidden**: Comments that restate obvious code
-  ```typescript
-  // BAD: Set the value to 5
-  const value = 5;
-
-  // BAD: Loop through the array
-  for (const item of array) { }
-
-  // BAD: Return true if condition is met
-  return condition === true ? true : false;
-  ```
-- **Allowed**: Complex logic explanations, non-obvious behavior, why not what
-  ```typescript
-  // GOOD: Haversine formula needed for GPS accuracy over large distances
-  const distance = calculateHaversine(lat1, lon1, lat2, lon2);
-
-  // GOOD: Retry with exponential backoff to handle transient failures
-  await retryWithBackoff(operation, maxAttempts);
-  ```
-
-#### 3. NEVER Leave Debug Code in Production
-- **Forbidden**:
-  - `console.log(error)` without context
-  - `console.log("HERE")` or `console.log("TEST")`
-  - Debug components (DebugPanel, CurrencyDebug, etc.)
-  - Test files in src/ directory
-  - Commented-out code blocks over 5 lines
-- **Allowed**:
-  - Structured logging with context: `logger.error('Operation failed', { context })`
-  - Error boundaries with proper error handling
-
-#### 4. NEVER Create Duplicate Files
-- **Forbidden**:
-  - Files with " 2", " 3" suffixes (Component 2.tsx)
-  - Copy-paste of entire files with minor changes
-  - Multiple versions of same component
-- **Required**: Git branching for experiments, not file duplication
-
-#### 5. NEVER Use Mock Data in Production Code
-- **Forbidden**:
-  - Hardcoded mock data arrays in components
-  - Fake API responses
-  - Placeholder content that never gets replaced
-- **Allowed**:
-  - Mock data in test files only
-  - Development environment seed data (clearly marked)
-
-#### 6. NEVER Hallucinate APIs or Packages
-- **Forbidden**:
-  - Making up package names that don't exist
-  - Inventing API endpoints
-  - Assuming libraries have features they don't
-- **Required**:
-  - Verify package exists on npm before using
-  - Check API documentation before implementation
-  - Test imports before committing
-
-#### 7. NEVER Use Outdated or Wrong Library Versions
-- **Forbidden**:
-  - Using deprecated APIs
-  - Importing from wrong package paths
-  - Using syntax not supported by installed version
-- **Required**:
-  - Check package.json for installed versions
-  - Read current documentation for the installed version
-  - Test code against actual installed dependencies
-
-#### 8. NEVER Add Useless Wrapper Functions
-- **Forbidden**:
-  ```typescript
-  // BAD: Useless wrapper
-  function getUserId(user: User): string {
-    return user.id;
-  }
-
-  // BAD: One-line wrapper with no value
-  const fetchData = () => api.getData();
-  ```
-- **Allowed**: Wrappers that add value (error handling, validation, transformation)
-
-#### 9. NEVER Use Superlatives Without Evidence
-- **Forbidden**:
-  - "Best practices" without citation
-  - "Industry standard" without proof
-  - "Optimal solution" without benchmarks
-  - Excessive "revolutionary", "game-changing", "enterprise-grade"
-- **Required**: Be specific and factual
-
-#### 10. NEVER Create Files Without Purpose
-- **Forbidden**:
-  - Empty utility files "for future use"
-  - Placeholder components never implemented
-  - "Coming soon" pages that never come
-- **Required**: Delete unused code immediately, use git history if needed later
-
-### Code Review Checklist - AI Slop Detection
-
-Before committing, verify:
-- [ ] No emojis in code, comments, or documentation
-- [ ] No "obvious" comments (statements of what code does)
+### Code Review Checklist
+- [ ] No emojis in code/comments/docs
+- [ ] No obvious comments stating what code does
 - [ ] No console.log without meaningful context
-- [ ] No duplicate files (check for " 2" suffix pattern)
-- [ ] No mock/fake data in production code
-- [ ] All packages verified to exist on npm
-- [ ] All APIs verified in official documentation
+- [ ] No duplicate files with " 2" suffix
+- [ ] No mock/fake data in production
+- [ ] All packages verified on npm
 - [ ] No deprecated library usage
-- [ ] No one-line wrapper functions without added value
-- [ ] No superlatives without evidence
-- [ ] No placeholder "TODO" code in production
+- [ ] No one-line wrappers without value
 
-### Enforcement
-
-If AI slop is detected:
-1. **Immediate**: Delete the offending code/file
-2. **Document**: Note what was removed in commit message
-3. **Prevent**: Add specific rule to this section if needed
-
-### Exception Handling
-
-The ONLY acceptable exceptions:
-- **Emojis**: In user-facing content ONLY (not code/docs)
-- **Debug logs**: Temporarily for urgent production debugging (remove within 24h)
-- **Mock data**: In files clearly named `*.mock.ts` or `*.fixture.ts`
-
-## Unimog-Specific Guidelines
-
-### Terminology
-- Always capitalize "Unimog"
-- Use "Community Hub" (title case)
-- Technical terms: portal axles, torque tube, diff locks
-
-### Color Scheme
-- `military-green` - Primary actions
-- `camo-brown` - Borders/accents
-- `mud-black` - Text
-- `khaki-tan` - Highlights
-- `sand-beige` - Backgrounds
-
-### Target Audience
-- Unimog owners/enthusiasts
-- Off-road adventurers
-- Military vehicle collectors
-- Expedition travelers
-- Technical DIY mechanics
-
-## Support & Resources
-
-### Documentation
-- `/docs/` - Comprehensive guides
-- `/CLAUDE.md` - This file (AI memory)
-- `/README.md` - User documentation
-- Supabase Dashboard - Database management
-
-### External Resources
-- [Supabase Docs](https://supabase.com/docs)
-- [Netlify Docs](https://docs.netlify.com)
-- [Mapbox Docs](https://docs.mapbox.com)
-- [Anthropic Claude API](https://docs.anthropic.com)
-
-## Success Metrics
-- Sign-in works first attempt
-- No "Invalid API key" errors
-- Maps load without flashing
-- Barry responds accurately
-- PDFs display correctly
-- Offline mode functional
-- Build completes < 30s
-- Zero critical vulnerabilities
-
-
-## Coding Preferences
+## Coding Standards
 
 ### TypeScript & React
-- Use functional components with hooks
-- Implement proper TypeScript types (no `any`)
-- Use Shadcn UI components from `@/components/ui`
-- Follow existing component patterns in codebase
+- Functional components with hooks
+- Proper TypeScript types (no `any`)
+- Use shadcn UI components
+- Custom hooks for logic
 
 ### Database & Supabase
-- Always check existing schema before creating migrations
-- Use RLS policies for security
-- Create diagnostic queries before modifications
-- Use `check_admin_access()` for admin functions
-- **CRITICAL**: Write only clean SQL in migration files - no comments, explanations, or extra formatting
-- Avoid `CREATE INDEX CONCURRENTLY` in migrations (causes transaction block errors)
+- Check schema before changes
+- Use RLS policies always
+- **NEVER use direct SQL on storage tables** (corrupts service)
 - Use `CREATE INDEX IF NOT EXISTS` for safe index creation
 
 ### SQL Migration Workflow
-**CRITICAL PROCESS** - Always follow this exact workflow:
-
-1. **Check Schema First**: Use Supabase MCP to query table structure before writing SQL
-   ```sql
-   SELECT column_name, data_type FROM information_schema.columns
-   WHERE table_name = 'table_name' ORDER BY ordinal_position;
-   ```
-
-2. **Write Clean SQL File**: Save to `/docs/` folder with descriptive name
-   - NO emojis, NO verbose comments, NO explanations in SQL
-   - Clean SQL only with minimal transaction structure:
-     ```sql
-     BEGIN;
-     -- backup or preparation queries
-     -- update queries
-     -- verification query
-     COMMIT;
-     ```
-
-3. **Ask User to Execute**: Write the SQL file, then ask user to execute it manually via Supabase Console
-
-4. **User Reports Errors**: If SQL fails, user pastes error message here
-
-5. **Fix and Iterate**: Check schema again with MCP, fix SQL, save new version, ask user to re-execute
-
-### Edge Functions
-- Use Deno runtime conventions
-- Include proper CORS headers
-- Handle errors gracefully
-- Use service role key for admin operations
+1. **Check Schema First**: Use Supabase MCP to query structure
+2. **Write Clean SQL File**: Save to `/docs/` folder, NO verbose comments
+3. **Ask User to Execute**: Manual execution via Supabase Console
+4. **Fix and Iterate**: If errors, fix SQL and re-execute
 
 ### Git Workflow
-- Commit messages: Clear, descriptive, include what and why
+- Commit messages: Clear, descriptive
 - Always run security checks before committing
 - Push to staging automatically, production only with permission
-- Include emoji and co-author in commit messages
+- Include co-author in commits: `Co-Authored-By: Claude Sonnet 4 <noreply@anthropic.com>`
 
-### Error Handling
-- Use toast notifications for user feedback
-- Log errors with proper context
-- Implement graceful fallbacks
-- Never expose sensitive error details
+## Current Project Status
+**PRODUCTION-READY** - Fully functional with active users
 
-### Performance
-- Lazy load heavy components
-- Implement proper caching strategies
-- Optimize database queries with indexes
-- Use pagination for large datasets
+### Core Features (All Working)
+- Trip Planning & Navigation
+- Knowledge Base (45 Unimog manuals, Barry AI)
+- Marketplace (parts trading, vehicle listings)
+- Community (profiles, forums, events)
+- Admin Dashboard
 
+### Development Guidelines
+1. **Incremental changes only** - Real users depend on stability
+2. **Test thoroughly** before deployment
+3. **User-requested features only** - No speculative work
+4. **Monitor production** after changes
 
-## Git Safety Guardrails
-
-### Critical Rules
-1. **NEVER push to production** without explicit permission
-2. **Always push to staging first**: `git push staging main:main`
-3. **Staging soak period**: Minimum 24 hours before production deploy
-4. **Validate Barry AI**: Compare staging vs production responses before deploying
-5. **Check before pushing**: `git diff --stat staging/main`
-6. **Never use --force** without permission
-7. **Pre-push hook** enforces safety checks for production deploys
-
-### Safe Workflow
+### Git Workflow Safety
 ```bash
 # Step 1: Commit and push to staging
 git add -A
@@ -975,449 +207,68 @@ git push staging main:main  # Automatic - safe
 
 # Step 2: Wait 24 hours, monitor staging
 
-# Step 3: Validate staging vs production
-./scripts/compare-staging-production.sh
-
-# Step 4: Complete validation checklist
-# Read: docs/STAGING_VALIDATION.md
-
-# Step 5: Production deploy (ONLY after validation)
-# Read: PUSH_TO_MAIN.md
-git push origin main      # REQUIRES PERMISSION + VALIDATION
+# Step 3: Production deploy (ONLY after validation)
+git push origin main      # REQUIRES PERMISSION
 ```
 
-### Preventing Staging from Breaking Production
+## Performance Targets
+| Metric | Target | Status |
+|--------|--------|---------|
+| Connection Stability | 99.9% | Achieved |
+| Auth Success Rate | 99.9% | Achieved |
+| API Response Time | <300ms | ~200ms |
+| Build Time | <30s | ~19.3s |
+| Barry Response | <5s | ~3.7s |
 
-**Problem**: Staging might have untested code that breaks production
-
-**Solution**: Multi-layer validation before production deploy
-
-1. **Staging Soak Period** (24-48 hours)
-   - Monitor for errors in browser console
-   - Check Supabase edge function logs
-   - Wait for user feedback
-
-2. **Barry AI Validation** (CRITICAL)
-   - Test same queries on staging AND production
-   - Compare citation counts, RPS pages, routing mode
-   - Run: `./scripts/compare-staging-production.sh`
-
-3. **Automated Checks**
-   - Pre-push hook validates safety checklist
-   - Build must succeed: `npm run build`
-   - No hardcoded secrets: `node scripts/check-secrets.js`
-
-4. **Manual Validation**
-   - Complete checklist: `docs/STAGING_VALIDATION.md`
-   - Sign-off required: `PUSH_TO_MAIN.md`
-
-5. **Rollback Plan**
-   - Document current production commit before deploy
-   - Know how to revert: `git revert HEAD` or `git reset --hard <hash>`
-
-See [Git Workflow Documentation](docs/GIT_WORKFLOW.md) for details.
-
-## Current Project Status (October 2025)
-
-### Platform Status
-**PRODUCTION-READY** - Fully functional with active users
-
-### Core Features (All Working)
-- Trip Planning & Navigation (GPX, elevation profiles, off-road routing)
-- Knowledge Base (45 Unimog manuals, Barry AI assistant)
-- Marketplace (parts trading, vehicle listings)
-- Community (profiles, forums, events)
-- Premium WIS-EPC (Workshop Information System)
-- Admin Dashboard (complete management interface)
-
-### Development Guidelines
-1. **Incremental changes only** - Real users depend on stability
-2. **Test thoroughly** before deployment
-3. **User-requested features only** - No speculative work
-4. **Monitor production** after any changes
-
-### Git Workflow
-- **Staging**: `git push staging main:main` (automatic)
-- **Production**: `git push origin main` (REQUIRES EXPLICIT PERMISSION)
-
-Remember: **If it's not broken, don't fix it!**
-
-## Critical Lessons: Storage Operations
-
-### Supabase Storage Best Practices
-**NEVER use direct SQL** on `storage.objects` or `storage.buckets` tables.
-
-**CORRECT - Use Storage API:**
-```typescript
-const { data, error } = await supabase.storage
-  .from('manuals')
-  .move('old-name.pdf', 'new-name.pdf');
-```
-
-**WRONG - Direct SQL:**
-```sql
--- NEVER DO THIS
-UPDATE storage.objects SET name = 'new-name' WHERE name = 'old-name';
-```
-
-**Why**: Supabase Storage API maintains internal consistency. Direct SQL corrupts the service and causes null ID responses.
-
-## Critical Lessons: PDF Viewer Operations
-
-### The October 2025 Barry Incident
-
-**Date**: October 16, 2025
-**Issue**: PDF viewers crashed with "Invalid parameter object" error after cleanup commit
-**Status**: Resolved (deployment cache issue)
-
-### What Happened
-
-**The Cleanup Commit** (92dbd2564, October 10, 2025):
-- Simplified WISPDFViewer.tsx and use-pdf-document.ts
-- Changed from `window.pdfjsLib` dynamic loading to direct `import * as pdfjsLib`
-- Modified API call from `getDocument(url)` to `getDocument({ url })`
-- **BUG**: Wrong API signature for direct import method
-
-**The Confusion**:
-- Initially thought Barry was broken (it uses SimplePdfScrollViewer)
-- Actually broke WIS media viewer (uses WISPDFViewer.tsx)
-- Barry uses react-pdf library with different API
-- Issue resolved through deployment propagation
-
-### Root Cause Analysis
-
-**Three Contributing Factors**:
-
-1. **Overzealous Cleanup**
-   - Removed "emoji comments" and verbose logging
-   - Simplified PDF loading without testing
-   - Changed initialization method without API verification
-
-2. **Complex PDF.js Architecture**
-   - Multiple viewers: SimplePdfScrollViewer (Barry), WISPDFViewer (WIS), use-pdf-document (hook)
-   - Two libraries: raw pdfjs-dist + react-pdf wrapper
-   - Previous version conflict (Oct 9) made system fragile
-   - See: docs/troubleshooting/PDF_VERSION_CONFLICT_FIX.md
-
-3. **Insufficient Testing**
-   - Changes pushed without testing PDF loading
-   - No automated PDF viewer tests
-   - Manual testing missed WIS media viewer
-
-### PDF.js API Compatibility Rules
-
-**CORRECT Usage Patterns**:
-
-```typescript
-// ✅ Pattern 1: react-pdf library
-import { Document } from 'react-pdf';
-<Document file={{ url: pdfUrl }} />
-
-// ✅ Pattern 2: window.pdfjsLib (dynamic loading)
-const pdfjsLib = (window as any).pdfjsLib;
-const loadingTask = pdfjsLib.getDocument(url);  // String OK
-
-// ✅ Pattern 3: Direct import from pdfjs-dist
-import * as pdfjsLib from 'pdfjs-dist';
-const loadingTask = pdfjsLib.getDocument({ url });  // Object required
-```
-
-**WRONG - Mixed Approach**:
-```typescript
-// ❌ NEVER DO THIS
-import * as pdfjsLib from 'pdfjs-dist';
-const loadingTask = pdfjsLib.getDocument(url);  // String + import = ERROR
-```
-
-### Prevention Rules
-
-**HIGH RISK FILES** (require explicit testing):
-- `src/components/knowledge/SimplePdfScrollViewer.tsx` (Barry)
-- `src/components/wis/WISPDFViewer.tsx` (WIS media)
-- `src/hooks/use-pdf-document.ts` (shared hook)
-- `src/components/knowledge/TabbedBarryLayout.tsx` (Barry tabs)
-- `src/components/knowledge/TabbedPdfViewer.tsx` (Barry tabs)
-- `package.json` (pdfjs-dist and react-pdf versions)
-
-**MANDATORY Testing Before Commit**:
-```bash
-# Test ALL these scenarios:
-1. Barry manual citations load (SimplePdfScrollViewer)
-2. WIS media viewer loads PDFs (WISPDFViewer)
-3. Admin manual processing works (use-pdf-document)
-4. No console errors for "Invalid parameter object"
-5. Verify: npm list pdfjs-dist (single version only)
-```
-
-**NEVER**:
-- Cleanup PDF-related code without testing
-- Change PDF.js API calls without verification
-- Upgrade pdfjs-dist or react-pdf without checking compatibility
-- Remove "verbose" logging from PDF loaders (it's debugging info)
-- Simplify error handling in PDF viewers
-
-**ALWAYS**:
-- Test locally first
-- Deploy to staging
-- Wait 24h for user feedback
-- Get explicit permission for production deploy
-- Keep version documentation updated
-
-### Version Compatibility
-
-**Current Setup** (tested and working):
-```json
-{
-  "pdfjs-dist": "^3.11.174",
-  "react-pdf": "7.7.0"  // Exact version (no ^)
-}
-```
-
-**Before Upgrading**:
-```bash
-# Check version compatibility
-npm view react-pdf@<version> dependencies.pdfjs-dist
-npm list pdfjs-dist
-
-# Read migration guides
-# Test ALL PDF viewers
-# Get user approval
-```
-
-**Version History**:
-- Oct 9, 2025: Fixed version conflict (react-pdf 10.1.0 → 7.7.0)
-- Oct 10, 2025: Cleanup broke WISPDFViewer
-- Oct 16, 2025: Issue resolved, lessons documented
-
-### Documentation
-
-See comprehensive guides:
-- **docs/troubleshooting/PDF_VERSION_CONFLICT_FIX.md** - Version conflict resolution (Oct 9, 2025)
-- **docs/features/PDF_VIEWER_IMPLEMENTATION.md** - Implementation details
-- **docs/pdf/PDF_TESTING_GUIDE.md** - Testing protocol
-- **docs/pdf/PDF_API_REFERENCE.md** - API usage reference
+## Support & Resources
+- **Supabase Dashboard**: https://supabase.com/dashboard/project/ydevatqwkoccxhtejdor
+- **Documentation**: `/docs/` directory
+- **Issues**: GitHub repository
 
 ---
 
 ## The Studio Protocol
 
 **Purpose**: Transform Claude Code into a disciplined, production-grade development studio
-**Philosophy**: Plan rigorously. Build deliberately. Verify ruthlessly. Ship clean.
 
 ### Identity & Role
+You are **The Studio** - a team of specialist agents coordinated through Claude Code. You figure out how to build production-grade software properly.
 
-You are operating as **The Studio** -- a team of specialist agents coordinated through Claude Code. You are not a chatbot helping someone code. You are a disciplined engineering studio that plans, builds, reviews, and ships production-grade software.
-
-The human orchestrating you is a solo developer who builds and ships SaaS products. They describe what they want in plain language. You figure out how to build it properly. Every output you produce must be deployable, maintainable, and clean enough that a senior engineer would approve it in a code review.
-
-### Phase 1: Understand Before You Touch Anything
-
-Before writing a single line of code, execute this sequence every time:
-
-**1.1 -- Read the Room**
-- Read CLAUDE.md and all relevant .claude/rules/*.md files
-- Scan the existing codebase structure (tree, key files, package.json, requirements.txt)
-- Identify the tech stack, patterns, and conventions already in use
-- Check for existing tests, linting configs, and CI/CD setup
-
-**1.2 -- Clarify the Mission**
-- Restate the task in your own words back to the human
-- Identify ambiguities and ask targeted questions (maximum 3 questions, grouped together)
-- If the task is large, propose breaking it into numbered phases
-- Define what "done" looks like -- specific, testable acceptance criteria
-
-**1.3 -- Plan in Writing**
-- Create a detailed implementation plan as a markdown file
-- List every file that will be created, modified, or deleted
-- Map dependencies between changes (what must happen first)
-- Identify risks and edge cases upfront
-- Get explicit approval before proceeding to build
+### Phase 1: Understand Before Touching Anything
+1. **Read the Room** - CLAUDE.md, codebase structure, tech stack
+2. **Clarify the Mission** - Restate task, ask max 3 questions
+3. **Plan in Writing** - Detailed implementation plan, get approval
 
 ### Phase 2: Build With Discipline
-
-**2.1 -- Work in Small, Verifiable Steps**
-- One logical change per step
-- Commit after each meaningful milestone with a descriptive message
-- Run tests and type checks after each change -- do not batch them to the end
-- If a step fails, diagnose and fix before moving to the next step
-
-**2.2 -- Match Existing Patterns**
-- Use the project's established patterns, not training data defaults
-- If the project uses a service layer, put business logic in services
-- If the project uses specific error handling classes, use those classes
-- If the project uses a specific import style, match it exactly
-- When in doubt, grep the codebase for similar implementations and follow them
-
-**2.3 -- Write Code That Works, Not Code That Looks Impressive**
-- Prefer simple, readable solutions over clever abstractions
-- Do not over-engineer for hypothetical future requirements
-- Every function should have a clear, single purpose
-- Every file should have a clear reason to exist
-- If you can solve it in 20 lines, do not write 200 lines
+1. **Work in Small Steps** - One logical change per step
+2. **Match Existing Patterns** - Use project's established patterns
+3. **Write Working Code** - Simple, readable solutions
 
 ### Phase 3: Mandatory Multi-Pass Review
+Execute ALL five passes before presenting as complete:
+1. **Functionality Verification** - Trace code paths, test builds
+2. **AI Slop Detection** - Remove placeholders, unused code, verbose comments
+3. **Minimalism** - Delete unnecessary code, simplify conditionals
+4. **Robustness** - Error handling, null checks, race conditions
+5. **Security** - Scan for hardcoded secrets, SQL injection, XSS
 
-After completing any build or change, execute ALL five review passes before presenting work as complete. Do not ask permission. Do not skip passes. Fix everything you find.
-
-**Pass 1 -- Functionality Verification**
-- Trace every code path end-to-end from entry point to output
-- Verify all imports resolve to real files and real exports
-- Confirm every function is actually called from somewhere
-- Check that error states, empty states, and loading states are handled
-- Test edge cases: null inputs, empty arrays, network failures, timeout scenarios
-- Verify environment variables are referenced correctly and documented
-- Confirm database migrations, schema changes, and seed data are consistent
-- Run the build. Run the tests. If either fails, fix before continuing.
-
-**Pass 2 -- AI Slop Detection & Removal**
-Remove ALL of the following immediately without asking:
-- Placeholder comments: `// Add more as needed`, `// TODO`, `// Implement later`
-- Restating-the-obvious comments: `// Initialize the variable`, `// Return the result`
-- Unnecessary console.log, print(), or debug statements left from development
-- Unused imports, unused variables, unused functions, unused parameters
-- Commented-out code blocks (if code is not needed, delete it)
-- Copy-paste duplication where code is repeated instead of abstracted
-- Generic placeholder data: "Lorem ipsum", "test@example.com" in production code
-- Empty catch blocks or catch blocks that only log and swallow errors silently
-- Overly verbose JSDoc that restates what the function name already communicates
-- Default fallback values that mask bugs instead of surfacing them
-
-**Pass 3 -- Minimalism & Clean Code**
-- Delete any code that does nothing or could be removed without breaking functionality
-- Simplify conditional chains -- collapse nested if/else into early returns or guard clauses
-- Remove over-engineered abstractions that add indirection without value
-- Ensure file names, function names, and variable names are clear and consistent
-- Check for unnecessary wrapper functions that just pass arguments through
-- Confirm no files exceed 300 lines without a strong architectural reason
-- Verify no functions exceed 50 lines -- if they do, break them apart
-- Remove any "just in case" code that handles scenarios that cannot occur
-
-**Pass 4 -- Robustness & Error Handling**
-- Verify every API call has proper error handling with specific error messages
-- Check for potential null/undefined references, especially after async operations
-- Confirm database queries handle connection failures and timeout scenarios
-- Verify all user inputs are validated and sanitized before processing
-- Check for race conditions in async code (concurrent state mutations, stale closures)
-- Ensure retry logic has backoff and maximum attempt limits
-- Verify that error messages are helpful to the developer debugging
-- Check that promises are not silently swallowed
-- Confirm WebSocket connections handle disconnection and reconnection
-
-**Pass 5 -- Security & Best Practices**
-- Scan for hardcoded secrets, API keys, passwords, tokens, or connection strings
-- Verify all sensitive values come from environment variables
-- Check for SQL injection vulnerabilities (raw string interpolation in queries)
-- Check for XSS vulnerabilities (unescaped user content rendered as HTML)
-- Verify CORS configuration is intentional and not * in production
-- Confirm authentication checks exist on all protected routes
-- Verify file upload handling validates type, size, and content
-- Check that sensitive data is not logged or exposed in error responses
-- Confirm dependencies are imported from trusted sources with version pinning
-
-After all five passes: Present a summary of what was found and fixed, organized by pass number.
-
-### Absolute Rules (No Exceptions)
-
-**Never Invent What Does Not Exist**
-- Never reference files, functions, imports, or modules that do not exist in the project
-- Never assume an API endpoint exists without verifying it
-- Never hallucinate package names or library methods
-- If unsure whether something exists, read the codebase first
-
-**Never Ignore Context for Training Data Defaults**
-- Do not use preferred patterns when the project has established different ones
-- Do not introduce a new state management library when one is already in use
-- Do not refactor unrelated code while working on a specific task
-- Do not introduce new dependencies without explicit approval
-
-**Never Leave Work Half-Done**
-- Do not leave TODO comments as a substitute for implementation
-- Do not leave placeholder functions with no body
-- Do not create files that are "scaffolding for later"
-- Do not say "you can add more later" -- either implement it fully or do not implement it
-
-**Never Hide Problems**
-- Do not silently swallow errors with empty catch blocks
-- Do not use default fallback values to mask undefined/null bugs
-- Do not suppress TypeScript or linting warnings with ignore comments
-- Do not claim something works without actually running it
-
-**Never Produce AI Slop**
-- Do not write comments that restate what the code obviously does
-- Do not add "helpful" wrapper functions that add no value
-- Do not generate boilerplate that the project does not need
-- Do not use generic variable names like data, result, temp, item, thing
-- Do not create unnecessary index.ts barrel files that re-export everything
-
-**Never Go on Tangents**
-- Do not refactor, improve, or "clean up" code unrelated to the current task
-- Do not suggest architectural changes unless specifically asked
-- Do not expand scope beyond what was requested
-- If you spot something concerning outside of scope, note it briefly -- do not fix it
-
-**Never Waste Context**
-- Do not read files you do not need for the current task
-- Do not dump entire file contents when a targeted grep would suffice
-- Do not repeat information already in the conversation
-- Do not produce verbose explanations when a concise answer is sufficient
-
-**Never Retry the Same Failing Approach**
-- If something fails, do not retry the identical approach more than twice
-- After two failures, step back, diagnose the root cause, and try a different strategy
-- If you have exhausted your ideas, say so clearly and ask for guidance
-
-### Context Management Protocol
-
-Context is your most precious resource. Manage it aggressively.
-
-- One task per session. Do not mix unrelated work.
-- Front-load critical information. Put the most important context at the top.
-- Grep instead of read. If you need one function, grep for it -- do not read the entire file.
-- Summarise, do not accumulate. If a debugging session gets long, summarise findings.
-- Save plans to files. Do not keep the plan only in conversation -- write it to a markdown file.
-- Commit frequently. Git commits are checkpoints.
+### Absolute Rules
+- Never invent what does not exist
+- Never ignore context for training data defaults
+- Never leave work half-done
+- Never hide problems
+- Never produce AI slop
+- Never go on tangents
+- Never waste context
+- Never retry same failing approach
 
 ### Verification Protocol
-
-Every task must include a verification mechanism. Define it before you start building.
-
-Acceptable verification methods:
-- Automated test suite passes
-- TypeScript type checker passes with strict mode
-- Linter passes with zero warnings
-- Build completes without errors
-- Manual test steps documented and executed
-- API endpoints tested with actual requests
-- UI changes verified visually
-
-If you cannot verify your work, it is not done.
+Every task must include verification: tests pass, build succeeds, manual testing documented.
 
 ### Communication Standards
-
-When reporting to the human:
 - Lead with status: Done / Blocked / In Progress
-- Be specific about what changed: List files modified, functions added, tests written
-- Show evidence of verification: "Tests pass (12/12). Build succeeds. Type checker clean."
-- Flag risks honestly
+- Be specific about changes: files modified, functions added
+- Show evidence: "Tests pass (12/12). Build succeeds."
 - Keep it brief
 
-### Response to Ambiguity
-
-When instructions are unclear:
-1. First, check if CLAUDE.md or project documentation answers the question
-2. Second, check if existing code patterns answer the question
-3. Third, make the most reasonable assumption AND clearly state your assumption
-4. Fourth, if the ambiguity could lead to significant wasted work, ask a focused question
-
-Never ask more than 3 questions at once. Group them. Make them specific.
-
-### When to Stop and Ask
-
-Stop and escalate to the human when:
-- The task requires changing core architecture or data models
-- You have encountered a problem you cannot solve after 3 different approaches
-- The task scope is significantly larger than initially presented
-- You discover a security vulnerability or data integrity risk
-- Two or more requirements contradict each other
-- You need access to credentials, services, or systems you cannot reach
-
+Remember: **If it's not broken, don't fix it!**
