@@ -442,29 +442,33 @@ const FullVehicleDashboard = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Efficiency Metrics</CardTitle>
-                  <CardDescription>Key performance indicators</CardDescription>
+                  <CardDescription>Based on your fuel log data</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span>Average L/100km</span>
-                      <span className="font-medium">8.2</span>
+                      <span className="font-medium">{vehicleStats?.avgFuelEfficiency?.toFixed(1) || 'N/A'}</span>
                     </div>
-                    <Progress value={82} className="h-2" />
+                    <Progress value={Math.min((vehicleStats?.avgFuelEfficiency || 0) * 2, 100)} className="h-2" />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Idle Time Ratio</span>
-                      <span className="font-medium">12%</span>
+                      <span>Total Fuel</span>
+                      <span className="font-medium">
+                        {realFuelData.length > 0
+                          ? `${realFuelData.reduce((sum, d) => sum + (d.consumption || 0), 0).toFixed(0)} L`
+                          : 'N/A'}
+                      </span>
                     </div>
-                    <Progress value={12} className="h-2" />
+                    <Progress value={Math.min(realFuelData.length * 10, 100)} className="h-2" />
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span>Load Efficiency</span>
-                      <span className="font-medium">73%</span>
+                      <span>Fill-ups Logged</span>
+                      <span className="font-medium">{realFuelData.length}</span>
                     </div>
-                    <Progress value={73} className="h-2" />
+                    <Progress value={Math.min(realFuelData.length * 10, 100)} className="h-2" />
                   </div>
                 </CardContent>
               </Card>
