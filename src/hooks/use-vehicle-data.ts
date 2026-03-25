@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { VehicleService } from '@/services/vehicleService';
 import { supabase } from '@/lib/supabase-client';
+import { calculateFuelEfficiency } from '@/hooks/vehicle-maintenance/use-fuel-logs';
 
 interface FuelDataPoint {
   month: string;
@@ -192,32 +193,11 @@ function categorizeMaintenance(serviceType: string): string {
 }
 
 function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: any[]): VehicleStats {
-  const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.total_cost || '0'), 0);
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
-  // Calculate L/100km using only consecutive full-tank fill-ups
-  // Partial fills make efficiency unknowable for that segment
-  const sortedLogs = [...fuelLogs].sort((a, b) => a.odometer - b.odometer);
-  let totalDistance = 0;
-  let fuelForDistance = 0;
-
-  for (let i = 1; i < sortedLogs.length; i++) {
-    const prev = sortedLogs[i - 1];
-    const curr = sortedLogs[i];
-
-    // Only count this segment if BOTH fills were full tanks
-    if (prev.full_tank && curr.full_tank) {
-      const segmentDistance = curr.odometer - prev.odometer;
-      if (segmentDistance > 0) {
-        totalDistance += segmentDistance;
-        fuelForDistance += parseFloat(curr.fuel_amount || '0');
-      }
-    }
-  }
-
-  const avgFuelEfficiency = totalDistance > 0 && fuelForDistance > 0
-    ? (fuelForDistance / totalDistance) * 100  // L/100km
-    : 0;
+  // Use the single source of truth for fuel efficiency
+  const fuelStats = calculateFuelEfficiency(fuelLogs);
+  const avgFuelEfficiency = fuelStats.avgLper100km;
 
   const lastMaintenance = maintenanceLogs.length > 0
     ? maintenanceLogs.sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime())[0]
@@ -236,7 +216,7 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
   return {
     totalDistance: vehicle.current_odometer || 0,
     avgFuelEfficiency: Math.round(avgFuelEfficiency * 10) / 10,
-    totalFuelCost: Math.round(totalFuelCost),
+    totalFuelCost: Math.round(fuelStats.totalCost),
     totalMaintenanceCost: Math.round(totalMaintenanceCost),
     lastServiceDate,
     nextServiceDue

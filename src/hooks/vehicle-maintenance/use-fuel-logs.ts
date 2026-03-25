@@ -135,67 +135,7 @@ export const useFuelLogs = (vehicleId?: string) => {
     }
   }, []);
 
-  // Calculate fuel efficiency statistics
-  const calculateFuelStats = useCallback((logs: FuelLog[]) => {
-    if (!logs || logs.length === 0) {
-      return {
-        totalCost: 0,
-        totalFuel: 0,
-        avgEfficiency: 0,
-        avgCostPerUnit: 0,
-        avgCostPerDistance: 0,
-        fuelLogs: []
-      };
-    }
-
-    // Sort logs by odometer reading (ascending)
-    const sortedLogs = [...logs].sort((a, b) => a.odometer - b.odometer);
-    
-    let totalCost = 0;
-    let totalFuel = 0;
-    let prevOdometer: number | null = null;
-    const logsWithEfficiency = sortedLogs.map((log, index) => {
-      // Calculate distance since last fill-up
-      const distance = prevOdometer !== null ? log.odometer - prevOdometer : 0;
-      
-      // Calculate efficiency if not the first log
-      const efficiency = index > 0 && log.full_tank ? distance / log.fuel_amount : null;
-      
-      // Update for next iteration
-      prevOdometer = log.odometer;
-      
-      // Update totals
-      totalCost += log.total_cost;
-      totalFuel += log.fuel_amount;
-      
-      return {
-        ...log,
-        distance,
-        efficiency
-      };
-    });
-
-    // Calculate averages across all logs
-    const validEfficiencyLogs = logsWithEfficiency.filter(log => log.efficiency !== null);
-    const avgEfficiency = validEfficiencyLogs.length > 0 
-      ? validEfficiencyLogs.reduce((sum, log) => sum + (log.efficiency || 0), 0) / validEfficiencyLogs.length
-      : 0;
-    
-    const avgCostPerUnit = totalFuel > 0 ? totalCost / totalFuel : 0;
-    
-    // Calculate total distance
-    const totalDistance = logsWithEfficiency.reduce((sum, log) => sum + (log.distance || 0), 0);
-    const avgCostPerDistance = totalDistance > 0 ? totalCost / totalDistance : 0;
-    
-    return {
-      totalCost,
-      totalFuel,
-      avgEfficiency,
-      avgCostPerUnit,
-      avgCostPerDistance,
-      fuelLogs: logsWithEfficiency
-    };
-  }, []);
+  const calculateFuelStats = useCallback((logs: FuelLog[]) => calculateFuelEfficiency(logs), []);
 
   return {
     fuelLogs,
@@ -208,3 +148,65 @@ export const useFuelLogs = (vehicleId?: string) => {
     calculateFuelStats,
   };
 };
+
+/**
+ * Single source of truth for fuel efficiency calculation.
+ * Skips partial fills - only consecutive full-tank fill-ups give valid efficiency.
+ * Returns avgEfficiency in km/L. Convert to L/100km with: 100 / avgEfficiency
+ */
+export function calculateFuelEfficiency(logs: FuelLog[]) {
+  if (!logs || logs.length === 0) {
+    return {
+      totalCost: 0,
+      totalFuel: 0,
+      avgEfficiency: 0,
+      avgLper100km: 0,
+      avgCostPerUnit: 0,
+      avgCostPerDistance: 0,
+      fuelLogs: [] as (FuelLog & { distance: number; efficiency: number | null })[]
+    };
+  }
+
+  const sortedLogs = [...logs].sort((a, b) => a.odometer - b.odometer);
+
+  let totalCost = 0;
+  let totalFuel = 0;
+  let prevOdometer: number | null = null;
+  let prevWasFullTank = false;
+
+  const logsWithEfficiency = sortedLogs.map((log, index) => {
+    const distance = prevOdometer !== null ? log.odometer - prevOdometer : 0;
+
+    // Only valid if both current AND previous fill were full tanks
+    const efficiency = index > 0 && log.full_tank && prevWasFullTank && distance > 0
+      ? distance / log.fuel_amount
+      : null;
+
+    prevOdometer = log.odometer;
+    prevWasFullTank = log.full_tank;
+
+    totalCost += log.total_cost;
+    totalFuel += log.fuel_amount;
+
+    return { ...log, distance, efficiency };
+  });
+
+  const validLogs = logsWithEfficiency.filter(log => log.efficiency !== null);
+  const avgEfficiency = validLogs.length > 0
+    ? validLogs.reduce((sum, log) => sum + (log.efficiency || 0), 0) / validLogs.length
+    : 0;
+
+  const avgCostPerUnit = totalFuel > 0 ? totalCost / totalFuel : 0;
+  const totalDistance = logsWithEfficiency.reduce((sum, log) => sum + (log.distance || 0), 0);
+  const avgCostPerDistance = totalDistance > 0 ? totalCost / totalDistance : 0;
+
+  return {
+    totalCost,
+    totalFuel,
+    avgEfficiency,
+    avgLper100km: avgEfficiency > 0 ? 100 / avgEfficiency : 0,
+    avgCostPerUnit,
+    avgCostPerDistance,
+    fuelLogs: logsWithEfficiency
+  };
+}
