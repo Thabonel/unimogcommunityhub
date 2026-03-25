@@ -195,17 +195,26 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
   const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.total_cost || '0'), 0);
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
-  // Calculate L/100km properly:
-  // Distance = last odometer - first odometer
-  // Fuel = all fill-ups EXCEPT the first (first fill's fuel was used before tracking)
+  // Calculate L/100km using only consecutive full-tank fill-ups
+  // Partial fills make efficiency unknowable for that segment
   const sortedLogs = [...fuelLogs].sort((a, b) => a.odometer - b.odometer);
   let totalDistance = 0;
   let fuelForDistance = 0;
-  if (sortedLogs.length >= 2) {
-    totalDistance = sortedLogs[sortedLogs.length - 1].odometer - sortedLogs[0].odometer;
-    // Exclude first fill-up's fuel - it was consumed before our first odometer reading
-    fuelForDistance = sortedLogs.slice(1).reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
+
+  for (let i = 1; i < sortedLogs.length; i++) {
+    const prev = sortedLogs[i - 1];
+    const curr = sortedLogs[i];
+
+    // Only count this segment if BOTH fills were full tanks
+    if (prev.full_tank && curr.full_tank) {
+      const segmentDistance = curr.odometer - prev.odometer;
+      if (segmentDistance > 0) {
+        totalDistance += segmentDistance;
+        fuelForDistance += parseFloat(curr.fuel_amount || '0');
+      }
+    }
   }
+
   const avgFuelEfficiency = totalDistance > 0 && fuelForDistance > 0
     ? (fuelForDistance / totalDistance) * 100  // L/100km
     : 0;
