@@ -204,7 +204,7 @@ export function calculateFuelEfficiency(logs: FuelLog[]) {
     totalCost,
     totalFuel,
     avgEfficiency,
-    avgLper100km: avgEfficiency > 0 ? 100 / avgEfficiency : 0,
+    avgLper100km: avgEfficiency > 0 ? Math.round((100 / avgEfficiency) * 10) / 10 : 0,
     avgCostPerUnit,
     avgCostPerDistance,
     fuelLogs: logsWithEfficiency
