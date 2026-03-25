@@ -79,9 +79,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
   onReceiptProcessed
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>('capture');
-  const [selectedVehicle, setSelectedVehicle] = useState<string>(
-    vehicles.length === 1 ? vehicles[0].id : ''
-  );
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
@@ -99,7 +97,6 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
     if (!open) {
       // Reset all state when modal closes
       setCurrentStep('capture');
-      setSelectedVehicle('');
       setUploadedFiles([]);
       setIsProcessing(false);
       setProcessingStatus({ step: '', progress: 0, message: '' });
@@ -107,8 +104,15 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       setEditedFuelData(null);
       setError(null);
       setCameraOpen(false);
+    } else {
+      // When modal opens, auto-select vehicle if only one exists
+      if (vehicles.length === 1) {
+        setSelectedVehicle(vehicles[0].id);
+      } else {
+        setSelectedVehicle('');
+      }
     }
-  }, [open]);
+  }, [open, vehicles]);
 
   // Handle file uploads from camera or file picker
   const handleFilesChange = useCallback((files: File[]) => {
