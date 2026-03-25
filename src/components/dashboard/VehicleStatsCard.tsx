@@ -243,7 +243,7 @@ export function VehicleStatsCard() {
                 <Skeleton className="h-6 w-16" />
               ) : (
                 <p className="text-xl font-semibold">
-                  {stats?.fuelEfficiency ? `${stats.fuelEfficiency} L/100km` : '-- L/100km'}
+                  {stats?.fuelEfficiency ? `${stats.fuelEfficiency.toFixed(1)} L/100km` : '-- L/100km'}
                 </p>
               )}
             </div>
