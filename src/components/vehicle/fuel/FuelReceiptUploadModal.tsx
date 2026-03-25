@@ -41,6 +41,11 @@ import { ExtractedData } from '@/services/vehicle-ocr-service';
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
 
+// Confidence thresholds for OCR accuracy assessment
+const CONFIDENCE_THRESHOLD_HIGH = 85; // Auto-proceed without review
+const CONFIDENCE_THRESHOLD_MEDIUM = 70; // Warning but usable
+// Below CONFIDENCE_THRESHOLD_MEDIUM = Manual review required
+
 // Modal step types
 type ModalStep = 'capture' | 'processing' | 'review' | 'complete';
 
@@ -207,7 +212,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       setEditedFuelData(fuelReceiptData);
 
       // Decide next step based on confidence
-      if (needsReview || confidence < 85) {
+      if (needsReview || confidence < CONFIDENCE_THRESHOLD_HIGH) {
         setCurrentStep('review');
       } else {
         // High confidence - proceed directly to completion
@@ -364,9 +369,9 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
     if (!reviewData || !editedFuelData) return null;
 
     const { confidence, originalImage } = reviewData;
-    const confidenceColor = confidence >= 85
+    const confidenceColor = confidence >= CONFIDENCE_THRESHOLD_HIGH
       ? 'text-green-600'
-      : confidence >= 70
+      : confidence >= CONFIDENCE_THRESHOLD_MEDIUM
       ? 'text-amber-600'
       : 'text-red-600';
 
@@ -384,7 +389,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
           </Badge>
         </div>
 
-        {confidence < 70 && (
+        {confidence < CONFIDENCE_THRESHOLD_MEDIUM && (
           <Alert variant="warning">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
