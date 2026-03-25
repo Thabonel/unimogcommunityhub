@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarIcon, Fuel } from 'lucide-react';
+import { CalendarIcon, Fuel, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { FuelType, Vehicle } from '@/hooks/vehicle-maintenance/types';
+import { FuelReceiptUploadModal } from './FuelReceiptUploadModal';
+import { FuelReceiptData } from '@/services/fuel-receipt-parser';
 
 const fuelTypes: FuelType[] = [
   "diesel",
@@ -79,6 +81,7 @@ interface FuelLogFormProps {
 const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCancel }: FuelLogFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   const form = useForm<FuelLogFormValues>({
     resolver: zodResolver(fuelLogSchema),
@@ -120,17 +123,52 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
     }
   };
 
+  const handlePhotoUpload = () => {
+    setShowUploadModal(true);
+  };
+
+  const handleReceiptProcessed = (fuelData: FuelReceiptData, vehicleId: string) => {
+    // Convert receipt data to form values and populate the form
+    form.setValue('vehicle_id', vehicleId);
+    form.setValue('fill_date', new Date(fuelData.date));
+    form.setValue('odometer', fuelData.odometerReading || 0);
+    form.setValue('fuel_amount', fuelData.combinedTotals.totalVolume);
+    form.setValue('total_cost', fuelData.combinedTotals.totalAmount);
+    form.setValue('fuel_price_per_unit', fuelData.combinedTotals.blendedPrice);
+    form.setValue('fuel_station', fuelData.stationName);
+    form.setValue('fuel_type', 'diesel'); // Default, user can change if needed
+    form.setValue('full_tank', true); // Assume full tank for dual tank receipts
+
+    // Close modal - form is now populated and ready for review/editing
+    setShowUploadModal(false);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Fuel className="h-5 w-5" />
-          {isUpdate ? 'Update Fuel Log' : 'Add Fuel Log'}
-        </CardTitle>
-        <CardDescription>
-          Keep track of your fuel consumption and costs
-        </CardDescription>
-      </CardHeader>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Fuel className="h-5 w-5" />
+            {isUpdate ? 'Update Fuel Log' : 'Add Fuel Log'}
+          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardDescription>
+              Keep track of your fuel consumption and costs
+            </CardDescription>
+            {!isUpdate && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handlePhotoUpload}
+                className="flex items-center gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Upload Receipt
+              </Button>
+            )}
+          </div>
+        </CardHeader>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFinalSubmit)}>
@@ -389,6 +427,15 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
         </form>
       </Form>
     </Card>
+
+    {/* Upload Modal */}
+    <FuelReceiptUploadModal
+      open={showUploadModal}
+      onOpenChange={setShowUploadModal}
+      vehicles={vehicles}
+      onReceiptProcessed={handleReceiptProcessed}
+    />
+    </>
   );
 };
 
