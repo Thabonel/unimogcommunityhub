@@ -20,7 +20,7 @@ import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
 import { VehicleService } from '@/services/vehicleService';
 import { MaintenanceRecordModal } from '@/components/vehicle/maintenance/MaintenanceRecordModal';
 import FuelLogForm, { FuelLogFormValues } from '@/components/vehicle/fuel/FuelLogForm';
-import { useFuelLogs } from '@/hooks/vehicle-maintenance/use-fuel-logs';
+import { useFuelLogs, calculateFuelEfficiency } from '@/hooks/vehicle-maintenance/use-fuel-logs';
 import { toast } from 'sonner';
 
 interface VehicleStats {
@@ -39,18 +39,51 @@ export function VehicleStatsCard() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [showFuelModal, setShowFuelModal] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
-  const { addFuelLog } = useFuelLogs();
+  const { fuelLogs, addFuelLog, fetchFuelLogs } = useFuelLogs();
 
   const primaryVehicle = vehicles?.[0];
 
+  // Fetch fuel logs when vehicle is available
+  useEffect(() => {
+    if (primaryVehicle) {
+      fetchFuelLogs();
+    }
+  }, [primaryVehicle, fetchFuelLogs]);
+
+  // Calculate stats from fuel logs using single source of truth
   useEffect(() => {
     async function loadStats() {
       if (!primaryVehicle) return;
 
       setStatsLoading(true);
       try {
-        const vehicleStats = await VehicleService.getVehicleStatistics(primaryVehicle.id);
-        setStats(vehicleStats);
+        // Use the single fuel efficiency calculator
+        const fuelStats = calculateFuelEfficiency(fuelLogs);
+
+        // Get maintenance data separately
+        const serviceLogs = await VehicleService.getServiceHistory(primaryVehicle.id);
+        const maintenanceSchedules = await VehicleService.getMaintenanceSchedules(primaryVehicle.id);
+
+        const totalServiceCost = serviceLogs.reduce((sum, log) => sum + (log.cost || 0), 0);
+        const lastService = serviceLogs[0];
+        const upcomingMaintenance = maintenanceSchedules.filter(schedule =>
+          schedule.next_due_date && new Date(schedule.next_due_date) > new Date()
+        );
+
+        // Calculate distance from fuel logs
+        const sortedLogs = [...fuelLogs].sort((a, b) => a.odometer - b.odometer);
+        const totalDistance = sortedLogs.length >= 2
+          ? sortedLogs[sortedLogs.length - 1].odometer - sortedLogs[0].odometer
+          : 0;
+
+        setStats({
+          fuelEfficiency: fuelStats.avgLper100km,
+          totalMiles: totalDistance,
+          totalOperatingCost: fuelStats.totalCost + totalServiceCost,
+          lastServiceDate: lastService?.service_date,
+          upcomingMaintenanceCount: upcomingMaintenance.length,
+          nextMaintenanceDue: upcomingMaintenance[0]?.next_due_date,
+        });
       } catch (error) {
         console.error('Failed to load vehicle stats:', error);
       } finally {
@@ -59,7 +92,7 @@ export function VehicleStatsCard() {
     }
 
     loadStats();
-  }, [primaryVehicle]);
+  }, [primaryVehicle, fuelLogs]);
 
   const handleFuelLogSubmit = async (data: FuelLogFormValues) => {
     const result = await addFuelLog({
@@ -79,11 +112,7 @@ export function VehicleStatsCard() {
     if (result.success) {
       toast.success('Fuel log added successfully');
       setShowFuelModal(false);
-      // Refresh stats
-      if (primaryVehicle) {
-        const vehicleStats = await VehicleService.getVehicleStatistics(primaryVehicle.id);
-        setStats(vehicleStats);
-      }
+      fetchFuelLogs(); // Refresh triggers stats recalculation
     }
   };
 
@@ -100,11 +129,7 @@ export function VehicleStatsCard() {
   }, [vehiclesLoading, vehicles]);
 
   const handleMaintenanceAdded = async () => {
-    // Refresh stats after maintenance log added
-    if (primaryVehicle) {
-      const vehicleStats = await VehicleService.getVehicleStatistics(primaryVehicle.id);
-      setStats(vehicleStats);
-    }
+    fetchFuelLogs(); // Refresh triggers stats recalculation
   };
 
   // Loading state
