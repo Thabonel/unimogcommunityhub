@@ -197,8 +197,12 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
   const lastServiceDate = lastMaintenance ? lastMaintenance.service_date : '';
 
   // Calculate next service (rough estimate)
-  const nextServiceDate = new Date(lastServiceDate);
-  nextServiceDate.setMonth(nextServiceDate.getMonth() + 3);
+  let nextServiceDue = '';
+  if (lastServiceDate) {
+    const nextServiceDate = new Date(lastServiceDate);
+    nextServiceDate.setMonth(nextServiceDate.getMonth() + 3);
+    nextServiceDue = nextServiceDate.toISOString().split('T')[0];
+  }
 
   return {
     totalDistance: vehicle.current_odometer || 0,
@@ -206,6 +210,6 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
     totalFuelCost: Math.round(totalFuelCost),
     totalMaintenanceCost: Math.round(totalMaintenanceCost),
     lastServiceDate,
-    nextServiceDue: nextServiceDate.toISOString().split('T')[0]
+    nextServiceDue
   };
 }
