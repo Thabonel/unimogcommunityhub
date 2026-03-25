@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Plus,
   Car,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVehicles } from '@/hooks/vehicle-maintenance/use-vehicles';
@@ -85,6 +86,18 @@ export function VehicleStatsCard() {
       }
     }
   };
+
+  const handleFuelModalOpen = useCallback(() => {
+    if (vehiclesLoading) {
+      toast.info('Loading vehicle data...');
+      return;
+    }
+    if (!vehicles || vehicles.length === 0) {
+      toast.error('Please add a vehicle first');
+      return;
+    }
+    setShowFuelModal(true);
+  }, [vehiclesLoading, vehicles]);
 
   const handleMaintenanceAdded = async () => {
     // Refresh stats after maintenance log added
@@ -277,10 +290,17 @@ export function VehicleStatsCard() {
             <Button
               variant="outline"
               className="w-full min-w-0 px-2 sm:px-4 text-xs sm:text-sm"
-              onClick={() => setShowFuelModal(true)}
+              disabled={vehiclesLoading || !vehicles || vehicles.length === 0}
+              onClick={handleFuelModalOpen}
             >
-              <Fuel className="h-4 w-4 shrink-0" />
-              <span className="truncate">Log Fuel</span>
+              {vehiclesLoading ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+              ) : (
+                <Fuel className="h-4 w-4 shrink-0" />
+              )}
+              <span className="truncate">
+                {vehiclesLoading ? 'Loading...' : 'Log Fuel'}
+              </span>
             </Button>
             <Button
               variant="outline"
@@ -307,6 +327,7 @@ export function VehicleStatsCard() {
           </DialogHeader>
           <FuelLogForm
             vehicles={vehicles || []}
+            isLoadingVehicles={vehiclesLoading}
             onSubmit={handleFuelLogSubmit}
             onCancel={() => setShowFuelModal(false)}
             initialValues={{

@@ -153,6 +153,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         <FuelLogForm
           onSubmit={handleAddFuelLog}
           vehicles={vehicles || []}
+          isLoadingVehicles={isLoadingVehicles}
           onCancel={() => setViewState('dashboard')}
         />
       )}
@@ -161,6 +162,7 @@ const FuelTrackingTabContent = ({ isOffline = false }: FuelTrackingTabContentPro
         <FuelLogForm
           onSubmit={handleUpdateFuelLog}
           vehicles={vehicles || []}
+          isLoadingVehicles={isLoadingVehicles}
           initialValues={prepareFormData(selectedLog)}
           isUpdate={true}
           onCancel={() => setViewState('details')}
