@@ -1,31 +1,24 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-import { getUserIdFromAuth, getClientIP } from '../_shared/security.ts'
-import {
-  GoogleVisionOCR,
-  UnstructuredOCR,
-  ClaudeVisionOCR,
-  InvoiceParser,
-  VendorRecognition,
-  CategorySuggestion,
-  type InvoiceData
-} from '../_shared/ocr-providers.ts'
 
-interface InvoiceProcessingRequest {
-  documentUrl: string;
-  documentType: 'pdf' | 'image' | 'photo' | 'scan';
-  ocrProvider?: 'google_vision' | 'unstructured' | 'claude_vision';
-  expenseId?: string;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
 }
 
-interface InvoiceProcessingResponse {
-  success: boolean;
-  expenseId: string;
-  invoiceData: InvoiceData;
-  requiresReview: boolean;
-  processingTime: number;
-  error?: string;
+async function getUserFromAuth(request: Request, supabase: any) {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader) return { user: null, error: 'No auth header' }
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    )
+    return { user, error }
+  } catch (err) {
+    return { user: null, error: 'Auth failed' }
+  }
 }
 
 serve(async (req: Request) => {
@@ -33,303 +26,109 @@ serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const startTime = Date.now()
-
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
 
-    const { userId, error: authError } = await getUserIdFromAuth(req, supabase)
-    if (authError || !userId) {
+    const { user, error: authError } = await getUserFromAuth(req, supabase)
+    if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: authError }),
+        JSON.stringify({ error: 'Unauthorized' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
       )
     }
 
-    const body: InvoiceProcessingRequest = await req.json()
-    const { documentUrl, documentType, ocrProvider = 'google_vision', expenseId } = body
+    const body = await req.json()
+    const { imageBase64, mediaType } = body
 
-    console.log(`[Invoice OCR] Processing document for user ${userId}`, {
-      documentType,
-      ocrProvider,
-      hasExpenseId: !!expenseId
+    if (!imageBase64) {
+      throw new Error('imageBase64 required')
+    }
+
+    console.log(`[Fuel OCR] Processing for user: ${user.id}, media: ${mediaType || 'image/jpeg'}`)
+
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
+    if (!anthropicKey) {
+      throw new Error('ANTHROPIC_API_KEY not configured')
+    }
+
+    console.log('[Fuel OCR] Calling Claude Vision...')
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType || 'image/jpeg',
+              data: imageBase64
+            }
+          }, {
+            type: 'text',
+            text: `Analyze this fuel receipt. Extract data and respond ONLY with JSON:
+
+{
+  "station_name": "gas station name",
+  "date": "YYYY-MM-DD",
+  "fuel_entries": [{
+    "fuel_type": "Diesel",
+    "volume_liters": 85.5,
+    "price_per_liter": 1.45,
+    "total_amount": 123.98
+  }],
+  "total_volume": 85.5,
+  "total_amount": 123.98,
+  "odometer_reading": null,
+  "confidence": 90
+}
+
+Rules: For dual-tank Unimogs combine entries. Be precise with numbers. Set confidence 0-100.`
+          }]
+        }]
+      })
     })
 
-    const clientIP = getClientIP(req)
-
-    let currentExpenseId = expenseId
-
-    if (!currentExpenseId) {
-      const { data: expense, error: createError } = await supabase
-        .from('expenses')
-        .insert({
-          user_id: userId,
-          invoice_date: new Date().toISOString().split('T')[0],
-          vendor_name: 'Processing...',
-          amount: 0,
-          total_amount: 0,
-          category: 'Uncategorized',
-          ocr_status: 'processing',
-          document_url: documentUrl,
-          document_type: documentType
-        })
-        .select('id')
-        .single()
-
-      if (createError || !expense) {
-        throw new Error(`Failed to create expense record: ${createError?.message}`)
-      }
-
-      currentExpenseId = expense.id
-      console.log(`[Invoice OCR] Created expense record: ${currentExpenseId}`)
-    } else {
-      await supabase
-        .from('expenses')
-        .update({ ocr_status: 'processing' })
-        .eq('id', currentExpenseId)
+    if (!claudeResponse.ok) {
+      const errText = await claudeResponse.text()
+      console.error('[Fuel OCR] Claude error:', errText)
+      throw new Error(`Claude API error: ${claudeResponse.status}`)
     }
 
-    // Ensure currentExpenseId is defined at this point
-    if (!currentExpenseId) {
-      throw new Error('Failed to obtain expense ID')
-    }
+    const claudeData = await claudeResponse.json()
+    const content = claudeData.content?.[0]?.text || ''
 
-    const { data: queueItem, error: queueError } = await supabase
-      .from('ocr_processing_queue')
-      .insert({
-        expense_id: currentExpenseId,
-        status: 'processing',
-        ocr_provider: ocrProvider,
-        processing_started_at: new Date().toISOString(),
-        metadata: { user_id: userId, client_ip: clientIP }
-      })
-      .select('id')
-      .single()
-
-    if (queueError) {
-      console.warn('[Invoice OCR] Failed to create queue item:', queueError)
-    }
-
-    console.log('[Invoice OCR] Downloading document...')
-    const documentResponse = await fetch(documentUrl)
-    if (!documentResponse.ok) {
-      throw new Error(`Failed to download document: ${documentResponse.status}`)
-    }
-    const documentBlob = await documentResponse.blob()
-    console.log(`[Invoice OCR] Document size: ${documentBlob.size} bytes`)
-
-    let ocrResult
+    let fuelData: any = {}
     try {
-      if (ocrProvider === 'google_vision') {
-        const googleApiKey = Deno.env.get('GOOGLE_VISION_API_KEY')
-        if (!googleApiKey) {
-          throw new Error('Google Vision API key not configured')
-        }
-
-        const ocr = new GoogleVisionOCR(googleApiKey)
-        ocrResult = await ocr.processDocument(documentBlob)
-        console.log(`[Invoice OCR] Google Vision OCR complete, confidence: ${ocrResult.confidence}%`)
-      } else if (ocrProvider === 'claude_vision') {
-        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
-        if (!anthropicApiKey) {
-          throw new Error('Anthropic API key not configured')
-        }
-
-        const ocr = new ClaudeVisionOCR(anthropicApiKey)
-        ocrResult = await ocr.processDocument(documentBlob)
-        console.log(`[Invoice OCR] Claude Vision OCR complete, confidence: ${ocrResult.confidence}%`)
-      } else {
-        const unstructuredApiKey = Deno.env.get('UNSTRUCTURED_API_KEY')
-        if (!unstructuredApiKey) {
-          throw new Error('Unstructured API key not configured')
-        }
-
-        const ocr = new UnstructuredOCR(unstructuredApiKey)
-        const filename = documentUrl.split('/').pop() || 'document.pdf'
-        ocrResult = await ocr.processDocument(documentBlob, filename)
-        console.log(`[Invoice OCR] Unstructured OCR complete, confidence: ${ocrResult.confidence}%`)
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        fuelData = JSON.parse(jsonMatch[0])
       }
-    } catch (ocrError: any) {
-      console.error('[Invoice OCR] OCR processing failed:', ocrError)
-
-      await supabase
-        .from('expenses')
-        .update({
-          ocr_status: 'failed',
-          ocr_error: ocrError.message,
-          requires_review: true
-        })
-        .eq('id', currentExpenseId)
-
-      if (queueItem) {
-        await supabase
-          .from('ocr_processing_queue')
-          .update({
-            status: 'failed',
-            error_message: ocrError.message,
-            processing_completed_at: new Date().toISOString()
-          })
-          .eq('id', queueItem.id)
-      }
-
-      throw ocrError
+    } catch (_) {
+      fuelData = { station_name: 'Unknown', confidence: 50, total_volume: 0, total_amount: 0 }
     }
 
-    console.log('[Invoice OCR] Parsing invoice data...')
-    const invoiceData = InvoiceParser.parseInvoiceData(ocrResult)
-    console.log('[Invoice OCR] Extracted invoice data:', {
-      hasInvoiceNumber: !!invoiceData.invoiceNumber,
-      hasVendor: !!invoiceData.vendorName,
-      hasAmount: !!invoiceData.totalAmount,
-      lineItemCount: invoiceData.lineItems?.length || 0,
-      confidence: invoiceData.confidence
-    })
-
-    console.log('[Invoice OCR] Recognizing vendor...')
-    const vendorRecognition = await VendorRecognition.recognizeVendor(
-      invoiceData.vendorName || 'Unknown',
-      supabase
-    )
-    console.log('[Invoice OCR] Vendor recognition:', vendorRecognition)
-
-    if (vendorRecognition.vendorId) {
-      await supabase
-        .from('known_vendors')
-        .update({
-          times_seen: supabase.rpc('increment', { row_id: vendorRecognition.vendorId }),
-          last_seen_at: new Date().toISOString()
-        })
-        .eq('id', vendorRecognition.vendorId)
-    } else if (invoiceData.vendorName && invoiceData.vendorName !== 'Unknown Vendor') {
-      const { data: newVendor } = await supabase
-        .from('known_vendors')
-        .insert({
-          name: invoiceData.vendorName,
-          times_seen: 1,
-          last_seen_at: new Date().toISOString()
-        })
-        .select('id')
-        .single()
-
-      if (newVendor) {
-        console.log('[Invoice OCR] Created new vendor:', newVendor.id)
-      }
-    }
-
-    console.log('[Invoice OCR] Suggesting category...')
-    const categoryResult = await CategorySuggestion.suggestCategory(invoiceData, supabase)
-    console.log('[Invoice OCR] Category suggestion:', categoryResult)
-
-    const requiresReview = invoiceData.confidence < 70 || !invoiceData.totalAmount
-
-    const updateData: any = {
-      invoice_number: invoiceData.invoiceNumber,
-      invoice_date: invoiceData.invoiceDate || new Date().toISOString().split('T')[0],
-      vendor_name: vendorRecognition.name,
-      amount: invoiceData.subtotal || invoiceData.totalAmount || 0,
-      tax_amount: invoiceData.taxAmount || 0,
-      total_amount: invoiceData.totalAmount || 0,
-      currency: invoiceData.currency || 'USD',
-      category: categoryResult.category,
-      ocr_status: 'completed',
-      ocr_confidence: invoiceData.confidence,
-      ocr_raw_text: ocrResult.text.substring(0, 5000),
-      ocr_processed_at: new Date().toISOString(),
-      requires_review: requiresReview,
-      metadata: {
-        vendor_confidence: vendorRecognition.confidence,
-        category_confidence: categoryResult.confidence,
-        ocr_provider: ocrProvider,
-        line_item_count: invoiceData.lineItems?.length || 0
-      }
-    }
-
-    console.log('[Invoice OCR] Updating expense record...')
-    const { error: updateError } = await supabase
-      .from('expenses')
-      .update(updateData)
-      .eq('id', currentExpenseId)
-
-    if (updateError) {
-      throw new Error(`Failed to update expense: ${updateError.message}`)
-    }
-
-    if (invoiceData.lineItems && invoiceData.lineItems.length > 0) {
-      console.log(`[Invoice OCR] Inserting ${invoiceData.lineItems.length} line items...`)
-
-      const lineItemsData = invoiceData.lineItems.map((item: any, index: number) => ({
-        expense_id: currentExpenseId,
-        item_description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        line_total: item.lineTotal,
-        tax_amount: item.taxAmount,
-        line_number: index + 1
-      }))
-
-      const { error: lineItemsError } = await supabase
-        .from('expense_line_items')
-        .insert(lineItemsData)
-
-      if (lineItemsError) {
-        console.warn('[Invoice OCR] Failed to insert line items:', lineItemsError)
-      }
-    }
-
-    if (queueItem) {
-      const processingTime = Date.now() - startTime
-      await supabase
-        .from('ocr_processing_queue')
-        .update({
-          status: 'completed',
-          processing_completed_at: new Date().toISOString(),
-          processing_time_ms: processingTime
-        })
-        .eq('id', queueItem.id)
-    }
-
-    await supabase
-      .from('ocr_api_usage')
-      .insert({
-        user_id: userId,
-        provider: ocrProvider,
-        endpoint: 'process-invoice-ocr',
-        request_count: 1,
-        pages_processed: 1,
-        cost_estimate: ocrProvider === 'google_vision' ? 0.0015 :
-                       ocrProvider === 'claude_vision' ? 0.004 : 0.001,
-        metadata: { expense_id: currentExpenseId }
-      })
-
-    const processingTime = Date.now() - startTime
-
-    const response: InvoiceProcessingResponse = {
-      success: true,
-      expenseId: currentExpenseId,
-      invoiceData,
-      requiresReview,
-      processingTime
-    }
-
-    console.log(`[Invoice OCR] Processing complete in ${processingTime}ms`)
+    console.log(`[Fuel OCR] Done! Confidence: ${fuelData.confidence}%`)
 
     return new Response(
-      JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      JSON.stringify({ success: true, fuelData }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error: any) {
-    console.error('[Invoice OCR] Error:', error)
-
+    console.error('[Fuel OCR] Error:', error)
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message,
-        expenseId: null,
-        processingTime: Date.now() - startTime
-      }),
+      JSON.stringify({ success: false, error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
