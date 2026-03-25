@@ -4,7 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ChevronDown, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -60,6 +65,9 @@ export function MaintenanceRecordModal({
 }: MaintenanceRecordModalProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [customType, setCustomType] = useState('');
+  const [typesOpen, setTypesOpen] = useState(false);
 
   const {
     register,
@@ -74,11 +82,35 @@ export function MaintenanceRecordModal({
       date: format(new Date(), 'yyyy-MM-dd'),
       odometer: 0,
       cost: 0,
-      currency: 'USD'
+      currency: 'AUD'
     }
   });
 
-  const selectedType = watch('maintenance_type');
+  // Sync selected types to form field
+  const updateFormValue = (types: string[], custom: string) => {
+    const all = [...types];
+    if (custom.trim()) all.push(custom.trim());
+    setValue('maintenance_type', all.join(', '), { shouldValidate: true });
+  };
+
+  const toggleType = (type: string) => {
+    const updated = selectedTypes.includes(type)
+      ? selectedTypes.filter(t => t !== type)
+      : [...selectedTypes, type];
+    setSelectedTypes(updated);
+    updateFormValue(updated, customType);
+  };
+
+  const removeType = (type: string) => {
+    const updated = selectedTypes.filter(t => t !== type);
+    setSelectedTypes(updated);
+    updateFormValue(updated, customType);
+  };
+
+  const handleCustomTypeChange = (value: string) => {
+    setCustomType(value);
+    updateFormValue(selectedTypes, value);
+  };
 
   const onSubmit = async (data: MaintenanceRecordForm) => {
     if (!user) {
@@ -112,6 +144,8 @@ export function MaintenanceRecordModal({
 
       toast.success('Maintenance record added successfully');
       reset();
+      setSelectedTypes([]);
+      setCustomType('');
       onOpenChange(false);
       onRecordAdded?.();
     } catch (error) {
@@ -122,13 +156,9 @@ export function MaintenanceRecordModal({
     }
   };
 
-  const handleMaintenanceTypeChange = (value: string) => {
-    setValue('maintenance_type', value);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Maintenance Record</DialogTitle>
         </DialogHeader>
@@ -163,19 +193,88 @@ export function MaintenanceRecordModal({
           </div>
 
           <div>
-            <Label htmlFor="maintenance_type">Maintenance Type</Label>
-            <Select onValueChange={handleMaintenanceTypeChange} value={selectedType}>
-              <SelectTrigger className={errors.maintenance_type ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select maintenance type" />
-              </SelectTrigger>
-              <SelectContent>
-                {maintenanceTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
+            <Label>Work Performed (select all that apply)</Label>
+
+            {/* Selected items as badges */}
+            {(selectedTypes.length > 0 || customType.trim()) && (
+              <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
+                {selectedTypes.map(type => (
+                  <Badge key={type} variant="secondary" className="text-xs pl-2 pr-1 py-1">
                     {type}
-                  </SelectItem>
+                    <button type="button" onClick={() => removeType(type)} className="ml-1 hover:text-red-500">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
                 ))}
-              </SelectContent>
-            </Select>
+                {customType.trim() && (
+                  <Badge variant="outline" className="text-xs pl-2 pr-1 py-1">
+                    {customType}
+                    <button type="button" onClick={() => handleCustomTypeChange('')} className="ml-1 hover:text-red-500">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+              </div>
+            )}
+
+            {/* Checkbox list */}
+            <Popover open={typesOpen} onOpenChange={setTypesOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={`w-full justify-between font-normal ${errors.maintenance_type ? 'border-red-500' : ''}`}
+                >
+                  {selectedTypes.length > 0 || customType.trim()
+                    ? `${selectedTypes.length + (customType.trim() ? 1 : 0)} item(s) selected`
+                    : 'Select work performed...'}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[340px] p-0" align="start">
+                <ScrollArea className="h-[280px] p-3">
+                  <div className="space-y-2">
+                    {maintenanceTypes.filter(t => t !== 'Other').map(type => (
+                      <label
+                        key={type}
+                        className="flex items-center gap-2.5 py-1.5 px-2 rounded hover:bg-muted cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selectedTypes.includes(type)}
+                          onCheckedChange={() => toggleType(type)}
+                        />
+                        <span className="text-sm">{type}</span>
+                      </label>
+                    ))}
+
+                    {/* Custom "Other" input */}
+                    <div className="border-t pt-2 mt-2">
+                      <label className="flex items-center gap-2.5 py-1.5 px-2">
+                        <span className="text-sm font-medium">Other:</span>
+                      </label>
+                      <Input
+                        placeholder="Type custom work here..."
+                        value={customType}
+                        onChange={(e) => handleCustomTypeChange(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </ScrollArea>
+                <div className="border-t p-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setTypesOpen(false)}
+                  >
+                    Done
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <input type="hidden" {...register('maintenance_type')} />
             {errors.maintenance_type && (
               <p className="text-sm text-red-500 mt-1">{errors.maintenance_type.message}</p>
             )}
