@@ -40,6 +40,7 @@ import { FuelReceiptParser, FuelReceiptData, CombinedTotals } from '@/services/f
 import { ExtractedData } from '@/services/vehicle-ocr-service';
 import { supabase } from '@/lib/supabase-client';
 import { cn } from '@/lib/utils';
+import { VehicleLoadingState } from './VehicleLoadingState';
 
 // Confidence thresholds for OCR accuracy assessment
 const CONFIDENCE_THRESHOLD_HIGH = 85; // Auto-proceed without review
@@ -53,6 +54,7 @@ interface FuelReceiptUploadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vehicles: Vehicle[];
+  isLoadingVehicles?: boolean;
   onReceiptProcessed: (fuelData: FuelReceiptData, vehicleId: string) => void;
 }
 
@@ -73,6 +75,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
   open,
   onOpenChange,
   vehicles,
+  isLoadingVehicles = false,
   onReceiptProcessed
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>('capture');
@@ -274,12 +277,17 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       <div className="flex items-center gap-2">
         <Car className="h-5 w-5 text-blue-600" />
         <Label className="text-sm font-medium">
-          {vehicles.length === 1 ? 'Vehicle' : 'Select Vehicle'}
+          {isLoadingVehicles ? 'Loading Vehicle...' : vehicles.length === 1 ? 'Vehicle' : 'Select Vehicle'}
         </Label>
       </div>
 
+      {/* Show loading state while vehicles load */}
+      {isLoadingVehicles && (
+        <VehicleLoadingState />
+      )}
+
       {/* Multiple vehicles - show dropdown */}
-      {vehicles.length > 1 && (
+      {!isLoadingVehicles && vehicles.length > 1 && (
         <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
           <SelectTrigger>
             <SelectValue placeholder="Choose a vehicle for this fuel receipt" />
@@ -295,7 +303,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       )}
 
       {/* Single vehicle - show as read-only */}
-      {vehicles.length === 1 && (
+      {!isLoadingVehicles && vehicles.length === 1 && (
         <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
           <Car className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">
@@ -304,13 +312,13 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
         </div>
       )}
 
-      {selectedVehicle && vehicles.length > 1 && (
+      {!isLoadingVehicles && selectedVehicle && vehicles.length > 1 && (
         <p className="text-sm text-muted-foreground">
           Fuel data will be added to {vehicles.find(v => v.id === selectedVehicle)?.name}
         </p>
       )}
 
-      {vehicles.length === 1 && (
+      {!isLoadingVehicles && vehicles.length === 1 && (
         <p className="text-sm text-muted-foreground">
           Fuel data will be added to this vehicle
         </p>

@@ -18,6 +18,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { FuelType, Vehicle } from '@/hooks/vehicle-maintenance/types';
 import { FuelReceiptUploadModal } from './FuelReceiptUploadModal';
 import { FuelReceiptData } from '@/services/fuel-receipt-parser';
+import { FuelFormLoadingSkeleton } from './FuelFormLoadingSkeleton';
+import { NoVehiclesState } from './VehicleLoadingState';
 
 const fuelTypes: FuelType[] = [
   "diesel",
@@ -73,12 +75,13 @@ const fuelLogSchema = z.object({
 interface FuelLogFormProps {
   onSubmit: (data: FuelLogFormValues) => Promise<void>;
   vehicles: Vehicle[];
+  isLoadingVehicles?: boolean;
   initialValues?: Partial<FuelLogFormValues>;
   isUpdate?: boolean;
   onCancel: () => void;
 }
 
-const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCancel }: FuelLogFormProps) => {
+const FuelLogForm = ({ onSubmit, vehicles, isLoadingVehicles = false, initialValues, isUpdate = false, onCancel }: FuelLogFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -145,6 +148,16 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
     // Close modal - form is now populated and ready for review/editing
     setShowUploadModal(false);
   };
+
+  // Show loading skeleton while vehicles are loading
+  if (isLoadingVehicles) {
+    return <FuelFormLoadingSkeleton />;
+  }
+
+  // Show no vehicles state if no vehicles after loading
+  if (!isLoadingVehicles && (!vehicles || vehicles.length === 0)) {
+    return <NoVehiclesState onAddVehicle={() => window.location.href = '/profile?tab=vehicles'} />;
+  }
 
   return (
     <>
