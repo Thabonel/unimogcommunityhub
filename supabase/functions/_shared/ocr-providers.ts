@@ -193,7 +193,9 @@ export class ClaudeVisionOCR {
       throw new Error(`Claude Vision API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json().catch(err => {
+      throw new Error(`Failed to parse Claude API response: ${err.message}`);
+    });
     const content = data.content?.[0]?.text;
 
     if (!content) {
@@ -286,7 +288,7 @@ Important rules:
     const blocks: OCRBlock[] = [];
 
     // Create blocks for each fuel entry
-    fuelData.fuel_entries?.forEach((entry: any, index: number) => {
+    fuelData.fuel_entries?.forEach((entry: any) => {
       blocks.push({
         text: `${entry.fuel_type}: ${entry.volume_liters}L @ $${entry.price_per_liter}/L = $${entry.total_amount}`,
         confidence: fuelData.confidence || 85,
