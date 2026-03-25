@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { VehicleService } from '@/services/vehicleService';
+import { supabase } from '@/lib/supabase-client';
 
 interface FuelDataPoint {
   month: string;
@@ -57,13 +58,29 @@ export const useVehicleData = (userId?: string, vehicleId?: string) => {
           return;
         }
 
-        // Fetch fuel logs (reverse order then reverse back to get ascending chronological order)
-        const fuelLogs = await VehicleService.getFuelLogs(targetVehicle.id, 100);
-        const fuelLogsAscending = fuelLogs.reverse(); // VehicleService returns descending, we need ascending
+        // Fetch fuel logs from fuel_logs table (not vehicle_fuel_logs)
+        const { data: fuelLogs, error: fuelError } = await supabase
+          .from('fuel_logs')
+          .select('*')
+          .eq('vehicle_id', targetVehicle.id)
+          .order('fill_date', { ascending: true });
 
-        // Fetch maintenance logs (reverse order then reverse back to get ascending chronological order)
-        const maintenanceLogs = await VehicleService.getServiceHistory(targetVehicle.id);
-        const maintenanceLogsAscending = maintenanceLogs.reverse(); // VehicleService returns descending, we need ascending
+        if (fuelError) {
+          console.error('Error fetching fuel logs:', fuelError);
+        }
+        const fuelLogsAscending = fuelLogs || [];
+
+        // Fetch service logs
+        const { data: maintenanceLogs, error: maintError } = await supabase
+          .from('vehicle_service_logs')
+          .select('*')
+          .eq('vehicle_id', targetVehicle.id)
+          .order('service_date', { ascending: true });
+
+        if (maintError) {
+          console.error('Error fetching service logs:', maintError);
+        }
+        const maintenanceLogsAscending = maintenanceLogs || [];
 
         // Process fuel data by month
         const processedFuelData = processFuelDataByMonth(fuelLogsAscending || []);
