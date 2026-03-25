@@ -58,33 +58,18 @@ import {
   RadialBar
 } from 'recharts';
 
-// Sample data for charts
-const fuelData = [
-  { month: 'Jan', consumption: 285, cost: 1140, efficiency: 8.2 },
-  { month: 'Feb', consumption: 298, cost: 1192, efficiency: 7.9 },
-  { month: 'Mar', consumption: 267, cost: 1068, efficiency: 8.7 },
-  { month: 'Apr', consumption: 289, cost: 1156, efficiency: 8.1 },
-  { month: 'May', consumption: 301, cost: 1204, efficiency: 7.8 },
-  { month: 'Jun', consumption: 278, cost: 1112, efficiency: 8.4 }
-];
-
-const maintenanceData = [
-  { category: 'Engine', cost: 1240, items: 12, lastService: '2024-01-15' },
-  { category: 'Transmission', cost: 890, items: 6, lastService: '2024-02-20' },
-  { category: 'Brakes', cost: 650, items: 8, lastService: '2024-01-30' },
-  { category: 'Hydraulics', cost: 1520, items: 15, lastService: '2024-02-10' },
-  { category: 'Tires', cost: 2100, items: 4, lastService: '2024-01-25' }
-];
 
 
-// This will be calculated based on real data
-const getExpenseBreakdown = (vehicleStats: any) => [
-  { name: 'Fuel', value: vehicleStats?.totalFuelCost || 6872, color: '#ff6b6b' },
-  { name: 'Maintenance', value: vehicleStats?.totalMaintenanceCost || 4320, color: '#4ecdc4' },
-  { name: 'Insurance', value: 1800, color: '#45b7d1' },
-  { name: 'Registration', value: 650, color: '#96ceb4' },
-  { name: 'Parts', value: 2150, color: '#feca57' }
-];
+const getExpenseBreakdown = (vehicleStats: any) => {
+  const items = [];
+  if (vehicleStats?.totalFuelCost > 0) {
+    items.push({ name: 'Fuel', value: vehicleStats.totalFuelCost, color: '#ff6b6b' });
+  }
+  if (vehicleStats?.totalMaintenanceCost > 0) {
+    items.push({ name: 'Maintenance', value: vehicleStats.totalMaintenanceCost, color: '#4ecdc4' });
+  }
+  return items.length > 0 ? items : [{ name: 'No data yet', value: 1, color: '#e5e7eb' }];
+};
 
 const FullVehicleDashboard = () => {
   const { user } = useAuth();
@@ -156,49 +141,50 @@ const FullVehicleDashboard = () => {
     setLastUpdate(new Date());
   };
 
+  const firstVehicle = vehicles?.[0];
   const currentVehicle = {
-    model: 'U1700L',
-    year: '1987',
-    vin: 'WDB4351011234567',
-    mileage: vehicleStats?.totalDistance || 45200,
-    lastService: vehicleStats?.lastServiceDate || '2024-01-15',
-    nextService: vehicleStats?.nextServiceDue || '2024-04-15',
+    model: firstVehicle?.model || 'Unknown',
+    year: firstVehicle?.year?.toString() || '',
+    vin: firstVehicle?.vin || 'Not recorded',
+    mileage: vehicleStats?.totalDistance || 0,
+    lastService: vehicleStats?.lastServiceDate || '',
+    nextService: vehicleStats?.nextServiceDue || '',
     status: 'operational'
   };
 
   const kpiCards = [
     {
       title: 'Current Mileage',
-      value: currentVehicle.mileage.toLocaleString(),
+      value: currentVehicle.mileage > 0 ? currentVehicle.mileage.toLocaleString() : 'N/A',
       unit: 'km',
-      change: '+1,247',
+      change: '',
       changeType: 'increase',
       icon: Gauge,
       color: 'bg-blue-500'
     },
     {
       title: 'Fuel Efficiency',
-      value: vehicleStats?.avgFuelEfficiency?.toFixed(1) || '8.4',
+      value: vehicleStats?.avgFuelEfficiency && vehicleStats.avgFuelEfficiency > 0 ? vehicleStats.avgFuelEfficiency.toFixed(1) : 'N/A',
       unit: 'L/100km',
-      change: '-0.3',
+      change: '',
       changeType: 'decrease',
       icon: Fuel,
       color: 'bg-green-500'
     },
     {
       title: 'Total Fuel Costs',
-      value: vehicleStats?.totalFuelCost?.toLocaleString() || '1,112',
-      unit: '$',
-      change: '+8.2%',
+      value: vehicleStats?.totalFuelCost && vehicleStats.totalFuelCost > 0 ? `$${vehicleStats.totalFuelCost.toLocaleString()}` : 'N/A',
+      unit: '',
+      change: '',
       changeType: 'increase',
       icon: DollarSign,
       color: 'bg-red-500'
     },
     {
-      title: 'Uptime',
-      value: '96.8',
-      unit: '%',
-      change: '+2.1%',
+      title: 'Fill-ups',
+      value: realFuelData.length > 0 ? realFuelData.length.toString() : '0',
+      unit: 'logged',
+      change: '',
       changeType: 'increase',
       icon: Activity,
       color: 'bg-purple-500'
@@ -278,6 +264,7 @@ const FullVehicleDashboard = () => {
                       <p className="text-2xl font-bold">{kpi.value}</p>
                       <span className="text-sm text-muted-foreground">{kpi.unit}</span>
                     </div>
+                    {kpi.change && (
                     <div className="flex items-center gap-1 mt-1">
                       {kpi.changeType === 'increase' ? (
                         <TrendingUp className="h-3 w-3 text-green-500" />
@@ -288,6 +275,7 @@ const FullVehicleDashboard = () => {
                         {kpi.change}
                       </span>
                     </div>
+                    )}
                   </div>
                   <div className={`p-3 rounded-full ${kpi.color}`}>
                     <kpi.icon className="h-6 w-6 text-white" />
@@ -339,82 +327,58 @@ const FullVehicleDashboard = () => {
               {/* Maintenance Status */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Maintenance Status</CardTitle>
-                  <CardDescription>Upcoming services and alerts</CardDescription>
+                  <CardTitle>Maintenance Summary</CardTitle>
+                  <CardDescription>Based on your service logs</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                      <div>
-                        <p className="font-medium">Oil Change Due</p>
-                        <p className="text-sm text-muted-foreground">In 2 weeks or 800km</p>
+                  {realMaintenanceData.length > 0 ? (
+                    realMaintenanceData.slice(0, 3).map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <div>
+                            <p className="font-medium">{item.category}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.items} service{item.items !== 1 ? 's' : ''} logged - Last: {new Date(item.lastService).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="secondary">${item.cost}</Badge>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <p>No service logs yet</p>
+                      <p className="text-sm mt-1">Add service records to track maintenance</p>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleScheduleMaintenance('Oil Change', 'Regular oil change and filter replacement')}
-                    >
-                      Schedule
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="font-medium">Annual Inspection</p>
-                        <p className="text-sm text-muted-foreground">Completed 2 months ago</p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">Passed</Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Thermometer className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium">Coolant System</p>
-                        <p className="text-sm text-muted-foreground">Operating normally</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline">Good</Badge>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Vehicle Health Score */}
+            {/* Maintenance Breakdown */}
+            {realMaintenanceData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Vehicle Health Score</CardTitle>
-                <CardDescription>Overall condition based on diagnostics and maintenance history</CardDescription>
+                <CardTitle>Maintenance Breakdown</CardTitle>
+                <CardDescription>Service costs by category</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {[
-                    { system: 'Engine', score: 92, color: '#22c55e' },
-                    { system: 'Transmission', score: 88, color: '#3b82f6' },
-                    { system: 'Hydraulics', score: 95, color: '#10b981' },
-                    { system: 'Electrical', score: 85, color: '#f59e0b' }
-                  ].map((system, index) => (
-                    <div key={index} className="text-center">
-                      <div className="relative w-24 h-24 mx-auto mb-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadialBarChart data={[{ value: system.score }]} innerRadius="60%" outerRadius="100%">
-                            <RadialBar dataKey="value" fill={system.color} />
-                          </RadialBarChart>
-                        </ResponsiveContainer>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-lg font-bold">{system.score}%</span>
-                        </div>
+                  {realMaintenanceData.slice(0, 4).map((item, index) => {
+                    const colors = ['#22c55e', '#3b82f6', '#10b981', '#f59e0b'];
+                    return (
+                      <div key={index} className="text-center">
+                        <p className="text-2xl font-bold">${item.cost}</p>
+                        <p className="font-medium text-muted-foreground">{item.category}</p>
+                        <p className="text-sm text-muted-foreground">{item.items} service{item.items !== 1 ? 's' : ''}</p>
                       </div>
-                      <p className="font-medium">{system.system}</p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           {/* Fuel Analytics Tab */}
