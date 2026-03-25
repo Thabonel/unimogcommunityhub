@@ -86,7 +86,7 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
   const form = useForm<FuelLogFormValues>({
     resolver: zodResolver(fuelLogSchema),
     defaultValues: {
-      vehicle_id: initialValues?.vehicle_id || '',
+      vehicle_id: initialValues?.vehicle_id || (vehicles.length === 1 ? vehicles[0].id : ''),
       odometer: initialValues?.odometer || 0,
       fill_date: initialValues?.fill_date || new Date(),
       fuel_amount: initialValues?.fuel_amount || 0,
@@ -129,7 +129,10 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
 
   const handleReceiptProcessed = (fuelData: FuelReceiptData, vehicleId: string) => {
     // Convert receipt data to form values and populate the form
-    form.setValue('vehicle_id', vehicleId);
+    // Only set vehicle_id if user has multiple vehicles, otherwise it's already set
+    if (vehicles.length > 1) {
+      form.setValue('vehicle_id', vehicleId);
+    }
     form.setValue('fill_date', new Date(fuelData.date));
     form.setValue('odometer', fuelData.odometerReading || 0);
     form.setValue('fuel_amount', fuelData.combinedTotals.totalVolume);
@@ -173,35 +176,50 @@ const FuelLogForm = ({ onSubmit, vehicles, initialValues, isUpdate = false, onCa
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFinalSubmit)}>
           <CardContent className="space-y-4">
-            {/* Vehicle selection */}
-            <FormField
-              control={form.control}
-              name="vehicle_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Vehicle</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    disabled={isUpdate}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a vehicle" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {vehicles.map(vehicle => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.name} ({vehicle.model} {vehicle.year})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Vehicle selection - only show if multiple vehicles */}
+            {vehicles.length > 1 && (
+              <FormField
+                control={form.control}
+                name="vehicle_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vehicle</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isUpdate}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a vehicle" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {vehicles.map(vehicle => (
+                          <SelectItem key={vehicle.id} value={vehicle.id}>
+                            {vehicle.name} ({vehicle.model} {vehicle.year})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Show current vehicle name when only one vehicle */}
+            {vehicles.length === 1 && (
+              <div className="space-y-2">
+                <FormLabel>Vehicle</FormLabel>
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+                  <Fuel className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {vehicles[0].name} ({vehicles[0].model} {vehicles[0].year})
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Date picker */}
             <FormField
