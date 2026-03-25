@@ -101,15 +101,7 @@ export const useVehicleData = (userId?: string, vehicleId?: string) => {
 // Helper functions
 function processFuelDataByMonth(fuelLogs: any[]): FuelDataPoint[] {
   if (fuelLogs.length === 0) {
-    // Return mock data if no real data
-    return [
-      { month: 'Jan', consumption: 285, cost: 1140, efficiency: 8.2 },
-      { month: 'Feb', consumption: 298, cost: 1192, efficiency: 7.9 },
-      { month: 'Mar', consumption: 267, cost: 1068, efficiency: 8.7 },
-      { month: 'Apr', consumption: 289, cost: 1156, efficiency: 8.1 },
-      { month: 'May', consumption: 301, cost: 1204, efficiency: 7.8 },
-      { month: 'Jun', consumption: 278, cost: 1112, efficiency: 8.4 }
-    ];
+    return [];
   }
 
   const monthlyData: { [key: string]: { consumption: number; cost: number; distance: number } } = {};
@@ -135,14 +127,7 @@ function processFuelDataByMonth(fuelLogs: any[]): FuelDataPoint[] {
 
 function processMaintenanceDataByCategory(maintenanceLogs: any[]): MaintenanceDataPoint[] {
   if (maintenanceLogs.length === 0) {
-    // Return mock data if no real data
-    return [
-      { category: 'Engine', cost: 1240, items: 12, lastService: '2024-01-15' },
-      { category: 'Transmission', cost: 890, items: 6, lastService: '2024-02-20' },
-      { category: 'Brakes', cost: 650, items: 8, lastService: '2024-01-30' },
-      { category: 'Hydraulics', cost: 1520, items: 15, lastService: '2024-02-10' },
-      { category: 'Tires', cost: 2100, items: 4, lastService: '2024-01-25' }
-    ];
+    return [];
   }
 
   const categoryData: { [key: string]: { cost: number; items: number; lastService: string } } = {};
@@ -194,20 +179,20 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
   const totalFuelAmount = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
-  const avgFuelEfficiency = totalFuelAmount > 0 ? (vehicle.current_odometer / totalFuelAmount) : 8.5;
+  const avgFuelEfficiency = totalFuelAmount > 0 ? (vehicle.current_odometer / totalFuelAmount) : 0;
 
   const lastMaintenance = maintenanceLogs.length > 0
     ? maintenanceLogs.sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime())[0]
     : null;
 
-  const lastServiceDate = lastMaintenance ? lastMaintenance.service_date : '2024-01-15';
+  const lastServiceDate = lastMaintenance ? lastMaintenance.service_date : '';
 
   // Calculate next service (rough estimate)
   const nextServiceDate = new Date(lastServiceDate);
   nextServiceDate.setMonth(nextServiceDate.getMonth() + 3);
 
   return {
-    totalDistance: vehicle.current_odometer || 45200,
+    totalDistance: vehicle.current_odometer || 0,
     avgFuelEfficiency: Math.round(avgFuelEfficiency * 10) / 10,
     totalFuelCost: Math.round(totalFuelCost),
     totalMaintenanceCost: Math.round(totalMaintenanceCost),
