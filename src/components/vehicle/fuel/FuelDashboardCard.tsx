@@ -220,12 +220,15 @@ const FuelDashboardCard = ({
                     <CardDescription>Efficiency</CardDescription>
                     <CardTitle className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4 text-green-500" />
-                      {stats.avgEfficiency.toFixed(2)}
+                      {stats.avgEfficiency > 0 ? (100 / stats.avgEfficiency).toFixed(1) : '0'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      {vehicleId ? vehicles?.find(v => v.id === vehicleId)?.odometer_unit === 'km' ? 'km/L' : 'MPG' : 'km/L or MPG'}
+                      L/100km
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {stats.avgEfficiency.toFixed(2)} km/L
                     </p>
                   </CardContent>
                 </Card>
@@ -398,8 +401,13 @@ const FuelDashboardCard = ({
                           <div>
                             <p className="text-sm text-muted-foreground">Efficiency</p>
                             <p className="font-medium">
-                              {log.efficiency ? log.efficiency.toFixed(2) : 'N/A'}
+                              {log.efficiency ? `${(100 / log.efficiency).toFixed(1)} L/100km` : 'N/A'}
                             </p>
+                            {log.efficiency && (
+                              <p className="text-xs text-muted-foreground">
+                                {log.efficiency.toFixed(2)} km/L
+                              </p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
