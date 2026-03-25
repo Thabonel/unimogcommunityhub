@@ -113,15 +113,15 @@ function processFuelDataByMonth(fuelLogs: any[]): FuelDataPoint[] {
       monthlyData[monthKey] = { consumption: 0, cost: 0, distance: 0 };
     }
 
-    monthlyData[monthKey].consumption += parseFloat(log.fuel_amount);
-    monthlyData[monthKey].cost += parseFloat(log.fuel_cost);
+    monthlyData[monthKey].consumption += parseFloat(log.fuel_amount || '0');
+    monthlyData[monthKey].cost += parseFloat(log.total_cost || '0');
   });
 
   return Object.entries(monthlyData).map(([month, data]) => ({
     month,
-    consumption: Math.round(data.consumption),
+    consumption: Math.round(data.consumption * 10) / 10,
     cost: Math.round(data.cost),
-    efficiency: data.distance > 0 ? Math.round((data.distance / data.consumption) * 10) / 10 : 8.0
+    efficiency: data.consumption > 0 ? Math.round((100 / (data.consumption > 0 ? data.consumption : 1)) * 10) / 10 : 0
   }));
 }
 
@@ -175,11 +175,20 @@ function categorizeMaintenance(serviceType: string): string {
 }
 
 function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: any[]): VehicleStats {
-  const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_cost || '0'), 0);
+  const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.total_cost || '0'), 0);
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
   const totalFuelAmount = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
-  const avgFuelEfficiency = totalFuelAmount > 0 ? (vehicle.current_odometer / totalFuelAmount) : 0;
+  // Calculate L/100km: need distance between fill-ups
+  // Use consecutive odometer readings to get actual distance driven
+  let totalDistance = 0;
+  const sortedLogs = [...fuelLogs].sort((a, b) => a.odometer - b.odometer);
+  if (sortedLogs.length >= 2) {
+    totalDistance = sortedLogs[sortedLogs.length - 1].odometer - sortedLogs[0].odometer;
+  }
+  const avgFuelEfficiency = totalDistance > 0 && totalFuelAmount > 0
+    ? (totalFuelAmount / totalDistance) * 100  // L/100km
+    : 0;
 
   const lastMaintenance = maintenanceLogs.length > 0
     ? maintenanceLogs.sort((a, b) => new Date(b.service_date).getTime() - new Date(a.service_date).getTime())[0]
