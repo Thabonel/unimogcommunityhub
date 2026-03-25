@@ -190,8 +190,8 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
 
       const fuelData = ocrData.fuelData || {};
 
-      // Parse using FuelReceiptParser
-      const fuelReceiptData = FuelReceiptParser.parseClaudeVisionResult(fuelData as ExtractedData, fuelData);
+      // Parse using FuelReceiptParser (wrap in fuel_data key as parser expects)
+      const fuelReceiptData = FuelReceiptParser.parseClaudeVisionResult(fuelData as ExtractedData, { fuel_data: fuelData });
 
       // Determine if review is needed
       const needsReview = FuelReceiptParser.shouldRequireReview(fuelData);
