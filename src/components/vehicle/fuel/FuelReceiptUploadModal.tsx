@@ -76,7 +76,9 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
   onReceiptProcessed
 }) => {
   const [currentStep, setCurrentStep] = useState<ModalStep>('capture');
-  const [selectedVehicle, setSelectedVehicle] = useState<string>('');
+  const [selectedVehicle, setSelectedVehicle] = useState<string>(
+    vehicles.length === 1 ? vehicles[0].id : ''
+  );
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
@@ -271,23 +273,46 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Car className="h-5 w-5 text-blue-600" />
-        <Label className="text-sm font-medium">Select Vehicle</Label>
+        <Label className="text-sm font-medium">
+          {vehicles.length === 1 ? 'Vehicle' : 'Select Vehicle'}
+        </Label>
       </div>
-      <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
-        <SelectTrigger>
-          <SelectValue placeholder="Choose a vehicle for this fuel receipt" />
-        </SelectTrigger>
-        <SelectContent>
-          {vehicles.map((vehicle) => (
-            <SelectItem key={vehicle.id} value={vehicle.id}>
-              {vehicle.name} ({vehicle.model} {vehicle.year})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {selectedVehicle && (
+
+      {/* Multiple vehicles - show dropdown */}
+      {vehicles.length > 1 && (
+        <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choose a vehicle for this fuel receipt" />
+          </SelectTrigger>
+          <SelectContent>
+            {vehicles.map((vehicle) => (
+              <SelectItem key={vehicle.id} value={vehicle.id}>
+                {vehicle.name} ({vehicle.model} {vehicle.year})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {/* Single vehicle - show as read-only */}
+      {vehicles.length === 1 && (
+        <div className="flex items-center gap-2 p-3 bg-muted rounded-md">
+          <Car className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">
+            {vehicles[0].name} ({vehicles[0].model} {vehicles[0].year})
+          </span>
+        </div>
+      )}
+
+      {selectedVehicle && vehicles.length > 1 && (
         <p className="text-sm text-muted-foreground">
           Fuel data will be added to {vehicles.find(v => v.id === selectedVehicle)?.name}
+        </p>
+      )}
+
+      {vehicles.length === 1 && (
+        <p className="text-sm text-muted-foreground">
+          Fuel data will be added to this vehicle
         </p>
       )}
     </div>
