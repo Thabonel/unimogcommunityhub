@@ -146,28 +146,24 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
     try {
       const file = uploadedFiles[0];
 
-      // Step 1: Upload file to storage
+      // Step 1: Convert file to base64
       setProcessingStatus({
-        step: 'upload',
+        step: 'preparing',
         progress: 10,
-        message: 'Uploading receipt image...'
+        message: 'Preparing receipt image...'
       });
 
-      const fileName = `fuel-receipt-${Date.now()}-${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('expense-receipts')
-        .upload(fileName, file);
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove data:image/... prefix
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-      if (uploadError) {
-        throw new Error(`Upload failed: ${uploadError.message}`);
-      }
-
-      // Get public URL for OCR processing
-      const { data: { publicUrl } } = supabase.storage
-        .from('expense-receipts')
-        .getPublicUrl(uploadData.path);
-
-      // Step 2: Call OCR service
+      // Step 2: Call OCR service with base64 data directly
       setProcessingStatus({
         step: 'ocr',
         progress: 30,
@@ -176,9 +172,8 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
 
       const { data: ocrData, error: ocrError } = await supabase.functions.invoke('process-invoice-ocr', {
         body: {
-          documentUrl: publicUrl,
-          documentType: 'image',
-          ocrProvider: 'claude_vision'
+          imageBase64: base64Data,
+          mediaType: file.type || 'image/jpeg'
         }
       });
 
@@ -193,15 +188,14 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
         message: 'Extracting fuel data...'
       });
 
-      const extractedData: ExtractedData = ocrData.invoiceData || {};
-      const metadata = ocrData.metadata || {};
+      const fuelData = ocrData.fuelData || {};
 
       // Parse using FuelReceiptParser
-      const fuelReceiptData = FuelReceiptParser.parseClaudeVisionResult(extractedData, metadata);
+      const fuelReceiptData = FuelReceiptParser.parseClaudeVisionResult(fuelData as ExtractedData, fuelData);
 
       // Determine if review is needed
-      const needsReview = FuelReceiptParser.shouldRequireReview(metadata.fuel_data);
-      const confidence = fuelReceiptData.confidence;
+      const needsReview = FuelReceiptParser.shouldRequireReview(fuelData);
+      const confidence = fuelData.confidence || fuelReceiptData.confidence;
 
       // Step 4: Complete processing
       setProcessingStatus({
