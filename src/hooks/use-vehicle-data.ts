@@ -195,16 +195,19 @@ function calculateVehicleStats(vehicle: any, fuelLogs: any[], maintenanceLogs: a
   const totalFuelCost = fuelLogs.reduce((sum, log) => sum + parseFloat(log.total_cost || '0'), 0);
   const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + parseFloat(log.cost || '0'), 0);
 
-  const totalFuelAmount = fuelLogs.reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
-  // Calculate L/100km: need distance between fill-ups
-  // Use consecutive odometer readings to get actual distance driven
-  let totalDistance = 0;
+  // Calculate L/100km properly:
+  // Distance = last odometer - first odometer
+  // Fuel = all fill-ups EXCEPT the first (first fill's fuel was used before tracking)
   const sortedLogs = [...fuelLogs].sort((a, b) => a.odometer - b.odometer);
+  let totalDistance = 0;
+  let fuelForDistance = 0;
   if (sortedLogs.length >= 2) {
     totalDistance = sortedLogs[sortedLogs.length - 1].odometer - sortedLogs[0].odometer;
+    // Exclude first fill-up's fuel - it was consumed before our first odometer reading
+    fuelForDistance = sortedLogs.slice(1).reduce((sum, log) => sum + parseFloat(log.fuel_amount || '0'), 0);
   }
-  const avgFuelEfficiency = totalDistance > 0 && totalFuelAmount > 0
-    ? (totalFuelAmount / totalDistance) * 100  // L/100km
+  const avgFuelEfficiency = totalDistance > 0 && fuelForDistance > 0
+    ? (fuelForDistance / totalDistance) * 100  // L/100km
     : 0;
 
   const lastMaintenance = maintenanceLogs.length > 0
