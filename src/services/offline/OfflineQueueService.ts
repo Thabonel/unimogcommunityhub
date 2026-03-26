@@ -317,7 +317,7 @@ class OfflineQueueServiceClass {
       }
       case 'maintenance': {
         const maintenanceData = entry.data as MaintenanceLogData;
-        const { error } = await supabase.from('maintenance_records').insert({
+        const { error } = await supabase.from('maintenance_logs').insert({
           ...maintenanceData,
           user_id: entry.userId,
           created_at: entry.createdAt,
