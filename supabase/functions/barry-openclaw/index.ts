@@ -852,7 +852,7 @@ async function executeEPCSearch(
     if (partNumberMatch) {
       const normalized = partNumberMatch[0].replace(/\s+/g, '-').toUpperCase();
       const { data } = await supabaseAdmin
-        .from('epc_parts')
+        .from('rps_parts')
         .select('*')
         .ilike('part_number', `%${normalized}%`)
         .limit(maxResults);
@@ -864,7 +864,7 @@ async function executeEPCSearch(
       const searchTerms = keywords.filter(k => !['part', 'number', 'epc'].includes(k));
       if (searchTerms.length > 0) {
         const { data: ftsData } = await supabaseAdmin
-          .from('epc_parts')
+          .from('rps_parts')
           .select('*')
           .textSearch('description_en', searchTerms.join(' & '), { type: 'websearch', config: 'english' })
           .limit(maxResults * 2);
@@ -878,7 +878,7 @@ async function executeEPCSearch(
       const primaryTerm = keywords.find(k => componentTerms.includes(k)) || keywords[0];
       if (primaryTerm) {
         const { data: ilikeData } = await supabaseAdmin
-          .from('epc_parts')
+          .from('rps_parts')
           .select('*')
           .ilike('description_en', `%${primaryTerm}%`)
           .limit(maxResults * 2);
