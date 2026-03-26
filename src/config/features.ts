@@ -4,9 +4,9 @@
 export const FEATURES = {
   // WIS System Integration
   WIS_ENABLED: true, // Enabled for staging deployment
-  
-  // Future features can be added here
-  // EXAMPLE_FEATURE: false,
+
+  // Subscription/trial system - site is currently free
+  SUBSCRIPTIONS_ENABLED: false,
 };
 
 // Helper function to check if a feature is enabled

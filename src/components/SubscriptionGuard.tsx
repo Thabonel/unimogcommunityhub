@@ -1,4 +1,5 @@
 
+import { FEATURES } from '@/config/features';
 import { ReactNode, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +30,10 @@ export default function SubscriptionGuard({
   allowTrial = true,
   requireVerification = false
 }: SubscriptionGuardProps) {
+  if (!FEATURES.SUBSCRIPTIONS_ENABLED) {
+    return <>{children}</>;
+  }
+
   const guardStart = performance.now();
   console.log('🛡️ [PERF] SubscriptionGuard START');
 

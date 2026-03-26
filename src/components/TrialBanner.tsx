@@ -1,4 +1,5 @@
 
+import { FEATURES } from '@/config/features';
 import { useTrial } from '@/hooks/use-trial';
 import { useSubscription } from '@/hooks/use-subscription';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
@@ -7,6 +8,8 @@ import { Link } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const TrialBannerContent = () => {
+  if (!FEATURES.SUBSCRIPTIONS_ENABLED) return null;
+
   const { trialStatus, trialData, isLoading: trialLoading } = useTrial();
   const { hasActiveSubscription, isLoading: subscriptionLoading } = useSubscription();
   
