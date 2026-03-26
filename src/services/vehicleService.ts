@@ -191,7 +191,7 @@ export class VehicleService {
   static async getFuelLogs(vehicleId: string, limit: number = 50): Promise<FuelLog[]> {
     try {
       const { data, error } = await supabase
-        .from('vehicle_fuel_logs')
+        .from('fuel_logs')
         .select('*')
         .eq('vehicle_id', vehicleId)
         .order('fill_date', { ascending: false })
@@ -208,7 +208,7 @@ export class VehicleService {
   static async addFuelLog(fuelData: FuelLogInsert): Promise<FuelLog> {
     try {
       const { data, error } = await supabase
-        .from('vehicle_fuel_logs')
+        .from('fuel_logs')
         .insert(fuelData)
         .select()
         .single();
@@ -224,7 +224,7 @@ export class VehicleService {
   static async calculateFuelEfficiency(vehicleId: string, days: number = 30) {
     try {
       const { data: fuelLogs, error } = await supabase
-        .from('vehicle_fuel_logs')
+        .from('fuel_logs')
         .select('fuel_amount, mileage, fill_date')
         .eq('vehicle_id', vehicleId)
         .gte('fill_date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
