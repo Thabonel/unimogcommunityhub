@@ -1,3 +1,4 @@
+import { FEATURES } from '@/config/features';
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,8 @@ import { useTrial } from '@/hooks/use-trial';
 import { Loader2, CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
 
 export function SubscriptionSection() {
+  if (!FEATURES.SUBSCRIPTIONS_ENABLED) return null;
+
   const { subscription, isLoading, hasActiveSubscription } = useSubscription();
   const { isLoading: managementLoading, openCustomerPortal, upgradeSubscription } = useSubscriptionManagement();
   const { trialStatus, trialData } = useTrial();
