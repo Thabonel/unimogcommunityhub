@@ -102,23 +102,26 @@ export const MaintenanceScheduleModal: React.FC<MaintenanceScheduleModalProps> =
     setIsSubmitting(true);
 
     try {
+      // Build description with extra details
+      const descParts = [formData.description];
+      if (formData.priority && formData.priority !== 'medium') descParts.push(`Priority: ${formData.priority}`);
+      if (formData.estimated_cost) descParts.push(`Est. cost: $${formData.estimated_cost}`);
+      if (formData.estimated_duration_hours) descParts.push(`Est. duration: ${formData.estimated_duration_hours}h`);
+      if (formData.location) descParts.push(`Location: ${formData.location}`);
+      if (formData.service_provider) descParts.push(`Provider: ${formData.service_provider}`);
+      if (formData.notes) descParts.push(`Notes: ${formData.notes}`);
+
       const scheduleData = {
         vehicle_id: vehicleId,
         maintenance_type: formData.maintenance_type,
-        description: formData.description,
-        scheduled_date: formData.scheduled_date,
-        due_odometer: formData.due_odometer ? parseInt(formData.due_odometer) : null,
-        priority: formData.priority,
-        estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,
-        estimated_duration_hours: formData.estimated_duration_hours ? parseInt(formData.estimated_duration_hours) : null,
-        location: formData.location || null,
-        service_provider: formData.service_provider || null,
-        notes: formData.notes || null,
-        status: 'scheduled'
+        description: descParts.filter(Boolean).join(' | '),
+        next_due_date: formData.scheduled_date,
+        next_due_mileage: formData.due_odometer ? parseInt(formData.due_odometer) : null,
+        is_active: true
       };
 
       const { data, error } = await supabase
-        .from('maintenance_schedule')
+        .from('vehicle_maintenance_schedules')
         .insert([scheduleData])
         .select()
         .single();
