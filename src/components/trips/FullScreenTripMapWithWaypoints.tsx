@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react';
+import { Plus, Map, List, MapPin, Layers, Save, Car, Footprints, Bike, Trash2, Navigation, Share2, Wrench, Crosshair, Mountain, ArrowLeft, Compass, Info, ChevronDown, ChevronUp, ArrowUpDown, Undo2 } from 'lucide-react';
+import { useWaypointManager } from '@/hooks/use-waypoint-manager';
 import MapComponent from '../MapComponent';
 import MapOptionsDropdown from './map/MapOptionsDropdown';
 import { TripCardProps } from './TripCard';
@@ -102,6 +103,9 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
 
   // Track map loaded state for plugin
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+
+  // Waypoint manager hook (Komoot-style click-to-add route building)
+  const waypointManager = useWaypointManager({ map: mapInstance });
 
   // Track map bounds for trail search
   const [mapBounds, setMapBounds] = useState<{
@@ -1259,35 +1263,23 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
     setShowList(!showList);
   };
 
-  // Toggle waypoint adding mode with plugin availability checks
+  // Toggle waypoint adding mode (Komoot-style: uses useWaypointManager, not Directions plugin)
   const toggleWaypointMode = () => {
-    const newMode = !isAddingWaypoints;
-    setIsAddingWaypoints(newMode);
-    setIsAddingPOI(false); // Disable POI mode
-    setShouldAutoCenter(false); // Prevent auto-centering when in waypoint mode
-    
-    // Check plugin availability
-    if (!pluginInitialized || pluginError || !directionsRef.current) {
-      if (newMode) {
-        toast.error('Route planning currently unavailable. Please refresh the page.');
-        console.log('⚠️ Plugin not available:', { pluginInitialized, pluginError, hasRef: !!directionsRef.current });
-      }
-      return;
+    const newMode = !waypointManager.isAddingMode;
+    waypointManager.setIsAddingMode(newMode);
+    setIsAddingWaypoints(newMode); // Keep local state in sync for UI
+    setIsAddingPOI(false);
+    setShouldAutoCenter(false);
+
+    // Keep Directions plugin non-interactive — our hook handles clicks
+    if (directionsRef.current) {
+      try { directionsRef.current.interactive = false; } catch (_) {}
     }
-    
-    // Control plugin interactivity
-    try {
-      if (newMode) {
-        // Enable plugin click-to-add functionality
-        directionsRef.current.interactive = true;
-        toast.info('🗺️ Click map to add waypoints A→B, drag route to modify');
-      } else {
-        // Keep plugin functional but reduce interactivity if needed
-        toast.info('Waypoint mode disabled');
-      }
-    } catch (error) {
-      console.error('❌ Error toggling waypoint mode:', error);
-      toast.error('Error controlling waypoint mode');
+
+    if (newMode) {
+      toast.info('Click map to add route points. Keep clicking to extend.');
+    } else {
+      toast.info('Route planning paused');
     }
   };
 
@@ -2409,6 +2401,18 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 >
                   <Navigation className="h-3 w-3 mr-1" />
                   {isAddingPOI ? 'Stop' : 'Add POI'}
+                </Button>
+
+                {/* Undo Button */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={waypointManager.undoLastWaypoint}
+                  disabled={waypointManager.waypoints.length === 0}
+                >
+                  <Undo2 className="h-3 w-3 mr-1" />
+                  Undo
                 </Button>
 
                 {/* Bottom Row */}

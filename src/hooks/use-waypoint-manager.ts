@@ -112,16 +112,16 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     let displayLabel = String(index + 1);
     
     if ('type' in waypoint) {
-      // For regular waypoints, determine type by position
-      if (index === 0) {
+      // Use the waypoint's actual type (set by Komoot-style logic)
+      if (waypoint.type === 'origin') {
         displayType = 'origin';
         displayLabel = 'A';
-      } else if (index === totalWaypoints - 1 && totalWaypoints > 1) {
+      } else if (waypoint.type === 'destination') {
         displayType = 'destination';
         displayLabel = 'B';
       } else {
         displayType = 'waypoint';
-        displayLabel = String(index + 1);
+        displayLabel = String(index);
       }
       
       // Create nested HTML structure for reliable text rendering
@@ -334,6 +334,23 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     toast.success('Waypoint removed');
   }, []);
 
+  // Undo last waypoint (Komoot-style)
+  const undoLastWaypoint = useCallback(() => {
+    setWaypoints(prev => {
+      if (prev.length === 0) return prev;
+      const updated = prev.slice(0, -1);
+      // Make the new last point the destination (if more than 1 remain)
+      if (updated.length > 1) {
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          type: 'destination'
+        };
+      }
+      toast.success('Last point removed');
+      return updated;
+    });
+  }, []);
+
   // Add a new waypoint at clicked location
   const addWaypointAtLocation = useCallback(async (lngLat: { lng: number; lat: number }) => {
     console.log('addWaypointAtLocation called with:', lngLat);
@@ -370,33 +387,32 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
         return updated;
       });
     } else {
-      // Add regular waypoint
+      // Add regular waypoint (Komoot-style: last click is always destination)
       setWaypoints(prev => {
         const order = prev.length;
-        let waypointType: 'origin' | 'destination' | 'waypoint' = 'waypoint';
-        
-        // First waypoint is origin, last could be destination
+
         if (order === 0) {
-          waypointType = 'origin';
-        } else if (order === 1) {
-          waypointType = 'destination';
-        } else {
-          waypointType = 'waypoint';
+          // First click = origin
+          const newWaypoint: Waypoint = {
+            id: `waypoint-${Date.now()}`,
+            coords, name: placeName, type: 'origin',
+            order: 0, address: placeName
+          };
+          toast.success('Start point set');
+          return [newWaypoint];
         }
-        
+
+        // Subsequent clicks: retype previous destination as intermediate waypoint
+        const retyped = prev.map(w =>
+          w.type === 'destination' ? { ...w, type: 'waypoint' as const } : w
+        );
         const newWaypoint: Waypoint = {
           id: `waypoint-${Date.now()}`,
-          coords,
-          name: placeName,
-          type: waypointType,
-          order: order,
-          address: placeName
+          coords, name: placeName, type: 'destination',
+          order, address: placeName
         };
-        
-        const updated = [...prev, newWaypoint];
-        toast.success(`Waypoint ${updated.length} added`);
-        console.log('Added regular waypoint:', newWaypoint);
-        return updated;
+        toast.success(`Point ${retyped.length + 1} added`);
+        return [...retyped, newWaypoint];
       });
     }
   }, []);
@@ -769,6 +785,7 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     setRouteProfile,
     addWaypointAtLocation,
     removeWaypoint,
+    undoLastWaypoint,
     clearMarkers,
     drawRoute,
     loadTrackWaypoints,
