@@ -2325,7 +2325,7 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
             </div>
 
             {/* Route Profile Selection */}
-            {(waypoints.length > 0 || isAddingWaypoints) && (
+            {(waypointManager.waypoints.length > 0 || waypointManager.isAddingMode) && (
               <div className="grid grid-cols-3 gap-1 mb-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2449,35 +2449,37 @@ const FullScreenTripMapWithWaypoints: React.FC<FullScreenTripMapProps> = ({
                 </Tooltip>
               </div>
 
-              {currentRoute && (
+              {(waypointManager.currentRoute || waypointManager.waypoints.length > 0) && (
                 <>
-                  {waypoints.length > 0 && (
+                  {waypointManager.waypoints.length > 0 && (
                     <div className="text-xs text-muted-foreground">
-                      {waypoints.length} waypoint{waypoints.length !== 1 ? 's' : ''} added
+                      {waypointManager.waypoints.length} point{waypointManager.waypoints.length !== 1 ? 's' : ''} added
                     </div>
                   )}
 
+                  {waypointManager.currentRoute && (
                   <div className="bg-blue-50 rounded p-2 text-xs space-y-1">
-                    <div>Distance: {formatDistance(currentRoute.distance)}</div>
-                    <div>Duration: {formatDuration(currentRoute.duration)}</div>
-                    {elevationData && elevationData.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="w-full text-xs h-6 p-1 mt-1"
-                        onClick={() => setShowElevationProfile(!showElevationProfile)}
-                      >
-                        <Mountain className="h-3 w-3 mr-1" />
-                        {showElevationProfile ? 'Hide' : 'Show'} Elevation
-                      </Button>
-                    )}
+                    <div>Distance: {formatDistance(waypointManager.currentRoute.distance)}</div>
+                    <div>Duration: {formatDuration(waypointManager.currentRoute.duration)}</div>
                   </div>
+                  )}
+                  {waypointManager.elevationData && waypointManager.elevationData.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-full text-xs h-6 p-1 mt-1"
+                      onClick={() => setShowElevationProfile(!showElevationProfile)}
+                    >
+                      <Mountain className="h-3 w-3 mr-1" />
+                      {showElevationProfile ? 'Hide' : 'Show'} Elevation
+                    </Button>
+                  )}
 
                   {/* Elevation Profile */}
-                  {showElevationProfile && elevationData && elevationData.length > 0 && currentRoute && (
+                  {showElevationProfile && waypointManager.elevationData && waypointManager.elevationData.length > 0 && waypointManager.currentRoute && (
                     <ElevationProfile
-                      elevationData={elevationData}
-                      totalDistance={currentRoute.distance}
+                      elevationData={waypointManager.elevationData}
+                      totalDistance={waypointManager.currentRoute.distance}
                       className="text-xs"
                     />
                   )}
