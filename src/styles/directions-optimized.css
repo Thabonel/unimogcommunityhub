@@ -31,16 +31,16 @@
   pointer-events: none !important;
 }
 
-/* --- ROUTE VISUALIZATION --- */
+/* --- HIDE PLUGIN ROUTE — useWaypointManager draws the route now --- */
 .mapbox-directions-route,
-.mapbox-directions-route-line {
-  visibility: visible !important;
-  opacity: 1 !important;
+.mapbox-directions-route-line,
+.mapbox-directions-route.mapbox-directions-route-alternative {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
-.mapbox-directions-route.mapbox-directions-route-alternative {
-  visibility: visible !important;
-  opacity: 0.6 !important;
+.mapbox-directions-waypoint {
+  display: none !important;
 }
 
 /* --- TOP-LEFT CONTROL AREA --- */
