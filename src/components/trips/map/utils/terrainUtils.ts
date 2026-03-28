@@ -53,7 +53,7 @@ export const enableTerrain = (map: mapboxgl.Map): boolean => {
     }
     
     // Enable terrain with exaggeration
-    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
     
     return true;
   } catch (err) {
@@ -118,7 +118,7 @@ export const addTerrainLayer = (map: mapboxgl.Map): boolean => {
     }
     
     // Add terrain layer
-    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+    map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
     
     return true;
   } catch (err) {

@@ -151,7 +151,7 @@ const EnhancedMapComponent = ({
             onMove={(evt) => setViewport(evt.viewState)}
             attributionControl={showControls}
             onLoad={handleMapLoad}
-            terrain={{ source: 'mapbox-dem', exaggeration: 1.5 }}
+            terrain={{ source: 'mapbox-dem', exaggeration: 1.0 }}
           >
             {showControls && (
               // Changed position from top-right to bottom-left

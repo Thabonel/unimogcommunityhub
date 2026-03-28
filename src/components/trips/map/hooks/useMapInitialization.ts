@@ -206,7 +206,7 @@ export const useMapInitialization = ({
       if (enableTerrain) {
         try {
           addDemSource(map.current);
-          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          map.current.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
         } catch (err) {
           console.warn('Could not enable terrain:', err);
         }

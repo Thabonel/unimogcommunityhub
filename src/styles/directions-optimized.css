@@ -31,16 +31,24 @@
   pointer-events: none !important;
 }
 
-/* --- HIDE PLUGIN ROUTE — useWaypointManager draws the route now --- */
+/* --- HIDE ALL PLUGIN VISUALS — useWaypointManager is the sole route system --- */
 .mapbox-directions-route,
 .mapbox-directions-route-line,
+.mapbox-directions-route-line-casing,
 .mapbox-directions-route.mapbox-directions-route-alternative {
   visibility: hidden !important;
   opacity: 0 !important;
+  display: none !important;
 }
 
-.mapbox-directions-waypoint {
+.mapbox-directions-waypoint,
+.mapbox-directions-origin-label,
+.mapbox-directions-destination-label,
+.mapbox-directions-hover-point,
+.mapboxgl-marker.mapbox-directions-origin,
+.mapboxgl-marker.mapbox-directions-destination {
   display: none !important;
+  visibility: hidden !important;
 }
 
 /* --- TOP-LEFT CONTROL AREA --- */

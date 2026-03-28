@@ -417,66 +417,93 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
     }
   }, []);
 
-  // Draw route on map
+  // Draw route on map (casing + fill pattern for road-hugging visual)
   const drawRoute = useCallback((coordinates: [number, number][], isRoadFollowing: boolean = false) => {
     if (!map || coordinates.length < 2) return;
 
-    const routeData = {
-      type: 'Feature' as const,
+    const sourceId = routeLayerRef.current;
+    const casingId = `${sourceId}-casing`;
+    const lineColor = isRoadFollowing ? '#10b981' : '#3b82f6';
+    const casingColor = isRoadFollowing ? '#0d7a5f' : '#1e40af';
+
+    const routeData: GeoJSON.Feature = {
+      type: 'Feature',
       properties: {},
       geometry: {
-        type: 'LineString' as const,
+        type: 'LineString',
         coordinates
       }
     };
 
-    // Check if source and layer already exist
-    const sourceExists = map.getSource(routeLayerRef.current);
-    const layerExists = map.getLayer(routeLayerRef.current);
-
-    if (sourceExists) {
-      // Update existing source data
-      (sourceExists as mapboxgl.GeoJSONSource).setData(routeData);
-      
-      // Update layer paint properties if they've changed
-      if (layerExists) {
-        map.setPaintProperty(routeLayerRef.current, 'line-color', isRoadFollowing ? '#10b981' : '#3b82f6');
-        map.setPaintProperty(routeLayerRef.current, 'line-width', isRoadFollowing ? 5 : 4);
+    // Update existing source if it exists (no flicker)
+    const existingSource = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined;
+    if (existingSource) {
+      existingSource.setData(routeData);
+      // Update colors
+      if (map.getLayer(casingId)) {
+        map.setPaintProperty(casingId, 'line-color', casingColor);
       }
-    } else {
-      // Create new source and layer only if they don't exist
-      map.addSource(routeLayerRef.current, {
-        type: 'geojson',
-        data: routeData
-      });
-
-      // Find the first symbol layer to insert route below labels but above terrain
-      const layers = map.getStyle()?.layers;
-      let firstSymbolId: string | undefined;
-      if (layers) {
-        for (const layer of layers) {
-          if (layer.type === 'symbol') {
-            firstSymbolId = layer.id;
-            break;
-          }
-        }
+      if (map.getLayer(sourceId)) {
+        map.setPaintProperty(sourceId, 'line-color', lineColor);
       }
-
-      map.addLayer({
-        id: routeLayerRef.current,
-        type: 'line',
-        source: routeLayerRef.current,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': isRoadFollowing ? '#10b981' : '#3b82f6',
-          'line-width': isRoadFollowing ? 5 : 4,
-          'line-opacity': 0.8
-        }
-      }, firstSymbolId); // Add before labels so route is visible but labels remain on top
+      return;
     }
+
+    // First time: create source and both layers
+
+    // Find the first symbol layer — insert route BELOW labels
+    const layers = map.getStyle()?.layers;
+    let firstSymbolId: string | undefined;
+    if (layers) {
+      for (const layer of layers) {
+        if (layer.type === 'symbol') {
+          firstSymbolId = layer.id;
+          break;
+        }
+      }
+    }
+
+    // Also remove any leftover Directions plugin route layers
+    const pluginLayers = [
+      'directions-route-line', 'directions-route-line-alt',
+      'directions-route-line-casing', 'directions-route-line-casing-alt',
+      'directions-origin-point', 'directions-destination-point',
+      'directions-waypoint-point', 'directions-hover-point'
+    ];
+    pluginLayers.forEach(id => {
+      try { if (map.getLayer(id)) map.removeLayer(id); } catch (_) {}
+    });
+
+    map.addSource(sourceId, {
+      type: 'geojson',
+      data: routeData
+    });
+
+    // Casing layer (wider dark outline — road-hugging visual effect)
+    map.addLayer({
+      id: casingId,
+      type: 'line',
+      source: sourceId,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': casingColor,
+        'line-width': 10,
+        'line-opacity': 0.4
+      }
+    }, firstSymbolId);
+
+    // Main route line (narrower bright fill on top of casing)
+    map.addLayer({
+      id: sourceId,
+      type: 'line',
+      source: sourceId,
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': lineColor,
+        'line-width': 6,
+        'line-opacity': 0.85
+      }
+    }, firstSymbolId);
   }, [map]);
 
   // Fetch directions from Mapbox API
@@ -609,12 +636,10 @@ export function useWaypointManager({ map, onRouteUpdate }: WaypointManagerProps)
       fetchDirectionsRef.current(waypoints);
     } else if (waypoints.length === 1) {
       // Clear route if only one waypoint
-      if (map.getLayer(routeLayerRef.current)) {
-        map.removeLayer(routeLayerRef.current);
-      }
-      if (map.getSource(routeLayerRef.current)) {
-        map.removeSource(routeLayerRef.current);
-      }
+      const casingId = `${routeLayerRef.current}-casing`;
+      if (map.getLayer(routeLayerRef.current)) map.removeLayer(routeLayerRef.current);
+      if (map.getLayer(casingId)) map.removeLayer(casingId);
+      if (map.getSource(routeLayerRef.current)) map.removeSource(routeLayerRef.current);
       setCurrentRoute(null);
     }
 
