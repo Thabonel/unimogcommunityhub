@@ -108,7 +108,7 @@ export const useMap = ({
               });
               
               // Add terrain
-              newMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+              newMap.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.0 });
               initializedTerrain.current = true;
             }
           }

@@ -136,7 +136,7 @@ export const useMapInitialization = ({
               
               // Enable terrain if requested
               if (terrainEnabled) {
-                newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+                newMapInstance.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
               }
               
               if (isMountedRef.current) {
@@ -241,7 +241,7 @@ export const useMapInitialization = ({
         console.log('Terrain disabled');
       } else {
         // Enable terrain
-        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
         console.log('Terrain enabled');
       }
       

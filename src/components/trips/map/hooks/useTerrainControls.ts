@@ -20,7 +20,7 @@ export const useTerrainControls = (map: mapboxgl.Map | null) => {
         console.log('Terrain disabled');
       } else {
         // Enable terrain
-        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+        map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
         console.log('Terrain enabled');
       }
       

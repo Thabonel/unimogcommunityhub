@@ -88,7 +88,7 @@ export const toggleLayerVisibility = (
               tileSize: 256
             });
           }
-          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 });
+          map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.0 });
         } else {
           map.setTerrain(null);
         }
