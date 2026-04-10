@@ -15,17 +15,16 @@ export function useSecureGemini(location?: { latitude: number; longitude: number
   const { user } = useAuth();
   const { i18n } = useTranslation();
 
-  const sendMessage = useCallback(async (message: string) => {
-    if (!message.trim()) return;
+  const sendMessage = useCallback(async (message: string, image?: { data: string; mediaType: string }) => {
+    if (!message.trim() && !image) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get current language from i18n
       const userLanguage = i18n.language || 'en';
 
-      const response = await secureGeminiService.sendMessage(message, location, userLanguage);
+      const response = await secureGeminiService.sendMessage(message, location, userLanguage, image);
       setMessages(secureGeminiService.getMessages());
       if (response.manualReferences) {
         setManualReferences(response.manualReferences);

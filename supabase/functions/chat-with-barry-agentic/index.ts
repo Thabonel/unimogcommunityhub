@@ -30,6 +30,7 @@ const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowe
 const FEATURE_FLAG_RPS_DETERMINISTIC = (Deno.env.get('FEATURE_FLAG_RPS_DETERMINISTIC') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_RPS_CLARIFY = (Deno.env.get('FEATURE_FLAG_RPS_CLARIFY') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_LEARNING_CACHE = (Deno.env.get('FEATURE_FLAG_LEARNING_CACHE') || '').toLowerCase() === 'true';
+const FEATURE_FLAG_KB_GATHERER = (Deno.env.get('FEATURE_FLAG_KB_GATHERER') || 'true').toLowerCase() === 'true';
 const FEATURE_FLAG_WEB_SEARCH = (Deno.env.get('FEATURE_FLAG_WEB_SEARCH') || '').toLowerCase() === 'true';
 const CACHE_TTL_SECONDS = parseInt(Deno.env.get('FEATURE_CACHE_TTL_SECONDS') || '86400');
 const BRAVE_SEARCH_API_KEY = Deno.env.get('BRAVE_SEARCH_API_KEY');
@@ -1459,110 +1460,137 @@ async function checkKnowledgeBase(supabaseAdmin: any, query: string): Promise<{
       return null;
     }
 
+    // Split query into discrete words for word-boundary matching
+    const queryWords = queryLower.split(/\s+/);
+
+    // Best-match selection: track the highest-scoring entry instead of returning first match
+    let bestEntry: any = null;
+    let bestMatchCount = 0;
+    let bestMatchRatio = 0;
+
     for (const entry of kbEntries) {
       const keywords = entry.question_keywords || [];
-      const matchCount = keywords.filter((kw: string) =>
-        queryLower.includes(kw.toLowerCase())
-      ).length;
+      if (keywords.length === 0) continue;
 
-      if (matchCount >= 2 || (matchCount >= 1 && keywords.length <= 3)) {
-        console.log(`[KB Gatherer] MATCH found: ${matchCount} keywords matched for entry ${entry.id}`);
-
-        const refs = entry.manual_references || {};
-        const pages = refs.pages || [];
-        const pdfFile = refs.pdf || null;
-        const manual = refs.manual || 'Workshop Manual';
-        const section = refs.section || '';
-
-        // Build manual references with proper PDF URLs
-        const manualReferences = await Promise.all(pages.map(async (pageNum: number) => {
-          // BARRY AI ENHANCEMENT: Generate dynamic PDF URL using new database function
-          const { data: dynamicPdfUrl, error: pdfError } = await supabaseAdmin.rpc('generate_pdf_url', {
-            manual_title_param: manual,
-            page_number_param: pageNum
-          });
-
-          if (pdfError) {
-            console.warn(`[KB PDF URL] Error generating URL for ${manual} page ${pageNum}:`, pdfError);
-          }
-
-          // For U435 pages, use the chapter navigation system as fallback
-          if (manual === 'U435' || manual.includes('U435')) {
-            const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
-            if (chapterInfo || dynamicPdfUrl) {
-              return {
-                type: 'kb_validated',
-                title: section || `Page ${pageNum}`,
-                manual_title: manual,
-                page_number: pageNum,
-                original_page: pageNum,
-                pdf_page: chapterInfo?.pdfPage || pageNum,
-                section_title: section,
-                storage_url: dynamicPdfUrl || chapterInfo?.url, // Prefer dynamic URL, fallback to chapter
-                chapter_filename: chapterInfo?.filename || null,
-                source: 'knowledge_base',
-                pdf_verified: true // Knowledge base entries are pre-verified
-              };
-            }
-          }
-
-          // For other manuals (G603, etc.), use direct PDF URL from manuals bucket
-          if (pdfFile) {
-            return {
-              type: 'kb_validated',
-              title: section || `Page ${pageNum}`,
-              manual_title: manual,
-              page_number: pageNum,
-              original_page: pageNum,
-              pdf_page: pageNum,
-              section_title: section,
-              storage_url: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${pdfFile}#page=${pageNum}`,
-              chapter_filename: pdfFile,
-              source: 'knowledge_base'
-            };
-          }
-
-          // Fallback: try barry_manual_navigation for any page
-          const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
-          if (chapterInfo) {
-            return {
-              type: 'kb_validated',
-              title: section || `Page ${pageNum}`,
-              manual_title: manual,
-              page_number: pageNum,
-              original_page: pageNum,
-              pdf_page: chapterInfo.pdfPage,
-              section_title: section,
-              storage_url: chapterInfo.url,
-              chapter_filename: chapterInfo.filename,
-              source: 'knowledge_base'
-            };
-          }
-
-          // No PDF mapping found
-          console.warn(`[KB Gatherer] No PDF mapping for page ${pageNum}`);
-          return null;
-        }));
-
-        // Filter out null references
-        const validRefs = manualReferences.filter((ref): ref is NonNullable<typeof ref> => ref !== null);
-
-        if (validRefs.length === 0) {
-          console.log('[KB Gatherer] KB entry matched but no valid PDF mappings found');
-          continue; // Try next KB entry
+      const matchCount = keywords.filter((kw: string) => {
+        const kwLower = kw.toLowerCase();
+        // Multi-word keywords: check if phrase appears in query
+        if (kwLower.includes(' ')) {
+          return queryLower.includes(kwLower);
         }
+        // Single-word keywords: require exact word match (not substring)
+        return queryWords.includes(kwLower);
+      }).length;
 
-        return {
-          found: true,
-          content: entry.barry_response_template,
-          manualReferences: validRefs,
-          confidence: entry.confidence_score
-        };
+      const matchRatio = matchCount / keywords.length;
+
+      console.log(`[KB Gatherer] Entry ${entry.id}: ${matchCount}/${keywords.length} keywords matched (${(matchRatio * 100).toFixed(0)}%)`);
+
+      // Require at least 3 keyword matches AND at least 30% of keywords
+      if (matchCount >= 3 && matchRatio >= 0.3 && matchRatio > bestMatchRatio) {
+        bestEntry = entry;
+        bestMatchCount = matchCount;
+        bestMatchRatio = matchRatio;
       }
     }
 
-    console.log('[KB Gatherer] No matching KB entry for query');
-    return null;
+    if (!bestEntry) {
+      console.log('[KB Gatherer] No matching KB entry for query');
+      return null;
+    }
+
+    console.log(`[KB Gatherer] Best match: ${bestMatchCount} keywords (${(bestMatchRatio * 100).toFixed(0)}%) for entry ${bestEntry.id}`);
+
+    const refs = bestEntry.manual_references || {};
+    const pages = refs.pages || [];
+    const pdfFile = refs.pdf || null;
+    const manual = refs.manual || 'Workshop Manual';
+    const section = refs.section || '';
+
+    // Build manual references with proper PDF URLs
+    const manualReferences = await Promise.all(pages.map(async (pageNum: number) => {
+      // BARRY AI ENHANCEMENT: Generate dynamic PDF URL using new database function
+      const { data: dynamicPdfUrl, error: pdfError } = await supabaseAdmin.rpc('generate_pdf_url', {
+        manual_title_param: manual,
+        page_number_param: pageNum
+      });
+
+      if (pdfError) {
+        console.warn(`[KB PDF URL] Error generating URL for ${manual} page ${pageNum}:`, pdfError);
+      }
+
+      // For U435 pages, use the chapter navigation system as fallback
+      if (manual === 'U435' || manual.includes('U435')) {
+        const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
+        if (chapterInfo || dynamicPdfUrl) {
+          return {
+            type: 'kb_validated',
+            title: section || `Page ${pageNum}`,
+            manual_title: manual,
+            page_number: pageNum,
+            original_page: pageNum,
+            pdf_page: chapterInfo?.pdfPage || pageNum,
+            section_title: section,
+            storage_url: dynamicPdfUrl || chapterInfo?.url,
+            chapter_filename: chapterInfo?.filename || null,
+            source: 'knowledge_base',
+            pdf_verified: true
+          };
+        }
+      }
+
+      // For other manuals (G603, etc.), use direct PDF URL from manuals bucket
+      if (pdfFile) {
+        return {
+          type: 'kb_validated',
+          title: section || `Page ${pageNum}`,
+          manual_title: manual,
+          page_number: pageNum,
+          original_page: pageNum,
+          pdf_page: pageNum,
+          section_title: section,
+          storage_url: `https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public/manuals/${pdfFile}#page=${pageNum}`,
+          chapter_filename: pdfFile,
+          source: 'knowledge_base'
+        };
+      }
+
+      // Fallback: try barry_manual_navigation for any page
+      const chapterInfo = await getChapterPdfUrl(supabaseAdmin, pageNum);
+      if (chapterInfo) {
+        return {
+          type: 'kb_validated',
+          title: section || `Page ${pageNum}`,
+          manual_title: manual,
+          page_number: pageNum,
+          original_page: pageNum,
+          pdf_page: chapterInfo.pdfPage,
+          section_title: section,
+          storage_url: chapterInfo.url,
+          chapter_filename: chapterInfo.filename,
+          source: 'knowledge_base'
+        };
+      }
+
+      // No PDF mapping found
+      console.warn(`[KB Gatherer] No PDF mapping for page ${pageNum}`);
+      return null;
+    }));
+
+    // Filter out null references
+    const validRefs = manualReferences.filter((ref): ref is NonNullable<typeof ref> => ref !== null);
+
+    if (validRefs.length === 0) {
+      console.log('[KB Gatherer] KB entry matched but no valid PDF mappings found');
+      return null;
+    }
+
+    return {
+      found: true,
+      content: bestEntry.barry_response_template,
+      manualReferences: validRefs,
+      confidence: bestEntry.confidence_score
+    };
   } catch (err) {
     console.error('[KB Gatherer] Exception:', err);
     return null;
@@ -1664,12 +1692,59 @@ serve(async (req) => {
     // We will guard actual Claude calls later and return graceful responses.
 
     // Get the request body
-    const { messages, location } = await req.json();
+    const { messages, location, image } = await req.json();
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: 'Invalid request body' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // PHOTO DIAGNOSTICS: If user sent an image, analyze it with Claude Vision first
+    let imageAnalysis = '';
+    if (image && image.data && ANTHROPIC_API_KEY && image.data.length < 4_500_000) {
+      try {
+        console.log('[Photo] Analyzing user-uploaded image...');
+        const visionResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: ANTHROPIC_MODEL_VISION,
+            max_tokens: 500,
+            messages: [{
+              role: 'user',
+              content: [
+                {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(image.mediaType) ? image.mediaType : 'image/jpeg',
+                    data: image.data
+                  }
+                },
+                {
+                  type: 'text',
+                  text: 'You are a Unimog mechanic. Identify the vehicle component shown in this photo. Note any visible damage, wear, or issues. Name the specific Unimog part/system. Keep response under 100 words.'
+                }
+              ]
+            }]
+          })
+        });
+
+        if (visionResponse.ok) {
+          const visionData = await visionResponse.json();
+          imageAnalysis = visionData.content?.[0]?.text || '';
+          console.log(`[Photo] Vision analysis: ${imageAnalysis.substring(0, 100)}...`);
+        } else {
+          console.warn(`[Photo] Vision API returned ${visionResponse.status}`);
+        }
+      } catch (visionErr) {
+        console.warn('[Photo] Vision analysis failed:', visionErr);
+      }
     }
 
     // VEHICLE CONTEXT GATHERER: Get user's vehicle information for personalization
@@ -2354,7 +2429,9 @@ Use this data to answer weather questions. Be specific with temperatures and con
       }
 
       // KB GATHERER: Check knowledge base for validated answers BEFORE comprehensive search
-      const kbResult = await checkKnowledgeBase(supabaseAdmin, lastUserMessage.content || '');
+      const kbResult = FEATURE_FLAG_KB_GATHERER
+        ? await checkKnowledgeBase(supabaseAdmin, lastUserMessage.content || '')
+        : null;
       if (kbResult && kbResult.found) {
         console.log(`[KB Gatherer] Returning validated answer with ${kbResult.manualReferences.length} references`);
         return new Response(JSON.stringify({
@@ -2368,39 +2445,71 @@ Use this data to answer weather questions. Be specific with temperatures and con
       }
 
       try {
-        // STEP 1: Load manual content from manual_chunks (replaces faulty u435_manual_index)
-        console.log('Loading workshop manual content from manual_chunks...');
-        const { data: workshopChunks, error: chunksError } = await supabaseAdmin
-          .from('manual_chunks')
-          .select('*')
-          .ilike('manual_title', '%U435%')
-          .order('page_number', { ascending: true });
+        // STEP 1: Targeted search - find only the most relevant manual chunks for this query
+        // If we have image analysis, combine it with the user's question for better search
+        const searchQuery = imageAnalysis
+          ? `${lastUserMessage.content || ''} ${imageAnalysis}`.trim()
+          : (lastUserMessage.content || '');
+        console.log(`[RAG] Searching manual chunks for: "${searchQuery.substring(0, 100)}"`);
+        const searchResults = await searchManualChunks(supabaseAdmin, searchQuery, 15);
 
-        if (chunksError) {
-          console.error('Failed to load manual chunks:', chunksError);
-          knowledgeMode = 'general';
-          systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
-        } else if (!workshopChunks || workshopChunks.length === 0) {
-          console.log('Manual chunks are empty');
+        // STEP 1.5: Also search RPS catalog if query might be about parts
+        const queryLowerForRPS = (lastUserMessage.content || '').toLowerCase();
+        const rpsKeywords = ['part', 'parts', 'exploded', 'diagram', 'illustration', 'catalog', 'number', 'niin'];
+        const mightNeedRPS = rpsKeywords.some(kw => queryLowerForRPS.includes(kw));
+        let rpsResults: any[] = [];
+        if (mightNeedRPS) {
+          console.log('[RAG] Query may need RPS data, searching RPS catalog...');
+          const rpsSearchWords = queryLowerForRPS.split(/\s+/).filter(w => w.length > 3).slice(0, 3);
+          if (rpsSearchWords.length > 0) {
+            const orFilter = rpsSearchWords.map(w => `section_title.ilike.%${w}%`).join(',');
+            const { data: rpsEntries, error: rpsError } = await supabaseAdmin
+              .from('manual_chunks')
+              .select('*')
+              .eq('manual_title', 'RPS Catalog')
+              .or(orFilter)
+              .order('page_number', { ascending: true })
+              .limit(10);
+            if (!rpsError && rpsEntries) {
+              rpsResults = rpsEntries;
+              console.log(`[RAG] Found ${rpsResults.length} RPS catalog entries`);
+            }
+          }
+        }
+
+        if (searchResults.length === 0 && rpsResults.length === 0) {
+          console.log('[RAG] No relevant manual content found');
           knowledgeMode = 'general';
           systemPrompt = BARRY_GENERAL_PROMPT + userContext + locationContext;
         } else {
-          console.log(`Loaded ${workshopChunks.length} workshop manual chunks`);
+          console.log(`[RAG] Found ${searchResults.length} workshop + ${rpsResults.length} RPS results`);
 
-          // STEP 1.5: Load RPS catalog entries from manual_chunks
-          console.log('Loading RPS catalog entries from manual_chunks...');
-          const { data: rpsEntries, error: rpsError } = await supabaseAdmin
-            .from('manual_chunks')
-            .select('*')
-            .eq('manual_title', 'RPS Catalog')
-            .order('page_number', { ascending: true });
+          // Combine and deduplicate by page number
+          const allResults = [...searchResults, ...rpsResults];
+          const seenPages = new Set<string>();
+          const deduped = allResults.filter(chunk => {
+            const key = `${chunk.manual_title || 'U435'}:${chunk.page_number}`;
+            if (seenPages.has(key)) return false;
+            seenPages.add(key);
+            return true;
+          });
 
-          if (rpsError) {
-            console.error('Failed to load RPS catalog:', rpsError);
-          }
+          // Format search results with FULL content for Claude (not just 150-char previews)
+          const formattedSections = deduped.map((chunk, i) => {
+            const title = chunk.section_title || 'Manual Section';
+            const manual = chunk.manual_title || 'U435 Workshop Manual';
+            const page = chunk.page_number || 0;
+            const content = chunk.content || '(no content available)';
+            return `--- SECTION ${i + 1}: ${title} ---\nManual: ${manual} | Page: ${page}\n${content}\n`;
+          }).join('\n');
 
-          // Convert chunks to index format for compatibility
-          const workshopIndexEntries = workshopChunks.map(chunk => ({
+          console.log(`[RAG] Formatted ${deduped.length} sections, ${formattedSections.length} characters`);
+
+          // Track which pages were provided to Claude (for citation validation)
+          const providedPages = deduped.map(c => c.page_number).filter(Boolean);
+
+          // Convert search results to index entries for reference extraction
+          const workshopIndexEntries = searchResults.map(chunk => ({
             term: chunk.section_title || chunk.content?.substring(0, 80) || 'Manual Entry',
             page_number: chunk.page_number,
             pdf_page_number: chunk.page_number,
@@ -2410,7 +2519,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
             content_preview: chunk.content?.substring(0, 200) || ''
           }));
 
-          const rpsIndexEntries = rpsEntries?.map(chunk => ({
+          const rpsIndexEntries = rpsResults.map(chunk => ({
             term: chunk.section_title,
             page_number: chunk.page_number,
             pdf_page_number: chunk.page_number,
@@ -2418,44 +2527,31 @@ Use this data to answer weather questions. Be specific with temperatures and con
             storage_url: getIllustrationCDNUrl(chunk.page_number),
             system_category: 'parts_catalog',
             metadata: chunk.metadata
-          })) || [];
+          }));
 
-          console.log(`Loaded ${rpsIndexEntries.length} RPS catalog entries`);
-
-          // Merge workshop manual + RPS catalog
           const combinedIndex = [...workshopIndexEntries, ...rpsIndexEntries];
-          console.log(`Total combined index: ${combinedIndex.length} entries (${workshopIndexEntries.length} workshop + ${rpsIndexEntries.length} RPS)`);
 
-          // Format the combined index for Claude (using actual content, not faulty index)
-          const formattedIndex = formatManualChunksForClaude([...workshopChunks, ...(rpsEntries || [])]);
-          console.log(`Formatted index size: ${formattedIndex.length} characters`);
-
-          // STEP 2: Give Claude the full index and let HIM decide what's relevant
+          // STEP 2: Give Claude ONLY the relevant sections with full content
+          const imageContext = imageAnalysis
+            ? `\nThe user uploaded a photo. Visual analysis: ${imageAnalysis}\nUse this analysis to inform your response about the identified component.\n`
+            : '';
           const agenticSystemPrompt = `You are Barry, a gruff but friendly Unimog mechanic with 40+ years of experience.
 
 ${userContext}
+${imageContext}
+Below are the most relevant sections from the U435 Series Workshop Manual (covers U1300L, U1700L, U435) and RPS Parts Catalog, found by searching for the user's question. Use ONLY the information provided below to answer.
 
-You have access to the COMPLETE U435 Series Workshop Manual (covers U1300L, U1700L, U435, and related Unimog models) AND the RPS Parts Catalog below. Read through it and pick ONLY the MOST RELEVANT pages that DIRECTLY answer the user's question.
-
-${formattedIndex}
+${formattedSections}
 
 CRITICAL INSTRUCTIONS:
-1. Read the user's question carefully - what SPECIFIC task are they asking about?
-2. Pick ONLY 2-4 pages that DIRECTLY cover that specific procedure
-3. DO NOT cite general reference pages (like "technical data", "specifications") unless specifically asked
-4. Focus on PROCEDURE pages (like "removal installation", "adjustment procedure", "disassembly assembly")
-5. If they ask "how do I remove the engine" → cite ONLY "engine removal installation" pages, NOT all engine pages
-6. If they ask for "exploded view" or "parts diagram" → cite RPS_Catalog pages (these are illustrated parts breakdowns)
+1. Answer the user's question using ONLY the manual content provided above
+2. ONLY cite page numbers that appear in the sections above (pages: ${providedPages.join(', ')})
+3. Do NOT cite or reference any page number not listed above - if you need a page that isn't provided, say "I don't have that specific page in my current search results"
+4. Include specific details from the manual text: torque values, step numbers, fluid capacities, etc.
+5. If the provided sections don't adequately answer the question, be honest about what you found and suggest the user rephrase their question
+6. For parts/exploded views, reference RPS_Catalog pages if available in the results above
 
-EXAMPLES:
-- "how do I change portal hub oil" → cite ONLY portal hub oil drain/change pages (page 737)
-- "how do I remove the engine" → cite ONLY engine removal/installation pages, NOT pistons/bearings/specs
-- "what are the torque specs for the head bolts" → cite ONLY tightening torques page
-- "show me the portal hub exploded view" → cite RPS_Catalog portal hub illustration pages (page 430)
-
-Be SELECTIVE. You're a mechanic helping with a SPECIFIC job, not teaching an entire chapter.
-
-Always cite specific page numbers and PDF files in your response.`;
+Always cite specific page numbers and manual names in your response. Be practical and direct.`;
 
           // STEP 3: Call Claude with the full index
           if (!ANTHROPIC_API_KEY) {
@@ -2481,8 +2577,8 @@ Always cite specific page numbers and PDF files in your response.`;
             },
             body: JSON.stringify({
               model: ANTHROPIC_MODEL_AGENTIC,
-              max_tokens: 800,
-              temperature: 0.7,
+              max_tokens: 1200,
+              temperature: 0.5,
               system: agenticSystemPrompt,
               messages: messages.map(m => ({
                 role: m.role === 'assistant' ? 'assistant' : 'user',

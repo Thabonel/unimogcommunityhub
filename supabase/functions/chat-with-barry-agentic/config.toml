@@ -7,6 +7,8 @@ FEATURE_FLAG_WEATHER = "true"
 FEATURE_FLAG_RPS_DETERMINISTIC = "true"
 FEATURE_FLAG_RPS_CLARIFY = "true"
 FEATURE_FLAG_LEARNING_CACHE = "true"
+FEATURE_FLAG_KB_GATHERER = "true"
+FEATURE_FLAG_WEB_SEARCH = "true"
 FEATURE_CACHE_TTL_SECONDS = "86400"
 
 # Optional: Configure model identifiers without code changes

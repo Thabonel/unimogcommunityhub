@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { VehicleDetailsCard } from './VehicleDetailsCard';
 import { MaintenanceStatusCard } from './MaintenanceStatusCard';
@@ -28,17 +28,6 @@ export const DashboardTabContent = ({
 }: DashboardTabContentProps) => {
   const { toast } = useToast();
   
-  // Add debug logging to track the component's state
-  useEffect(() => {
-    console.log('DashboardTabContent rendering with:', { 
-      isLoading, 
-      hasError: !!error, 
-      vehiclesCount: vehicles?.length || 0,
-      activeTab,
-      unimogModel 
-    });
-  }, [isLoading, error, vehicles, activeTab, unimogModel]);
-
   // Handle offline state
   const isOffline = error?.message?.includes('Network connection') || 
                     error?.message?.includes('Failed to fetch');
@@ -56,7 +45,7 @@ export const DashboardTabContent = ({
             vehicle={vehicles[0]} 
             isOffline={isOffline}
           />
-          <MaintenanceStatusCard isOffline={isOffline} />
+          <MaintenanceStatusCard vehicleId={vehicles[0]?.id} isOffline={isOffline} />
         </div>
       );
     } else if (error && !isOffline) {

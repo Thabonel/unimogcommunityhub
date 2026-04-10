@@ -210,13 +210,15 @@ export type ResponseGeneratorOutput = z.infer<typeof ResponseGeneratorOutputSche
 export const ResponseValidatorInputSchema = z.object({
   content: z.string(),
   citations: z.array(CitationSchema),
-  task: BarryTaskSchema
+  task: BarryTaskSchema,
+  provided_pages: z.array(z.number()).optional()
 });
 
 export const ResponseValidatorOutputSchema = z.object({
   is_valid: z.boolean(),
   issues: z.array(z.string()),
-  modified_citations: z.array(CitationSchema).optional()
+  modified_citations: z.array(CitationSchema).optional(),
+  citations_verified: z.boolean().optional()
 });
 
 export type ResponseValidatorInput = z.infer<typeof ResponseValidatorInputSchema>;

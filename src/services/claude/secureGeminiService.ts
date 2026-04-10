@@ -79,7 +79,7 @@ class SecureGeminiService {
     }];
   }
 
-  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search'; knowledgeSources?: string | null; attachments?: AttachmentMetadata[]; webSearchResults?: WebSearchResult[] }> {
+  async sendMessage(message: string, location?: { latitude: number; longitude: number }, userLanguage?: string, image?: { data: string; mediaType: string }): Promise<{ content: string; manualReferences?: ManualReference[]; knowledgeMode?: 'curated_knowledge' | 'two_pass_rag_verified' | 'general_ai' | 'web_search'; knowledgeSources?: string | null; attachments?: AttachmentMetadata[]; webSearchResults?: WebSearchResult[] }> {
     try {
       // Add user message to history
       this.messages.push({
@@ -159,7 +159,7 @@ class SecureGeminiService {
                        window.location.hostname.includes('localhost');
       const barryFunction = isStaging ? 'chat-with-barry-agentic' : 'chat-with-barry-agentic';
 
-      console.log(`🤖 Calling Barry function: ${barryFunction} (${isStaging ? 'STAGING - Agentic' : 'PRODUCTION - Stable'})`);
+      console.log(`Calling Barry function: ${barryFunction}`);
 
       // Call the main Barry Edge Function
       const { data, error } = await supabase.functions.invoke(barryFunction, {
@@ -168,7 +168,8 @@ class SecureGeminiService {
             role: msg.role,
             content: msg.content
           })),
-          location: location
+          location: location,
+          ...(image ? { image: { data: image.data, mediaType: image.mediaType } } : {})
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
