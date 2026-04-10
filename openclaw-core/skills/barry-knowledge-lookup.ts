@@ -40,7 +40,8 @@ function calculateMatchScore(queryKeywords: string[], entryKeywords: string[]): 
 
   for (const qk of queryKeywords) {
     for (const ek of entryKeywordsLower) {
-      if (ek.includes(qk) || qk.includes(ek)) {
+      // Exact match for single words; phrase containment only for multi-word keywords
+      if (ek === qk || (ek.includes(' ') && ek.includes(qk)) || (qk.includes(' ') && qk.includes(ek))) {
         matches++;
         break;
       }
@@ -116,7 +117,7 @@ export async function executeKnowledgeLookup(
       const entryKeywords = entry.question_keywords || [];
       const score = calculateMatchScore(queryKeywords, entryKeywords);
 
-      if (score > bestScore && score >= 0.5) {
+      if (score > bestScore && score >= 0.6) {
         bestScore = score;
         bestMatch = entry;
       }

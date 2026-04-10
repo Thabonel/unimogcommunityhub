@@ -31,16 +31,28 @@ const VALID_PAGE_RANGES = {
 
 /**
  * Validate citation page numbers are within expected ranges
- * Also rejects low-confidence generic citations (defense against fabrication)
+ * and optionally check against the actual pages provided to Claude
  */
-function validatePageNumbers(citations: Citation[]): { valid: Citation[]; issues: string[] } {
+function validatePageNumbers(citations: Citation[], providedPages?: number[]): { valid: Citation[]; issues: string[]; allVerified: boolean } {
   const valid: Citation[] = [];
   const issues: string[] = [];
+  const providedSet = providedPages ? new Set(providedPages) : null;
+  let allVerified = true;
 
   for (const citation of citations) {
     // Reject low-confidence citations pointing to page 1 (likely fabricated)
     if (citation.page_number === 1 && citation.confidence < 0.5) {
       issues.push(`Rejected likely fabricated citation: page 1 with confidence ${citation.confidence}`);
+      allVerified = false;
+      continue;
+    }
+
+    // Check against provided search results (strongest validation)
+    if (providedSet && providedSet.size > 0 && !providedSet.has(citation.page_number)) {
+      issues.push(`Citation page ${citation.page_number} was NOT in search results (possible hallucination)`);
+      allVerified = false;
+      // Still include it but flag it - don't silently drop citations
+      valid.push(citation);
       continue;
     }
 
@@ -52,12 +64,13 @@ function validatePageNumbers(citations: Citation[]): { valid: Citation[]; issues
 
     if (citation.page_number < range.min || citation.page_number > range.max) {
       issues.push(`Invalid page number ${citation.page_number} for ${citation.source} (expected ${range.min}-${range.max})`);
+      allVerified = false;
     } else {
       valid.push(citation);
     }
   }
 
-  return { valid, issues };
+  return { valid, issues, allVerified };
 }
 
 /**
@@ -132,7 +145,7 @@ export async function executeResponseValidator(
   const skillName = 'barry-response-validator';
 
   try {
-    const { content, citations, task } = input;
+    const { content, citations, task, provided_pages } = input;
     const allIssues: string[] = [];
 
     // Check minimum citation count
@@ -141,8 +154,8 @@ export async function executeResponseValidator(
       allIssues.push(`Insufficient citations: ${citations.length} provided, ${minCitations} required for ${task}`);
     }
 
-    // Validate page numbers
-    const { valid: validCitations, issues: pageIssues } = validatePageNumbers(citations);
+    // Validate page numbers against provided search results
+    const { valid: validCitations, issues: pageIssues, allVerified } = validatePageNumbers(citations, provided_pages);
     allIssues.push(...pageIssues);
 
     // Check for hallucinations
@@ -164,7 +177,8 @@ export async function executeResponseValidator(
       data: {
         is_valid: isValid,
         issues: allIssues,
-        modified_citations: validCitations.length < citations.length ? validCitations : undefined
+        modified_citations: validCitations.length < citations.length ? validCitations : undefined,
+        citations_verified: allVerified
       },
       executionTimeMs: performance.now() - startTime,
       skillName
