@@ -25,6 +25,13 @@ const MAX_TOOL_ITERATIONS = 5;
 const MAX_QUERY_LENGTH = 2000;
 const MAX_MESSAGES = 20;
 
+const TOOL_PHASE: Record<string, string> = {
+  lookup_knowledge_base: '1', search_manual: '1', lookup_user_vehicle: '1',
+  get_weather: '1', web_search: '1', search_marketplace: '1',
+  get_events: '1', convert_units: '1', translate_text: '1',
+  search_rps: '2', find_nearby_services: '2', search_community_content: '2',
+};
+
 // ─── Rate limiting ───────────────────────────────────────────────────────────
 
 const _rateCounts = new Map<string, { n: number; reset: number }>();
@@ -679,6 +686,7 @@ serve(async (req: Request) => {
         ? [...history.slice(0, -1), { role: 'user', content: safeQuery }]
         : [...history, { role: 'user', content: safeQuery }];
 
+    const requestConversationId = body.conversationId ?? crypto.randomUUID();
     const t0 = Date.now();
     let finalText = '';
     const manualRefs: Array<{ page_number: number; storage_url: string; title?: string }> = [];
@@ -708,7 +716,20 @@ serve(async (req: Request) => {
         const input = (call.input ?? {}) as Record<string, unknown>;
         toolsUsed.push(name);
 
+        const tTool = Date.now();
         const result = await dispatch(name, input, db, userId, body.userLocation) as Record<string, unknown>;
+        const toolLatencyMs = Date.now() - tTool;
+
+        db.from('barry_tool_executions').insert({
+          conversation_id: requestConversationId,
+          user_id: userId ?? null,
+          tool_name: name,
+          tool_phase: TOOL_PHASE[name] ?? '1',
+          latency_ms: toolLatencyMs,
+          success: result.ok !== false,
+          error_code: result.ok === false ? String(result.error ?? 'unknown').slice(0, 100) : null,
+          claude_iteration: iter + 1,
+        }).then(() => {}).catch(() => {});
 
         if (name === 'search_manual' && result.ok) {
           const rows = (result.results as Array<Record<string, unknown>>) ?? [];

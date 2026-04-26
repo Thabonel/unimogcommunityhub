@@ -1,3 +1,4 @@
+// DEPRECATED: superseded by barry-tools (Phase 3, 2026-04-26). Retain for emergency rollback only.
 /**
  * Barry OpenClaw Edge Function
  * Skill-based architecture for Barry AI with guardrails

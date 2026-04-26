@@ -1,3 +1,4 @@
+// DEPRECATED: superseded by barry-tools (Phase 3, 2026-04-26). Retain for emergency rollback only.
 // Barry Agentic Edge Function - Complete Hybrid Routing System
 // Date: 2025-10-31
 // Version: 30 - INTENT ROUTING: Adds intent/entity classification + clarification + weather gatherer (feature-flagged)

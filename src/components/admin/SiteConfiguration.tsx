@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SettingsSection } from "./settings/SettingsSection";
 import { AnswerEngineSettingsSection } from './settings/AnswerEngineSettingsSection';
 import { OpenClawSettingsSection } from './settings/OpenClawSettingsSection';
+import { BarryToolsMonitorSection } from './settings/BarryToolsMonitorSection';
 import { ScrapingSettingsSection } from './settings/ScrapingSettingsSection';
 import { NotificationSettingsSection } from "./settings/NotificationSettingsSection";
 import { TrialSettingsSection } from "./settings/TrialSettingsSection";
@@ -152,6 +153,9 @@ export const SiteConfiguration = () => {
 
         <TabsContent value="ai">
           <OpenClawSettingsSection />
+          <div className="mt-6">
+            <BarryToolsMonitorSection />
+          </div>
         </TabsContent>
 
         <TabsContent value="scraping">

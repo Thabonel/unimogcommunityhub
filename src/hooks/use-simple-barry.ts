@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase-client';
+import { callBarryTools } from '@/services/openclaw/barryToolsService';
 
 export interface BarryConversation {
   id: string;
@@ -267,23 +268,14 @@ export function useSimpleBarry(location?: { latitude: number; longitude: number 
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Call the barry function (STAGING: using chat-with-barry-agentic for Two-Mode Barry testing)
-      const { data, error: functionError } = await supabase.functions.invoke('chat-with-barry-agentic', {
-        body: {
-          messages: [
-            ...messages,
-            { role: 'user', content: message.trim() }
-          ],
-          location: location || null
-        }
-      });
+      const allMessages = [
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: 'user' as const, content: message.trim() }
+      ];
+      const data = await callBarryTools({ messages: allMessages, location });
 
-      if (functionError) throw functionError;
-
-      // Enrich manual references with chunk content
       const enrichedReferences = await enrichManualReferences(data.manualReferences || []);
 
-      // Add Barry's response
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: data.content || "I couldn't process that request.",
