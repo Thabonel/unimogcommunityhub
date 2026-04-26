@@ -12,6 +12,9 @@ import {
   HybridResponse,
   BarryOpenClawMessage
 } from '@/services/openclaw';
+import { callBarryTools } from '@/services/openclaw/barryToolsService';
+
+const BARRY_TOOLS_ENABLED = import.meta.env.VITE_BARRY_TOOLS_ENABLED === 'true';
 
 export interface BarryOpenClawConversation {
   id: string;
@@ -458,12 +461,15 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         userMessageContent = contextPrefix + userMessageContent;
       }
 
-      // Call hybrid service
-      const response = await barryHybridService.chat(
-        [...apiMessages, { role: 'user', content: userMessageContent }],
-        location,
-        user?.id
-      );
+      // Route to barry-tools when feature flag is enabled
+      const allMessages = [...apiMessages, { role: 'user' as const, content: userMessageContent }];
+      const response: HybridResponse = BARRY_TOOLS_ENABLED
+        ? {
+            ...await callBarryTools({ messages: allMessages, location, conversationId: conversationId ?? undefined }),
+            usedOpenClaw: true,
+            fallbackUsed: false,
+          }
+        : await barryHybridService.chat(allMessages, location, user?.id);
 
       setLastResponse(response);
 
