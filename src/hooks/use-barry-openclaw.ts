@@ -509,7 +509,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, location, user?.id, saveConversation]);
+  }, [messages, location, user?.id, saveConversation, vehicleContext, pageContext, conversationId]);
 
   const clearChat = useCallback(() => {
     setConversationId(null);

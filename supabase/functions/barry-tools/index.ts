@@ -497,9 +497,10 @@ async function toolFindNearbyServices(input: Record<string, unknown>, db: Return
 // ─── Tool: search_community_content ─────────────────────────────────────────
 
 async function toolSearchCommunity(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
-  const query = String(input.query ?? '');
+  const rawQuery = String(input.query ?? '');
   const docType = input.document_type ? String(input.document_type) : null;
-  if (!query.trim()) return { ok: false, error: 'query required' };
+  if (!rawQuery.trim()) return { ok: false, error: 'query required' };
+  const query = sanitiseFilterValue(rawQuery);
 
   let req = db.from('community_documents')
     .select('title,description,document_type,creator_name,download_count,rating_average')
@@ -673,7 +674,7 @@ serve(async (req: Request) => {
     let userId: string | undefined;
     const authHeader = req.headers.get('Authorization');
     if (authHeader) {
-      const userDb = createClient(SUPABASE_URL, authHeader.replace('Bearer ', ''));
+      const userDb = createClient(SUPABASE_URL, authHeader.split(' ')[1] ?? '');
       const { data: { user } } = await userDb.auth.getUser();
       userId = user?.id;
     }
