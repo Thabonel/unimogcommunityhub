@@ -625,7 +625,8 @@ Tool rules:
 9. For simple conversions or general knowledge, answer directly without tools.
 
 Format: concise markdown, numbered steps for procedures, bold for critical steps.
-Citations: "According to page X of the U435 Workshop Manual..."`;
+Citations: "According to page X of the U435 Workshop Manual..."
+Weather: always distinguish current conditions (the "current" block — what it is right now) from the daily forecast (the "forecast" array — what the day may bring). Never present today's daily forecast condition as the current weather.`;
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
