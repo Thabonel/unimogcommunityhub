@@ -22,19 +22,16 @@ type BarryToolsResponse = {
   execution_time_ms?: number;
 };
 
-function normaliseManualReferences(
-  rawRefs: BarryToolsManualReference[] | undefined
-): ManualReference[] {
-  const refs = rawRefs ?? [];
+function normaliseManualReferences(rawRefs: BarryToolsManualReference[] | undefined): ManualReference[] {
   const seen = new Set<string>();
-  const normalised: ManualReference[] = [];
+  const result: ManualReference[] = [];
 
-  for (const ref of refs) {
+  for (const ref of rawRefs ?? []) {
     const key = `${ref.page_number}|${ref.storage_url}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
-    normalised.push({
+    result.push({
       type: 'manual',
       title: ref.title ?? 'U435 Workshop Manual',
       page_number: ref.page_number,
@@ -45,7 +42,7 @@ function normaliseManualReferences(
     });
   }
 
-  return normalised;
+  return result;
 }
 
 export function normaliseBarryToolsResponse(data: BarryToolsResponse): BarryOpenClawResponse {
@@ -73,5 +70,6 @@ export async function callBarryTools(request: BarryToolsRequest): Promise<BarryO
   });
 
   if (error) throw new Error(error.message || 'Barry Tools unavailable');
+
   return normaliseBarryToolsResponse(data ?? {});
 }
