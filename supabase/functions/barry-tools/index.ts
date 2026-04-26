@@ -11,11 +11,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform',
 };
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL_TOOLS') || 'claude-haiku-4-5';
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
+
+if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY env var is required');
+if (!SUPABASE_URL) throw new Error('SUPABASE_URL env var is required');
+if (!SUPABASE_SERVICE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY env var is required');
 
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_QUERY_LENGTH = 2000;
@@ -65,8 +69,7 @@ function addSafety(text: string): string {
   return d.length ? text + '\n\n---\n' + d.join('\n') : text;
 }
 
-// ─── Supabase URL ─────────────────────────────────────────────────────────────
-const SUPA_STORAGE = 'https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public';
+const SUPA_STORAGE = `${SUPABASE_URL}/storage/v1/object/public`;
 
 // ─── Tool: search_manual ──────────────────────────────────────────────────────
 
@@ -174,9 +177,11 @@ async function toolKnowledgeBase(input: Record<string, unknown>, db: ReturnType<
     .order('priority', { ascending: false }).limit(50);
 
   const qkws = keywords(query);
-  const scored = (data ?? [])
+  type ScoredEntry = { e: Record<string, unknown>; s: number };
+  const scored: ScoredEntry[] = (data ?? [])
     .map((e: Record<string, unknown>) => ({ e, s: scoreKB(qkws, (e.question_keywords as string[]) ?? []) }))
-    .filter(x => x.s >= 0.4).sort((a, b) => b.s - a.s);
+    .filter((x: ScoredEntry) => x.s >= 0.4)
+    .sort((a: ScoredEntry, b: ScoredEntry) => b.s - a.s);
 
   if (!scored.length) return { ok: true, found: false, instructions: 'No validated answer found. Use search_manual.' };
 
@@ -192,7 +197,8 @@ async function toolKnowledgeBase(input: Record<string, unknown>, db: ReturnType<
 
 // ─── Tool: get_weather ───────────────────────────────────────────────────────
 
-const _weatherCache = new Map<string, { d: unknown; at: number }>();
+interface WeatherData { ok: boolean; current: Record<string, unknown>; forecast: Record<string, unknown>[]; source: string; as_of: string; instructions: string }
+const _weatherCache = new Map<string, { d: WeatherData; at: number }>();
 
 function wmoDesc(code: number): string {
   const m: Record<number, string> = {
@@ -214,7 +220,7 @@ async function toolGetWeather(input: Record<string, unknown>, userLocation?: { l
 
   const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
   const cached = _weatherCache.get(key);
-  if (cached && Date.now() - cached.at < 3_600_000) return { ok: true, ...cached.d };
+  if (cached && Date.now() - cached.at < 3_600_000) return cached.d;
 
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&forecast_days=${days}&timezone=auto&wind_speed_unit=kmh`;
@@ -225,7 +231,7 @@ async function toolGetWeather(input: Record<string, unknown>, userLocation?: { l
     const daily = raw.daily as Record<string, unknown[]>;
     const ts = new Date().toISOString();
 
-    const data = {
+    const data: WeatherData = {
       ok: true,
       current: {
         condition: wmoDesc(Number(cur.weather_code)),
@@ -249,7 +255,7 @@ async function toolGetWeather(input: Record<string, unknown>, userLocation?: { l
     _weatherCache.set(key, { d: data, at: Date.now() });
     return data;
   } catch (err) {
-    if (cached) return { ok: true, stale: true, ...cached.d };
+    if (cached) return { ...cached.d, stale: true };
     return { ok: false, error: String(err) };
   }
 }
@@ -431,11 +437,18 @@ async function toolSearchRPS(input: Record<string, unknown>, db: ReturnType<type
 
 // ─── Tool: find_nearby_services ──────────────────────────────────────────────
 
-async function toolFindNearbyServices(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
-  const query = String(input.query ?? '');
-  const specialty = input.specialty ? String(input.specialty) : null;
+// Strip PostgREST filter syntax chars that would break or() string parsing
+function sanitiseFilterValue(v: string): string {
+  return v.replace(/[,%()\[\]]/g, ' ').trim().slice(0, 100);
+}
 
-  // Build filter string for or() — combine query and specialty text search
+async function toolFindNearbyServices(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const rawQuery = String(input.query ?? '');
+  const rawSpecialty = input.specialty ? String(input.specialty) : null;
+  const query = sanitiseFilterValue(rawQuery);
+  const specialty = rawSpecialty ? sanitiseFilterValue(rawSpecialty) : null;
+
+  // Build PostgREST or() filter string — values sanitised above
   const filters: string[] = [];
   if (query) {
     filters.push(`business_name.ilike.%${query}%`, `description.ilike.%${query}%`, `tagline.ilike.%${query}%`);
@@ -583,27 +596,25 @@ async function dispatch(
   db: ReturnType<typeof createClient>,
   userId?: string,
   userLocation?: { latitude: number; longitude: number },
-): Promise<string> {
+): Promise<unknown> {
   try {
-    let result: unknown;
     switch (name) {
-      case 'lookup_knowledge_base': result = await toolKnowledgeBase(input, db); break;
-      case 'search_manual':         result = await toolSearchManual(input, db); break;
-      case 'lookup_user_vehicle':   result = await toolUserVehicle(db, userId); break;
-      case 'get_weather':           result = await toolGetWeather(input, userLocation); break;
-      case 'web_search':            result = await toolWebSearch(input); break;
-      case 'search_marketplace':    result = await toolMarketplace(input, db); break;
-      case 'get_events':            result = await toolGetEvents(input, db); break;
-      case 'convert_units':         result = toolConvertUnits(input); break;
-      case 'translate_text':           result = await toolTranslate(input); break;
-      case 'search_rps':               result = await toolSearchRPS(input, db); break;
-      case 'find_nearby_services':     result = await toolFindNearbyServices(input, db); break;
-      case 'search_community_content': result = await toolSearchCommunity(input, db); break;
-      default:                         result = { ok: false, error: `Unknown tool: ${name}` };
+      case 'lookup_knowledge_base':    return await toolKnowledgeBase(input, db);
+      case 'search_manual':            return await toolSearchManual(input, db);
+      case 'lookup_user_vehicle':      return await toolUserVehicle(db, userId);
+      case 'get_weather':              return await toolGetWeather(input, userLocation);
+      case 'web_search':               return await toolWebSearch(input);
+      case 'search_marketplace':       return await toolMarketplace(input, db);
+      case 'get_events':               return await toolGetEvents(input, db);
+      case 'convert_units':            return toolConvertUnits(input);
+      case 'translate_text':           return await toolTranslate(input);
+      case 'search_rps':               return await toolSearchRPS(input, db);
+      case 'find_nearby_services':     return await toolFindNearbyServices(input, db);
+      case 'search_community_content': return await toolSearchCommunity(input, db);
+      default:                         return { ok: false, error: `Unknown tool: ${name}` };
     }
-    return JSON.stringify(result);
   } catch (err) {
-    return JSON.stringify({ ok: false, error: String(err) });
+    return { ok: false, error: String(err) };
   }
 }
 
@@ -685,7 +696,7 @@ serve(async (req: Request) => {
       const cr = await resp.json() as { stop_reason: string; content: Array<Record<string, unknown>> };
       for (const b of cr.content) if (b.type === 'text') finalText = String(b.text);
 
-      if (cr.stop_reason === 'end_turn' || cr.stop_reason !== 'tool_use') break;
+      if (cr.stop_reason !== 'tool_use') break;
 
       const calls = cr.content.filter(b => b.type === 'tool_use');
       if (!calls.length) break;
@@ -697,8 +708,7 @@ serve(async (req: Request) => {
         const input = (call.input ?? {}) as Record<string, unknown>;
         toolsUsed.push(name);
 
-        const resultJson = await dispatch(name, input, db, userId, body.userLocation);
-        const result = JSON.parse(resultJson) as Record<string, unknown>;
+        const result = await dispatch(name, input, db, userId, body.userLocation) as Record<string, unknown>;
 
         if (name === 'search_manual' && result.ok) {
           const rows = (result.results as Array<Record<string, unknown>>) ?? [];
@@ -708,17 +718,18 @@ serve(async (req: Request) => {
           }
         }
 
-        results.push({ type: 'tool_result', tool_use_id: call.id, content: resultJson });
+        results.push({ type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(result) });
       }
       msgs.push({ role: 'user', content: results });
     }
 
+    if (!finalText) finalText = "I wasn't able to generate a complete response. Please try rephrasing your question.";
     const content = addSafety(finalText);
 
     // Log async — fire and forget
     db.from('chat_logs').insert({
       user_id: userId ?? null, messages: body.messages ?? [], response: content,
-      model: ANTHROPIC_MODEL, tokens_used: 0,
+      model: ANTHROPIC_MODEL,
       knowledge_source: toolsUsed.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
       pdf_references_found: searchCount,
     }).then(() => {}).catch(() => {});
