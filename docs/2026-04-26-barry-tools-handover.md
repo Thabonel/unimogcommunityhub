@@ -2,9 +2,10 @@
 
 **Date:** 2026-04-26
 **Branch:** main
-**Last commit on local + staging:** `051e376ab`
+**Last commit on local + staging:** `6aa864155`
 **Production Netlify deployed:** `acccb5346`
-**Production GitHub (origin/main):** `acc0f2058` ← stale, not synced
+**Production GitHub (origin/main):** `051e376ab` ← 3 commits behind local
+**Supabase barry-tools function:** v9 (includes storage-scan PDF resolver)
 
 ---
 
@@ -131,25 +132,25 @@ Three issues:
 
 | Surface | State | Commit |
 |---------|-------|--------|
-| Local `main` | Latest | `051e376ab` |
-| `staging/main` (GitHub) | In sync | `051e376ab` |
+| Local `main` | Latest | `6aa864155` |
+| `staging/main` (GitHub) | In sync | `6aa864155` |
 | Staging Netlify | Auto-deploys from staging push | latest |
-| Production Netlify | Deployed | `acccb5346` (one commit behind — OCR bump not yet deployed) |
-| `origin/main` (production GitHub) | **STALE** | `acc0f2058` (~10 commits behind) |
-| Supabase `barry-tools` function | Deployed | latest including `manualStorageUrl` fix |
+| Production Netlify | Deployed | `acccb5346` |
+| `origin/main` (production GitHub) | **STALE** | `051e376ab` (3 commits behind) |
+| Supabase `barry-tools` function | **v9 — current** | storage-scan PDF resolver + TS fix |
 
 ---
 
 ## Outstanding Items
 
 ### 1. Sync `origin/main` with production deploy
-`origin/main` is at `acc0f2058`. The production Netlify deploy somehow pulled `acccb5346` (likely from staging repo or a Netlify-side config). The production GitHub repo is now ~10 commits behind what's actually serving users.
+`origin/main` is at `051e376ab`. Local and staging are at `6aa864155` (3 commits ahead: handover doc, storage-scan PDF fix, TS annotation fix). The barry-tools edge function has been redeployed to v9 but origin/main is stale.
 
 **To fix:**
 ```bash
 git push origin main
 ```
-Hook will prompt `🎯 Confirm production deployment? (yes/no):` — must be answered in a real terminal (Claude Code's `!` and `Bash` tool don't allocate a TTY for this hook). After confirmation, this also triggers a fresh production Netlify deploy that includes commit `051e376ab` (the OCR Haiku 4.5 bump).
+Hook will prompt `🎯 Confirm production deployment? (yes/no):` — must be answered in a real terminal (Claude Code's `!` and `Bash` tool don't allocate a TTY for this hook).
 
 ### 2. Verify the PDF URL fix end-to-end
 Ask Barry "how do I change my indicator stalk" (or any technical question that hits `search_manual`) and confirm:
