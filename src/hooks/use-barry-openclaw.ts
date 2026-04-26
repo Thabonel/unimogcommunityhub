@@ -14,7 +14,7 @@ import {
 } from '@/services/openclaw';
 import { callBarryTools } from '@/services/openclaw/barryToolsService';
 
-const BARRY_TOOLS_ENABLED = import.meta.env.VITE_BARRY_TOOLS_ENABLED === 'true';
+const BARRY_TOOLS_DISABLED = import.meta.env.VITE_BARRY_TOOLS_DISABLED === 'true';
 
 export interface BarryOpenClawConversation {
   id: string;
@@ -461,9 +461,8 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         userMessageContent = contextPrefix + userMessageContent;
       }
 
-      // Route to barry-tools when feature flag is enabled
       const allMessages = [...apiMessages, { role: 'user' as const, content: userMessageContent }];
-      const response: HybridResponse = BARRY_TOOLS_ENABLED
+      const response: HybridResponse = !BARRY_TOOLS_DISABLED
         ? {
             ...await callBarryTools({ messages: allMessages, location, conversationId: conversationId ?? undefined }),
             usedOpenClaw: true,
