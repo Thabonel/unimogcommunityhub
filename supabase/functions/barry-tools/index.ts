@@ -1,17 +1,10 @@
 /**
- * Barry Tools Edge Function
- * Native Anthropic tool-use implementation replacing context-stuffing with first-class tool calls.
- *
- * Architecture:
- *   Security guardrails → Tool-use loop (max 5 iterations) → Safety filter → Log → Response
- *
- * Drop-in compatible with chat-with-barry-agentic response shape.
+ * Barry Tools Edge Function — single-file bundle (no local imports)
+ * Native Anthropic tool-use. Claude picks tools per question; no context stuffing.
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getToolDefinitions, getToolByName } from './tools/registry.ts';
-import type { ToolExecutionContext } from './tools/types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,216 +16,467 @@ const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL_TOOLS') || 'claude-haiku-4
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
-const MAPBOX_TOKEN = Deno.env.get('MAPBOX_TOKEN');
 
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_QUERY_LENGTH = 2000;
 const MAX_MESSAGES = 20;
 
-// --- Simple in-function rate limiting (avoids _shared dependency) ---
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 10;
-const RATE_WINDOW_MS = 60_000;
+// ─── Rate limiting ───────────────────────────────────────────────────────────
 
+const _rateCounts = new Map<string, { n: number; reset: number }>();
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
-  const entry = requestCounts.get(ip);
-  if (!entry || now >= entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
+  const e = _rateCounts.get(ip);
+  if (!e || now >= e.reset) { _rateCounts.set(ip, { n: 1, reset: now + 60_000 }); return true; }
+  if (e.n >= 10) return false;
+  e.n++; return true;
 }
-
 function getClientIP(req: Request): string {
-  return (
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip') ?? 'unknown';
 }
 
-// --- Safety ---
-const SAFETY_TRIGGERS: Array<{ keywords: string[]; disclaimer: string }> = [
-  {
-    keywords: ['brake', 'brakes', 'braking'],
-    disclaimer: 'Safety: Always use jack stands and chock wheels before working under vehicle. Never work on brakes without proper support.',
-  },
-  {
-    keywords: ['electrical', 'wiring', 'battery'],
-    disclaimer: 'Safety: Disconnect the negative battery terminal before working on electrical systems.',
-  },
-  {
-    keywords: ['lift', 'lifting', 'jack', 'raised'],
-    disclaimer: 'Safety: Always use rated jack stands. Never work under a vehicle supported only by a jack.',
-  },
-  {
-    keywords: ['hydraulic', 'hydraulics', 'pressure'],
-    disclaimer: 'Safety: Depressurize hydraulic systems before opening any lines. High-pressure fluid can penetrate skin.',
-  },
-  {
-    keywords: ['fuel', 'petrol', 'diesel', 'injector'],
-    disclaimer: 'Safety: Work in a well-ventilated area away from ignition sources when handling fuel.',
-  },
-  {
-    keywords: ['pto', 'power take-off', 'driveshaft'],
-    disclaimer: 'Safety: Disengage PTO and wait for all rotation to stop before performing any maintenance.',
-  },
-];
+// ─── Safety ──────────────────────────────────────────────────────────────────
 
 const BLOCKED_PATTERNS = [
-  'ignore previous instructions',
-  'system prompt override',
-  'act as different character',
-  'jailbreak',
-  'disable safety systems',
-  'bypass brake system',
-  'permanently disable brake',
-  'remove airbag',
-  'modify emissions control',
-  'defeat emissions',
-  'bypass seatbelt interlock',
-  'disable pto safety switch',
+  'ignore previous instructions', 'system prompt override', 'act as different character',
+  'jailbreak', 'disable safety systems', 'bypass brake system', 'permanently disable brake',
+  'remove airbag', 'modify emissions control', 'defeat emissions', 'bypass seatbelt interlock',
 ];
 
-function sanitizeQuery(query: string): string | null {
-  const q = query.trim().slice(0, MAX_QUERY_LENGTH);
-  const lower = q.toLowerCase();
-  for (const pattern of BLOCKED_PATTERNS) {
-    if (lower.includes(pattern)) return null;
-  }
-  return q;
+const SAFETY_TRIGGERS: Array<{ kw: string[]; msg: string }> = [
+  { kw: ['brake', 'brakes', 'braking'], msg: 'Always use jack stands and chock wheels before working under vehicle. Never work on brakes without proper support.' },
+  { kw: ['electrical', 'wiring', 'battery'], msg: 'Disconnect the negative battery terminal before working on electrical systems.' },
+  { kw: ['lift', 'lifting', 'jack', 'raised'], msg: 'Always use rated jack stands. Never work under a vehicle supported only by a jack.' },
+  { kw: ['hydraulic', 'hydraulics'], msg: 'Depressurise hydraulic systems before opening any lines. High-pressure fluid can penetrate skin.' },
+  { kw: ['fuel', 'diesel', 'petrol', 'injector'], msg: 'Work in a well-ventilated area away from ignition sources when handling fuel.' },
+  { kw: ['pto', 'power take-off', 'driveshaft'], msg: 'Disengage PTO and wait for all rotation to stop before performing any maintenance.' },
+];
+
+function sanitise(q: string): string | null {
+  const s = q.trim().slice(0, MAX_QUERY_LENGTH);
+  const lower = s.toLowerCase();
+  for (const p of BLOCKED_PATTERNS) if (lower.includes(p)) return null;
+  return s;
 }
 
-function buildSafetyDisclaimer(response: string): string {
-  const lower = response.toLowerCase();
-  const disclaimers: string[] = [];
-  for (const trigger of SAFETY_TRIGGERS) {
-    if (trigger.keywords.some(kw => lower.includes(kw))) {
-      disclaimers.push(trigger.disclaimer);
+function addSafety(text: string): string {
+  const lower = text.toLowerCase();
+  const d = SAFETY_TRIGGERS.filter(t => t.kw.some(k => lower.includes(k))).map(t => `⚠️ ${t.msg}`);
+  return d.length ? text + '\n\n---\n' + d.join('\n') : text;
+}
+
+// ─── Supabase URL ─────────────────────────────────────────────────────────────
+const SUPA_STORAGE = 'https://ydevatqwkoccxhtejdor.supabase.co/storage/v1/object/public';
+
+// ─── Tool: search_manual ──────────────────────────────────────────────────────
+
+const CHAPTER_RANGES = [
+  { start: 1,   end: 50,  file: 'U435_01_Introduction.pdf' },
+  { start: 51,  end: 100, file: 'U435_02_Engine.pdf' },
+  { start: 101, end: 150, file: 'U435_03_Fuel_System.pdf' },
+  { start: 151, end: 200, file: 'U435_04_Cooling.pdf' },
+  { start: 201, end: 250, file: 'U435_05_Exhaust.pdf' },
+  { start: 251, end: 300, file: 'U435_06_Clutch.pdf' },
+  { start: 301, end: 350, file: 'U435_07_Transmission.pdf' },
+  { start: 351, end: 400, file: 'U435_08_Transfer_Case.pdf' },
+  { start: 401, end: 450, file: 'U435_09_Driveline.pdf' },
+  { start: 451, end: 500, file: 'U435_10_Front_Axle.pdf' },
+  { start: 501, end: 550, file: 'U435_11_Rear_Axle.pdf' },
+  { start: 551, end: 600, file: 'U435_12_Steering.pdf' },
+  { start: 601, end: 650, file: 'U435_13_Brakes.pdf' },
+  { start: 651, end: 700, file: 'U435_14_Suspension.pdf' },
+  { start: 701, end: 750, file: 'U435_15_Wheels.pdf' },
+  { start: 751, end: 800, file: 'U435_16_Frame.pdf' },
+  { start: 801, end: 850, file: 'U435_17_Cab.pdf' },
+  { start: 851, end: 900, file: 'U435_18_Electrical.pdf' },
+  { start: 901, end: 950, file: 'U435_19_Wheel_Hub_Front.pdf' },
+  { start: 951, end: 1000, file: 'U435_20_Wheel_Hub_Rear.pdf' },
+];
+
+function chapterUrl(page: number): string {
+  for (const ch of CHAPTER_RANGES) {
+    if (page >= ch.start && page <= ch.end) {
+      return `${SUPA_STORAGE}/manuals/${ch.file}#page=${page - ch.start + 1}`;
     }
   }
-  if (!disclaimers.length) return response;
-  return response + '\n\n---\n' + disclaimers.map(d => `⚠️ ${d}`).join('\n');
+  return '';
 }
 
-// --- System prompt ---
-const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but friendly Unimog mechanic with 40+ years of experience. You specialise in the U435 series (U1300L, U1700L) and G-series military models, but you know the whole Unimog lineup.
-
-Your character:
-- Practical and direct — no waffle
-- Use proper technical terms but explain them when useful
-- Always emphasise safety, never skip safety precautions
-- Light personality: occasional mechanic's aside, but don't force it
-
-Tool use rules:
-1. For any technical Unimog question, ALWAYS call lookup_knowledge_base first, then search_manual if needed.
-2. Always cite specific page numbers from search_manual results in your response.
-3. For weather, call get_weather. For anything needing current information, call web_search.
-4. If you don't find information in the manuals, say so clearly — never fabricate specs or procedures.
-5. For general questions that need no tools, answer directly from general knowledge.
-6. If the user asks about their vehicle, call lookup_user_vehicle first.
-
-Response format:
-- Be concise but complete
-- Use markdown formatting for procedures (numbered lists, bold for critical steps)
-- When citing manuals, write: "According to page X of the U435 Workshop Manual..."`;
-
-// --- Claude API ---
-async function callClaude(
-  messages: Array<{ role: string; content: unknown }>,
-  tools: unknown[],
-): Promise<Record<string, unknown>> {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 2048,
-      system: BARRY_SYSTEM_PROMPT,
-      messages,
-      tools,
-    }),
-  });
-
-  if (!resp.ok) {
-    const body = await resp.text();
-    throw new Error(`Claude API ${resp.status}: ${body}`);
-  }
-
-  return resp.json() as Promise<Record<string, unknown>>;
+function keywords(q: string): string[] {
+  const stop = new Set(['the','a','an','is','are','was','were','have','has','do','does','will','would',
+    'could','should','to','of','in','for','on','with','at','by','from','how','what','where','when',
+    'why','which','who','my','your','i','me','you','can','may','might','be','been']);
+  return [...new Set(q.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(w => w.length > 2 && !stop.has(w)))];
 }
 
-// --- Tool execution ---
-async function executeToolCall(
-  toolName: string,
-  toolInput: Record<string, unknown>,
-  toolCtx: ToolExecutionContext,
-  conversationId: string,
-  db: ReturnType<typeof createClient>,
-  claudeIteration: number,
-): Promise<string> {
-  const tool = getToolByName(toolName);
-  if (!tool) {
-    return JSON.stringify({ ok: false, error: { code: 'NOT_FOUND', message: `Unknown tool: ${toolName}` } });
+async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const max = Math.min(Number(input.max_results ?? 5), 8);
+  if (!query.trim()) return { ok: false, error: 'query required' };
+
+  const kws = keywords(query);
+  let chunks: Record<string, unknown>[] = [];
+
+  if (kws.length) {
+    const { data: fts } = await db.from('manual_chunks')
+      .select('content,section_title,page_number,manual_title')
+      .textSearch('content', kws.join(' & '), { type: 'websearch', config: 'english' })
+      .ilike('manual_title', '%U435%').limit(max);
+    if (fts?.length) { chunks = fts; }
+    else {
+      const seen = new Set<number>();
+      for (const kw of kws.slice(0, 4)) {
+        const { data } = await db.from('manual_chunks')
+          .select('content,section_title,page_number,manual_title')
+          .ilike('content', `%${kw}%`).ilike('manual_title', '%U435%').limit(max);
+        for (const r of data ?? []) {
+          if (!seen.has(r.page_number)) { seen.add(r.page_number); chunks.push(r); }
+        }
+        if (chunks.length >= max) break;
+      }
+    }
   }
 
-  const startMs = Date.now();
-  let result;
+  const results = chunks.slice(0, max).map(c => ({
+    page_number: c.page_number,
+    section_title: c.section_title ?? null,
+    storage_url: chapterUrl(Number(c.page_number)),
+    content_preview: String(c.content ?? '').slice(0, 400),
+  }));
+
+  return {
+    ok: true,
+    found: results.length > 0,
+    result_count: results.length,
+    results,
+    instructions: results.length > 0
+      ? 'Cite specific page numbers from these results in your response.'
+      : 'No manual content found. Tell the user the manual does not cover this topic.',
+  };
+}
+
+// ─── Tool: lookup_knowledge_base ─────────────────────────────────────────────
+
+function scoreKB(qkws: string[], ekws: string[]): number {
+  if (!qkws.length || !ekws.length) return 0;
+  const lower = ekws.map(k => k.toLowerCase());
+  let m = 0;
+  for (const qk of qkws) if (lower.some(ek => ek === qk || ek.includes(qk) || qk.includes(ek))) m++;
+  return m / qkws.length;
+}
+
+async function toolKnowledgeBase(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  if (!query.trim()) return { ok: false, error: 'query required' };
+
+  const { data } = await db.from('barry_knowledge_base')
+    .select('id,question_keywords,barry_response_template,manual_references,validation_count')
+    .order('priority', { ascending: false }).limit(50);
+
+  const qkws = keywords(query);
+  const scored = (data ?? [])
+    .map((e: Record<string, unknown>) => ({ e, s: scoreKB(qkws, (e.question_keywords as string[]) ?? []) }))
+    .filter(x => x.s >= 0.4).sort((a, b) => b.s - a.s);
+
+  if (!scored.length) return { ok: true, found: false, instructions: 'No validated answer found. Use search_manual.' };
+
+  const best = scored[0].e;
+  return {
+    ok: true, found: true,
+    response_template: best.barry_response_template,
+    manual_references: best.manual_references ?? [],
+    validation_count: best.validation_count ?? 0,
+    instructions: 'Use this validated answer as primary source.',
+  };
+}
+
+// ─── Tool: get_weather ───────────────────────────────────────────────────────
+
+const _weatherCache = new Map<string, { d: unknown; at: number }>();
+
+function wmoDesc(code: number): string {
+  const m: Record<number, string> = {
+    0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+    45:'Foggy',48:'Rime fog',51:'Light drizzle',53:'Moderate drizzle',55:'Dense drizzle',
+    61:'Slight rain',63:'Moderate rain',65:'Heavy rain',71:'Slight snow',73:'Moderate snow',
+    75:'Heavy snow',80:'Slight showers',81:'Moderate showers',82:'Violent showers',
+    95:'Thunderstorm',96:'Thunderstorm with hail',99:'Thunderstorm with heavy hail',
+  };
+  return m[code] ?? 'Unknown';
+}
+
+async function toolGetWeather(input: Record<string, unknown>, userLocation?: { latitude: number; longitude: number }): Promise<unknown> {
+  const lat = input.latitude != null ? Number(input.latitude) : userLocation?.latitude;
+  const lon = input.longitude != null ? Number(input.longitude) : userLocation?.longitude;
+  const days = Math.min(Number(input.forecast_days ?? 3), 7);
+
+  if (lat == null || lon == null) return { ok: false, error: 'latitude and longitude required — ask the user to share their location or specify a place name' };
+
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  const cached = _weatherCache.get(key);
+  if (cached && Date.now() - cached.at < 3_600_000) return { ok: true, ...cached.d };
 
   try {
-    result = await Promise.race([
-      tool.execute(toolInput, toolCtx),
-      new Promise(resolve =>
-        setTimeout(() => resolve({
-          ok: false,
-          error: { code: 'TIMEOUT', message: `Tool ${toolName} timed out`, retriable: false },
-          metadata: { latency_ms: tool.config.timeout_ms, source: toolName, timestamp: new Date().toISOString() },
-        }), tool.config.timeout_ms)
-      ),
-    ]) as typeof result;
-  } catch (err) {
-    result = {
-      ok: false,
-      error: { code: 'UPSTREAM_ERROR', message: String(err), retriable: false },
-      metadata: { latency_ms: Date.now() - startMs, source: toolName, timestamp: new Date().toISOString() },
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&forecast_days=${days}&timezone=auto&wind_speed_unit=kmh`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!resp.ok) throw new Error(`Open-Meteo ${resp.status}`);
+    const raw = await resp.json() as Record<string, unknown>;
+    const cur = raw.current as Record<string, unknown>;
+    const daily = raw.daily as Record<string, unknown[]>;
+    const ts = new Date().toISOString();
+
+    const data = {
+      ok: true,
+      current: {
+        condition: wmoDesc(Number(cur.weather_code)),
+        temperature_c: cur.temperature_2m,
+        humidity_pct: cur.relative_humidity_2m,
+        wind_kmh: cur.wind_speed_10m,
+        precipitation_mm: cur.precipitation,
+      },
+      forecast: (daily.time as string[]).map((date, i) => ({
+        date,
+        condition: wmoDesc((daily.weather_code as number[])[i]),
+        max_temp_c: (daily.temperature_2m_max as number[])[i],
+        min_temp_c: (daily.temperature_2m_min as number[])[i],
+        precipitation_mm: (daily.precipitation_sum as number[])[i],
+        max_wind_kmh: (daily.wind_speed_10m_max as number[])[i],
+      })),
+      source: 'Open-Meteo',
+      as_of: ts,
+      instructions: `Include "(Source: Open-Meteo, ${ts})" when presenting this data.`,
     };
+    _weatherCache.set(key, { d: data, at: Date.now() });
+    return data;
+  } catch (err) {
+    if (cached) return { ok: true, stale: true, ...cached.d };
+    return { ok: false, error: String(err) };
   }
-
-  // Log async — don't await
-  db.from('barry_tool_executions').insert({
-    conversation_id: conversationId,
-    user_id: toolCtx.userId ?? null,
-    tool_name: toolName,
-    tool_phase: String(tool.phase),
-    latency_ms: result?.metadata?.latency_ms ?? (Date.now() - startMs),
-    success: result?.ok ?? false,
-    error_code: result?.error?.code ?? null,
-    claude_iteration: claudeIteration,
-  }).then(() => {}).catch(() => {});
-
-  return JSON.stringify(result);
 }
 
-// --- Main handler ---
-serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+// ─── Tool: web_search ────────────────────────────────────────────────────────
+
+async function toolWebSearch(input: Record<string, unknown>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const count = Math.min(Number(input.count ?? 5), 10);
+  if (!query.trim()) return { ok: false, error: 'query required' };
+  if (!BRAVE_API_KEY) return { ok: false, error: 'Web search not configured' };
+
+  try {
+    const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=${count}&text_decorations=0&safesearch=moderate`;
+    const resp = await fetch(url, {
+      headers: { Accept: 'application/json', 'X-Subscription-Token': BRAVE_API_KEY },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (resp.status === 429) return { ok: false, error: 'Search rate limited' };
+    if (!resp.ok) throw new Error(`Brave ${resp.status}`);
+    const raw = await resp.json() as { web?: { results?: Array<{ title: string; url: string; description: string; page_age?: string }> } };
+    const ts = new Date().toISOString();
+    return {
+      ok: true,
+      results: (raw.web?.results ?? []).map(r => ({ title: r.title, url: r.url, description: r.description, published: r.page_age ?? null })),
+      as_of: ts,
+      instructions: 'Include URL and publication date when citing these results.',
+    };
+  } catch (err) {
+    return { ok: false, error: String(err) };
   }
+}
 
-  const clientIP = getClientIP(req);
+// ─── Tool: convert_units ─────────────────────────────────────────────────────
 
-  if (!checkRateLimit(clientIP)) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. Please wait before sending another message.' }),
-      { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+const CONV: Record<string, Record<string, (v: number) => number>> = {
+  nm: { 'ft-lb': v => v * 0.737562 },
+  'ft-lb': { nm: v => v * 1.35582 },
+  bar: { psi: v => v * 14.5038, kpa: v => v * 100 },
+  psi: { bar: v => v * 0.0689476, kpa: v => v * 6.89476 },
+  kpa: { bar: v => v / 100, psi: v => v / 6.89476 },
+  liter: { gallon: v => v * 0.264172, quart: v => v * 1.05669 },
+  litre: { gallon: v => v * 0.264172, quart: v => v * 1.05669 },
+  gallon: { liter: v => v * 3.78541, litre: v => v * 3.78541, quart: v => v * 4 },
+  quart: { liter: v => v * 0.946353, litre: v => v * 0.946353 },
+  km: { mile: v => v * 0.621371, miles: v => v * 0.621371 },
+  mile: { km: v => v * 1.60934 }, miles: { km: v => v * 1.60934 },
+  kmh: { mph: v => v * 0.621371 }, mph: { kmh: v => v * 1.60934 },
+  kg: { lb: v => v * 2.20462, lbs: v => v * 2.20462 },
+  lb: { kg: v => v * 0.453592 }, lbs: { kg: v => v * 0.453592 },
+  celsius: { fahrenheit: v => v * 9/5 + 32 }, fahrenheit: { celsius: v => (v-32) * 5/9 },
+  mm: { inch: v => v * 0.0393701, inches: v => v * 0.0393701 },
+  inch: { mm: v => v * 25.4 }, inches: { mm: v => v * 25.4 },
+  m: { ft: v => v * 3.28084, feet: v => v * 3.28084 },
+  ft: { m: v => v * 0.3048 }, feet: { m: v => v * 0.3048 },
+};
+
+function toolConvertUnits(input: Record<string, unknown>): unknown {
+  const value = Number(input.value);
+  const from = String(input.from_unit ?? '').toLowerCase().replace(/\s/g,'');
+  const to = String(input.to_unit ?? '').toLowerCase().replace(/\s/g,'');
+  if (isNaN(value)) return { ok: false, error: 'value must be a number' };
+  if (from === to) return { ok: true, input: value, from_unit: from, to_unit: to, result: value };
+  const fn = CONV[from]?.[to];
+  if (!fn) return { ok: false, error: `Cannot convert ${from} to ${to}. Supported: nm/ft-lb, bar/psi/kpa, liter/gallon, km/mile, kg/lb, celsius/fahrenheit, mm/inch, m/ft` };
+  return { ok: true, input: value, from_unit: from, to_unit: to, result: Math.round(fn(value) * 10000) / 10000 };
+}
+
+// ─── Tool: lookup_user_vehicle ───────────────────────────────────────────────
+
+async function toolUserVehicle(db: ReturnType<typeof createClient>, userId?: string): Promise<unknown> {
+  if (!userId) return { ok: true, found: false, note: 'User not authenticated' };
+  const { data } = await db.from('vehicles').select('make,model,year,notes').eq('user_id', userId).limit(5);
+  return { ok: true, found: (data?.length ?? 0) > 0, vehicles: data ?? [] };
+}
+
+// ─── Tool: search_marketplace ────────────────────────────────────────────────
+
+async function toolMarketplace(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const category = input.category ? String(input.category) : null;
+  let req = db.from('marketplace_listings')
+    .select('id,title,description,price,category,condition,location,status,created_at')
+    .eq('status', 'active').order('created_at', { ascending: false }).limit(8);
+  if (query) req = req.ilike('title', `%${query}%`);
+  if (category) req = req.eq('category', category);
+  const { data } = await req;
+  return { ok: true, found: (data?.length ?? 0) > 0, result_count: data?.length ?? 0, listings: data ?? [] };
+}
+
+// ─── Tool: get_events ────────────────────────────────────────────────────────
+
+async function toolGetEvents(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const days = Math.min(Number(input.days_ahead ?? 90), 365);
+  const now = new Date().toISOString();
+  const until = new Date(Date.now() + days * 86_400_000).toISOString();
+  const { data } = await db.from('events')
+    .select('id,title,description,event_type,start_date,end_date,location_name,location_address,is_public')
+    .eq('is_public', true).gte('start_date', now).lte('start_date', until)
+    .order('start_date', { ascending: true }).limit(10);
+  return { ok: true, found: (data?.length ?? 0) > 0, result_count: data?.length ?? 0, events: data ?? [] };
+}
+
+// ─── Tool: translate_text ────────────────────────────────────────────────────
+
+async function toolTranslate(input: Record<string, unknown>): Promise<unknown> {
+  const text = String(input.text ?? '');
+  const lang = String(input.target_language ?? 'en');
+  if (!text.trim()) return { ok: false, error: 'text required' };
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/translate-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` },
+      body: JSON.stringify({ text, target_language: lang }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!resp.ok) throw new Error(`translate-text ${resp.status}`);
+    const r = await resp.json() as { translated_text?: string };
+    return { ok: true, original: text, translated: r.translated_text ?? text, target_language: lang };
+  } catch (err) {
+    return { ok: true, original: text, translated: text, target_language: lang, note: `Translation unavailable: ${err}` };
+  }
+}
+
+// ─── Tool registry ───────────────────────────────────────────────────────────
+
+const TOOL_DEFINITIONS = [
+  {
+    name: 'lookup_knowledge_base',
+    description: 'Check admin-validated knowledge base for pre-approved answers to Unimog questions. Call FIRST for any technical question.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'The user question' } }, required: ['query'] },
+  },
+  {
+    name: 'search_manual',
+    description: 'Search U435 Unimog workshop manuals for procedures, torque specs, fluid capacities, troubleshooting. Always cite page numbers returned.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Technical topic to search' }, max_results: { type: 'number', description: 'Max results 1-8 (default 5)' } }, required: ['query'] },
+  },
+  {
+    name: 'lookup_user_vehicle',
+    description: "Look up the user's registered Unimog vehicles (make, model, year). Call when the question refers to 'my Unimog' or 'my vehicle'.",
+    input_schema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_weather',
+    description: "Get current weather and 7-day forecast. Call when the user asks about weather or trip planning that depends on conditions. Uses user's GPS location automatically if available.",
+    input_schema: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, forecast_days: { type: 'number', description: '1-7 (default 3)' } }, required: [] },
+  },
+  {
+    name: 'web_search',
+    description: 'Search the web for current information: parts prices, dealer locations, fuel prices, campsite reviews, road conditions, community forums.',
+    input_schema: { type: 'object', properties: { query: { type: 'string' }, count: { type: 'number', description: '1-10 (default 5)' } }, required: ['query'] },
+  },
+  {
+    name: 'search_marketplace',
+    description: "Search the community marketplace for Unimog parts, vehicles, and services. Use when the user asks about buying or finding parts.",
+    input_schema: { type: 'object', properties: { query: { type: 'string' }, category: { type: 'string', description: 'parts | vehicles | services' } }, required: ['query'] },
+  },
+  {
+    name: 'get_events',
+    description: 'Get upcoming community events: rallies, meetups, trail rides, workshops.',
+    input_schema: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Days ahead to look (default 90)' } }, required: [] },
+  },
+  {
+    name: 'convert_units',
+    description: 'Convert between units. Supports: Nm↔ft-lb, bar↔psi↔kPa, liter↔gallon↔quart, km↔miles, kg↔lb, celsius↔fahrenheit, mm↔inch, m↔ft. No API call needed.',
+    input_schema: { type: 'object', properties: { value: { type: 'number' }, from_unit: { type: 'string' }, to_unit: { type: 'string' } }, required: ['value', 'from_unit', 'to_unit'] },
+  },
+  {
+    name: 'translate_text',
+    description: 'Translate text between languages. Useful for German Unimog manual text.',
+    input_schema: { type: 'object', properties: { text: { type: 'string' }, target_language: { type: 'string', description: 'e.g. "en", "de", "fr"' } }, required: ['text', 'target_language'] },
+  },
+];
+
+// ─── Dispatch ────────────────────────────────────────────────────────────────
+
+async function dispatch(
+  name: string,
+  input: Record<string, unknown>,
+  db: ReturnType<typeof createClient>,
+  userId?: string,
+  userLocation?: { latitude: number; longitude: number },
+): Promise<string> {
+  try {
+    let result: unknown;
+    switch (name) {
+      case 'lookup_knowledge_base': result = await toolKnowledgeBase(input, db); break;
+      case 'search_manual':         result = await toolSearchManual(input, db); break;
+      case 'lookup_user_vehicle':   result = await toolUserVehicle(db, userId); break;
+      case 'get_weather':           result = await toolGetWeather(input, userLocation); break;
+      case 'web_search':            result = await toolWebSearch(input); break;
+      case 'search_marketplace':    result = await toolMarketplace(input, db); break;
+      case 'get_events':            result = await toolGetEvents(input, db); break;
+      case 'convert_units':         result = toolConvertUnits(input); break;
+      case 'translate_text':        result = await toolTranslate(input); break;
+      default:                      result = { ok: false, error: `Unknown tool: ${name}` };
+    }
+    return JSON.stringify(result);
+  } catch (err) {
+    return JSON.stringify({ ok: false, error: String(err) });
+  }
+}
+
+// ─── System prompt ───────────────────────────────────────────────────────────
+
+const SYSTEM = `You are Barry, a gruff but friendly Unimog mechanic with 40+ years of experience. You specialise in the U435 series (U1300L, U1700L) and G-series military models.
+
+Character: practical, direct, always emphasise safety. Light personality — don't force it.
+
+Tool rules:
+1. For any technical Unimog question, call lookup_knowledge_base first, then search_manual if needed.
+2. Always cite specific page numbers from search_manual results.
+3. For weather questions, call get_weather. For current info, call web_search.
+4. If manuals don't cover something, say so — never fabricate specs or procedures.
+5. For "my Unimog" questions, call lookup_user_vehicle first.
+6. For simple conversions or general knowledge, answer directly without tools.
+
+Format: concise markdown, numbered steps for procedures, bold for critical steps.
+Citations: "According to page X of the U435 Workshop Manual..."`;
+
+// ─── Main ────────────────────────────────────────────────────────────────────
+
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  if (!checkRateLimit(getClientIP(req))) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   try {
@@ -244,140 +488,93 @@ serve(async (req: Request) => {
     };
 
     const rawQuery = body.message ?? body.messages?.at(-1)?.content ?? '';
-    const safeQuery = sanitizeQuery(rawQuery);
-
+    const safeQuery = sanitise(rawQuery);
     if (!safeQuery) {
-      return new Response(
-        JSON.stringify({ error: 'Message blocked by safety filter.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'Message blocked by safety filter.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Auth
-    const authHeader = req.headers.get('Authorization');
     const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     let userId: string | undefined;
-
+    const authHeader = req.headers.get('Authorization');
     if (authHeader) {
       const userDb = createClient(SUPABASE_URL, authHeader.replace('Bearer ', ''));
       const { data: { user } } = await userDb.auth.getUser();
       userId = user?.id;
     }
 
-    const conversationId = body.conversationId ?? crypto.randomUUID();
-
-    const toolCtx: ToolExecutionContext = {
-      supabaseUrl: SUPABASE_URL,
-      supabaseServiceKey: SUPABASE_SERVICE_KEY,
-      anthropicKey: ANTHROPIC_API_KEY,
-      braveApiKey: BRAVE_API_KEY,
-      mapboxToken: MAPBOX_TOKEN,
-      userId,
-      userLocation: body.userLocation,
-    };
-
-    // Build messages from history
-    const historyMessages = (body.messages ?? [])
-      .slice(-(MAX_MESSAGES - 1))
+    const history = (body.messages ?? []).slice(-(MAX_MESSAGES - 1))
       .map((m: { role: string; content: string }) => ({ role: m.role, content: m.content }));
 
-    const claudeMessages: Array<{ role: string; content: unknown }> =
-      historyMessages.length > 0 && historyMessages.at(-1)?.role === 'user'
-        ? [...historyMessages.slice(0, -1), { role: 'user', content: safeQuery }]
-        : [...historyMessages, { role: 'user', content: safeQuery }];
+    const msgs: Array<{ role: string; content: unknown }> =
+      history.length && history.at(-1)?.role === 'user'
+        ? [...history.slice(0, -1), { role: 'user', content: safeQuery }]
+        : [...history, { role: 'user', content: safeQuery }];
 
-    const toolDefs = getToolDefinitions();
-    const globalStartMs = Date.now();
-    let finalContent = '';
-    const manualReferences: Array<{ page_number: number; storage_url: string; title?: string }> = [];
-    const toolsInvoked: string[] = [];
-    let searchResultCount = 0;
+    const t0 = Date.now();
+    let finalText = '';
+    const manualRefs: Array<{ page_number: number; storage_url: string; title?: string }> = [];
+    const toolsUsed: string[] = [];
+    let searchCount = 0;
 
-    // Tool-use loop
-    for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-      const response = await callClaude(claudeMessages, toolDefs);
-      const stopReason = response.stop_reason as string;
-      const content = response.content as Array<Record<string, unknown>>;
+    for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 2048, system: SYSTEM, messages: msgs, tools: TOOL_DEFINITIONS }),
+      });
+      if (!resp.ok) throw new Error(`Claude ${resp.status}: ${await resp.text()}`);
 
-      for (const block of content) {
-        if (block.type === 'text') {
-          finalContent = String(block.text);
-        }
-      }
+      const cr = await resp.json() as { stop_reason: string; content: Array<Record<string, unknown>> };
+      for (const b of cr.content) if (b.type === 'text') finalText = String(b.text);
 
-      if (stopReason === 'end_turn') break;
-      if (stopReason !== 'tool_use') break;
+      if (cr.stop_reason === 'end_turn' || cr.stop_reason !== 'tool_use') break;
 
-      const toolUseBlocks = content.filter(b => b.type === 'tool_use');
-      if (!toolUseBlocks.length) break;
+      const calls = cr.content.filter(b => b.type === 'tool_use');
+      if (!calls.length) break;
+      msgs.push({ role: 'assistant', content: cr.content });
 
-      claudeMessages.push({ role: 'assistant', content });
+      const results: Array<Record<string, unknown>> = [];
+      for (const call of calls) {
+        const name = String(call.name);
+        const input = (call.input ?? {}) as Record<string, unknown>;
+        toolsUsed.push(name);
 
-      const toolResultContent: Array<Record<string, unknown>> = [];
-
-      for (const toolCall of toolUseBlocks) {
-        const toolName = String(toolCall.name);
-        const toolInput = (toolCall.input ?? {}) as Record<string, unknown>;
-        toolsInvoked.push(toolName);
-
-        const resultJson = await executeToolCall(toolName, toolInput, toolCtx, conversationId, db, iteration + 1);
+        const resultJson = await dispatch(name, input, db, userId, body.userLocation);
         const result = JSON.parse(resultJson) as Record<string, unknown>;
 
-        // Extract manual references for frontend
-        if (toolName === 'search_manual' && result.ok) {
-          const data = result.data as Record<string, unknown>;
-          const results = (data.results as Array<Record<string, unknown>>) ?? [];
-          searchResultCount += results.length;
-          for (const r of results) {
-            if (r.page_number && r.storage_url) {
-              manualReferences.push({
-                page_number: Number(r.page_number),
-                storage_url: String(r.storage_url),
-                title: r.section_title ? String(r.section_title) : undefined,
-              });
-            }
+        if (name === 'search_manual' && result.ok) {
+          const rows = (result.results as Array<Record<string, unknown>>) ?? [];
+          searchCount += rows.length;
+          for (const r of rows) if (r.page_number && r.storage_url) {
+            manualRefs.push({ page_number: Number(r.page_number), storage_url: String(r.storage_url), title: r.section_title ? String(r.section_title) : undefined });
           }
         }
 
-        toolResultContent.push({
-          type: 'tool_result',
-          tool_use_id: toolCall.id,
-          content: resultJson,
-        });
+        results.push({ type: 'tool_result', tool_use_id: call.id, content: resultJson });
       }
-
-      claudeMessages.push({ role: 'user', content: toolResultContent });
+      msgs.push({ role: 'user', content: results });
     }
 
-    const safeContent = buildSafetyDisclaimer(finalContent);
+    const content = addSafety(finalText);
 
-    // Log async
+    // Log async — fire and forget
     db.from('chat_logs').insert({
-      user_id: userId ?? null,
-      messages: body.messages ?? [],
-      response: safeContent,
-      model: ANTHROPIC_MODEL,
-      tokens_used: 0,
-      knowledge_source: toolsInvoked.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
-      pdf_references_found: searchResultCount,
+      user_id: userId ?? null, messages: body.messages ?? [], response: content,
+      model: ANTHROPIC_MODEL, tokens_used: 0,
+      knowledge_source: toolsUsed.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
+      pdf_references_found: searchCount,
     }).then(() => {}).catch(() => {});
 
-    return new Response(
-      JSON.stringify({
-        content: safeContent,
-        manualReferences,
-        knowledgeMode: toolsInvoked.join(',') || 'direct',
-        searchResultCount,
-        skill_chain: toolsInvoked,
-        execution_time_ms: Date.now() - globalStartMs,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({
+      content, manualReferences: manualRefs,
+      knowledgeMode: toolsUsed.join(',') || 'direct',
+      searchResultCount: searchCount,
+      skill_chain: toolsUsed,
+      execution_time_ms: Date.now() - t0,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
   } catch (err) {
-    console.error('[barry-tools] Error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Barry encountered an error. Please try again.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    );
+    console.error('[barry-tools]', err);
+    return new Response(JSON.stringify({ error: 'Barry encountered an error. Please try again.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
