@@ -80,13 +80,39 @@ const SUPA_STORAGE = `${SUPABASE_URL}/storage/v1/object/public`;
 
 // ─── Tool: search_manual ──────────────────────────────────────────────────────
 
-// Derive the storage filename from the manual_title stored in manual_chunks.
-// manual_title examples: "G603 Unimog all types Light Repair", "U435 Workshop Manual"
-// Storage filename: spaces replaced with dashes + ".pdf"
+// The manuals bucket is heterogeneous: most files use spaces→dashes + .pdf,
+// some preserve literal spaces, and some live under workshop/ or rps/ subfolders.
+// We list once per cold start and resolve manual_title → real storage path.
+let _pdfPaths: string[] | null = null;
+let _pdfBasenames: Map<string, string> | null = null;
+
+async function loadAvailablePdfs(db: ReturnType<typeof createClient>): Promise<void> {
+  if (_pdfPaths) return;
+  const { data } = await db.schema('storage').from('objects')
+    .select('name').eq('bucket_id', 'manuals').like('name', '%.pdf').limit(500);
+  const paths = (data ?? []).map((r: Record<string, unknown>) => String(r.name));
+  _pdfPaths = paths;
+  _pdfBasenames = new Map(paths.map(p => [p.split('/').pop()!, p]));
+}
+
+function resolveManualPath(manualTitle: string): string | null {
+  if (!manualTitle || !_pdfBasenames) return null;
+  const stripped = manualTitle.replace(/\.pdf$/i, '');
+  const candidates = [
+    stripped.replace(/\s+/g, '-') + '.pdf',  // most common: spaces → dashes
+    stripped + '.pdf',                        // literal spaces preserved
+  ];
+  for (const name of candidates) {
+    const path = _pdfBasenames.get(name);
+    if (path) return path;
+  }
+  return null;
+}
+
 function manualStorageUrl(manualTitle: string, pageNumber: number): string {
-  if (!manualTitle) return '';
-  const filename = manualTitle.replace(/\s+/g, '-') + '.pdf';
-  return `${SUPA_STORAGE}/manuals/${filename}#page=${pageNumber}`;
+  const path = resolveManualPath(manualTitle);
+  if (!path) return '';
+  return `${SUPA_STORAGE}/manuals/${encodeURI(path)}#page=${pageNumber}`;
 }
 
 function keywords(q: string): string[] {
@@ -101,6 +127,8 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
   const max = Math.min(Number(input.max_results ?? 5), 8);
   if (!query.trim()) return { ok: false, error: 'query required' };
 
+  await loadAvailablePdfs(db);
+
   const kws = keywords(query);
   let chunks: Record<string, unknown>[] = [];
 
@@ -108,29 +136,37 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
     const { data: fts } = await db.from('manual_chunks')
       .select('content,section_title,page_number,manual_title')
       .textSearch('content', kws.join(' & '), { type: 'websearch', config: 'english' })
-      .ilike('manual_title', '%U435%').limit(max);
+      .limit(max);
     if (fts?.length) { chunks = fts; }
     else {
-      const seen = new Set<number>();
+      const seen = new Set<string>();
       for (const kw of kws.slice(0, 4)) {
         const { data } = await db.from('manual_chunks')
           .select('content,section_title,page_number,manual_title')
-          .ilike('content', `%${kw}%`).ilike('manual_title', '%U435%').limit(max);
+          .ilike('content', `%${kw}%`).limit(max);
         for (const r of data ?? []) {
-          if (!seen.has(r.page_number)) { seen.add(r.page_number); chunks.push(r); }
+          const key = `${r.manual_title}|${r.page_number}`;
+          if (!seen.has(key)) { seen.add(key); chunks.push(r); }
         }
         if (chunks.length >= max) break;
       }
     }
   }
 
-  const results = chunks.slice(0, max).map(c => ({
-    page_number: c.page_number,
-    section_title: c.section_title ?? null,
-    manual_title: c.manual_title ?? null,
-    storage_url: manualStorageUrl(String(c.manual_title ?? ''), Number(c.page_number)),
-    content_preview: String(c.content ?? '').slice(0, 400),
-  }));
+  const results = chunks
+    .map(c => {
+      const url = manualStorageUrl(String(c.manual_title ?? ''), Number(c.page_number));
+      if (!url) return null;
+      return {
+        page_number: c.page_number,
+        section_title: c.section_title ?? null,
+        manual_title: c.manual_title ?? null,
+        storage_url: url,
+        content_preview: String(c.content ?? '').slice(0, 400),
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .slice(0, max);
 
   return {
     ok: true,
