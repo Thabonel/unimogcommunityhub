@@ -80,36 +80,13 @@ const SUPA_STORAGE = `${SUPABASE_URL}/storage/v1/object/public`;
 
 // ─── Tool: search_manual ──────────────────────────────────────────────────────
 
-const CHAPTER_RANGES = [
-  { start: 1,   end: 50,  file: 'U435_01_Introduction.pdf' },
-  { start: 51,  end: 100, file: 'U435_02_Engine.pdf' },
-  { start: 101, end: 150, file: 'U435_03_Fuel_System.pdf' },
-  { start: 151, end: 200, file: 'U435_04_Cooling.pdf' },
-  { start: 201, end: 250, file: 'U435_05_Exhaust.pdf' },
-  { start: 251, end: 300, file: 'U435_06_Clutch.pdf' },
-  { start: 301, end: 350, file: 'U435_07_Transmission.pdf' },
-  { start: 351, end: 400, file: 'U435_08_Transfer_Case.pdf' },
-  { start: 401, end: 450, file: 'U435_09_Driveline.pdf' },
-  { start: 451, end: 500, file: 'U435_10_Front_Axle.pdf' },
-  { start: 501, end: 550, file: 'U435_11_Rear_Axle.pdf' },
-  { start: 551, end: 600, file: 'U435_12_Steering.pdf' },
-  { start: 601, end: 650, file: 'U435_13_Brakes.pdf' },
-  { start: 651, end: 700, file: 'U435_14_Suspension.pdf' },
-  { start: 701, end: 750, file: 'U435_15_Wheels.pdf' },
-  { start: 751, end: 800, file: 'U435_16_Frame.pdf' },
-  { start: 801, end: 850, file: 'U435_17_Cab.pdf' },
-  { start: 851, end: 900, file: 'U435_18_Electrical.pdf' },
-  { start: 901, end: 950, file: 'U435_19_Wheel_Hub_Front.pdf' },
-  { start: 951, end: 1000, file: 'U435_20_Wheel_Hub_Rear.pdf' },
-];
-
-function chapterUrl(page: number): string {
-  for (const ch of CHAPTER_RANGES) {
-    if (page >= ch.start && page <= ch.end) {
-      return `${SUPA_STORAGE}/manuals/${ch.file}#page=${page - ch.start + 1}`;
-    }
-  }
-  return '';
+// Derive the storage filename from the manual_title stored in manual_chunks.
+// manual_title examples: "G603 Unimog all types Light Repair", "U435 Workshop Manual"
+// Storage filename: spaces replaced with dashes + ".pdf"
+function manualStorageUrl(manualTitle: string, pageNumber: number): string {
+  if (!manualTitle) return '';
+  const filename = manualTitle.replace(/\s+/g, '-') + '.pdf';
+  return `${SUPA_STORAGE}/manuals/${filename}#page=${pageNumber}`;
 }
 
 function keywords(q: string): string[] {
@@ -150,7 +127,8 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
   const results = chunks.slice(0, max).map(c => ({
     page_number: c.page_number,
     section_title: c.section_title ?? null,
-    storage_url: chapterUrl(Number(c.page_number)),
+    manual_title: c.manual_title ?? null,
+    storage_url: manualStorageUrl(String(c.manual_title ?? ''), Number(c.page_number)),
     content_preview: String(c.content ?? '').slice(0, 400),
   }));
 
@@ -736,7 +714,8 @@ serve(async (req: Request) => {
           const rows = (result.results as Array<Record<string, unknown>>) ?? [];
           searchCount += rows.length;
           for (const r of rows) if (r.page_number && r.storage_url) {
-            manualRefs.push({ page_number: Number(r.page_number), storage_url: String(r.storage_url), title: r.section_title ? String(r.section_title) : undefined });
+            const title = r.section_title ? String(r.section_title) : r.manual_title ? String(r.manual_title) : undefined;
+            manualRefs.push({ page_number: Number(r.page_number), storage_url: String(r.storage_url), title });
           }
         }
 
