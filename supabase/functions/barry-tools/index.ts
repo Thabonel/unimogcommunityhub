@@ -10,10 +10,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { rateLimiters, applyRateLimit } from '../_shared/rateLimit.ts';
-import { getClientIP } from '../_shared/security.ts';
-import { getToolDefinitions, getToolByName } from '../../openclaw-core/tools/registry.ts';
-import type { ToolExecutionContext } from '../../openclaw-core/tools/types.ts';
+import { getToolDefinitions, getToolByName } from './tools/registry.ts';
+import type { ToolExecutionContext } from './tools/types.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,7 +29,32 @@ const MAX_TOOL_ITERATIONS = 5;
 const MAX_QUERY_LENGTH = 2000;
 const MAX_MESSAGES = 20;
 
-// Safety disclaimer categories
+// --- Simple in-function rate limiting (avoids _shared dependency) ---
+const requestCounts = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60_000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = requestCounts.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    requestCounts.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
+function getClientIP(req: Request): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown'
+  );
+}
+
+// --- Safety ---
 const SAFETY_TRIGGERS: Array<{ keywords: string[]; disclaimer: string }> = [
   {
     keywords: ['brake', 'brakes', 'braking'],
@@ -59,7 +82,6 @@ const SAFETY_TRIGGERS: Array<{ keywords: string[]; disclaimer: string }> = [
   },
 ];
 
-// Blocked topics — deny at input
 const BLOCKED_PATTERNS = [
   'ignore previous instructions',
   'system prompt override',
@@ -96,6 +118,7 @@ function buildSafetyDisclaimer(response: string): string {
   return response + '\n\n---\n' + disclaimers.map(d => `⚠️ ${d}`).join('\n');
 }
 
+// --- System prompt ---
 const BARRY_SYSTEM_PROMPT = `You are Barry, a gruff but friendly Unimog mechanic with 40+ years of experience. You specialise in the U435 series (U1300L, U1700L) and G-series military models, but you know the whole Unimog lineup.
 
 Your character:
@@ -117,6 +140,7 @@ Response format:
 - Use markdown formatting for procedures (numbered lists, bold for critical steps)
 - When citing manuals, write: "According to page X of the U435 Workshop Manual..."`;
 
+// --- Claude API ---
 async function callClaude(
   messages: Array<{ role: string; content: unknown }>,
   tools: unknown[],
@@ -145,6 +169,7 @@ async function callClaude(
   return resp.json() as Promise<Record<string, unknown>>;
 }
 
+// --- Tool execution ---
 async function executeToolCall(
   toolName: string,
   toolInput: Record<string, unknown>,
@@ -162,15 +187,14 @@ async function executeToolCall(
   let result;
 
   try {
-    const timeoutMs = tool.config.timeout_ms;
     result = await Promise.race([
       tool.execute(toolInput, toolCtx),
       new Promise(resolve =>
         setTimeout(() => resolve({
           ok: false,
-          error: { code: 'TIMEOUT', message: `Tool ${toolName} timed out after ${timeoutMs}ms`, retriable: false },
-          metadata: { latency_ms: timeoutMs, source: toolName, timestamp: new Date().toISOString() },
-        }), timeoutMs)
+          error: { code: 'TIMEOUT', message: `Tool ${toolName} timed out`, retriable: false },
+          metadata: { latency_ms: tool.config.timeout_ms, source: toolName, timestamp: new Date().toISOString() },
+        }), tool.config.timeout_ms)
       ),
     ]) as typeof result;
   } catch (err) {
@@ -181,25 +205,22 @@ async function executeToolCall(
     };
   }
 
-  // Log tool execution
-  try {
-    await db.from('barry_tool_executions').insert({
-      conversation_id: conversationId,
-      user_id: toolCtx.userId ?? null,
-      tool_name: toolName,
-      tool_phase: tool.phase.toString(),
-      latency_ms: result?.metadata?.latency_ms ?? (Date.now() - startMs),
-      success: result?.ok ?? false,
-      error_code: result?.error?.code ?? null,
-      claude_iteration: claudeIteration,
-    });
-  } catch (_logErr) {
-    // Non-fatal
-  }
+  // Log async — don't await
+  db.from('barry_tool_executions').insert({
+    conversation_id: conversationId,
+    user_id: toolCtx.userId ?? null,
+    tool_name: toolName,
+    tool_phase: String(tool.phase),
+    latency_ms: result?.metadata?.latency_ms ?? (Date.now() - startMs),
+    success: result?.ok ?? false,
+    error_code: result?.error?.code ?? null,
+    claude_iteration: claudeIteration,
+  }).then(() => {}).catch(() => {});
 
   return JSON.stringify(result);
 }
 
+// --- Main handler ---
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -207,9 +228,7 @@ serve(async (req: Request) => {
 
   const clientIP = getClientIP(req);
 
-  // Rate limiting
-  const rlResponse = await applyRateLimit(clientIP, rateLimiters.chat);
-  if (rlResponse) {
+  if (!checkRateLimit(clientIP)) {
     return new Response(
       JSON.stringify({ error: 'Rate limit exceeded. Please wait before sending another message.' }),
       { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -257,12 +276,11 @@ serve(async (req: Request) => {
       userLocation: body.userLocation,
     };
 
-    // Build initial messages from history
+    // Build messages from history
     const historyMessages = (body.messages ?? [])
       .slice(-(MAX_MESSAGES - 1))
       .map((m: { role: string; content: string }) => ({ role: m.role, content: m.content }));
 
-    // Ensure last message is the sanitized user query
     const claudeMessages: Array<{ role: string; content: unknown }> =
       historyMessages.length > 0 && historyMessages.at(-1)?.role === 'user'
         ? [...historyMessages.slice(0, -1), { role: 'user', content: safeQuery }]
@@ -271,8 +289,8 @@ serve(async (req: Request) => {
     const toolDefs = getToolDefinitions();
     const globalStartMs = Date.now();
     let finalContent = '';
-    let manualReferences: Array<{ page_number: number; storage_url: string; title?: string }> = [];
-    let toolsInvoked: string[] = [];
+    const manualReferences: Array<{ page_number: number; storage_url: string; title?: string }> = [];
+    const toolsInvoked: string[] = [];
     let searchResultCount = 0;
 
     // Tool-use loop
@@ -281,7 +299,6 @@ serve(async (req: Request) => {
       const stopReason = response.stop_reason as string;
       const content = response.content as Array<Record<string, unknown>>;
 
-      // Collect any text blocks
       for (const block of content) {
         if (block.type === 'text') {
           finalContent = String(block.text);
@@ -289,14 +306,11 @@ serve(async (req: Request) => {
       }
 
       if (stopReason === 'end_turn') break;
-
       if (stopReason !== 'tool_use') break;
 
-      // Execute all tool calls in this iteration
       const toolUseBlocks = content.filter(b => b.type === 'tool_use');
       if (!toolUseBlocks.length) break;
 
-      // Append assistant message with all content
       claudeMessages.push({ role: 'assistant', content });
 
       const toolResultContent: Array<Record<string, unknown>> = [];
@@ -312,7 +326,7 @@ serve(async (req: Request) => {
         // Extract manual references for frontend
         if (toolName === 'search_manual' && result.ok) {
           const data = result.data as Record<string, unknown>;
-          const results = data.results as Array<Record<string, unknown>> ?? [];
+          const results = (data.results as Array<Record<string, unknown>>) ?? [];
           searchResultCount += results.length;
           for (const r of results) {
             if (r.page_number && r.storage_url) {
@@ -332,29 +346,21 @@ serve(async (req: Request) => {
         });
       }
 
-      // Feed tool results back to Claude
       claudeMessages.push({ role: 'user', content: toolResultContent });
     }
 
-    // Safety filter
     const safeContent = buildSafetyDisclaimer(finalContent);
 
-    // Log conversation
-    try {
-      await db.from('chat_logs').insert({
-        user_id: userId ?? null,
-        messages: body.messages ?? [],
-        response: safeContent,
-        model: ANTHROPIC_MODEL,
-        tokens_used: 0,
-        knowledge_source: toolsInvoked.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
-        pdf_references_found: searchResultCount,
-      });
-    } catch (_logErr) {
-      // Non-fatal
-    }
-
-    const executionMs = Date.now() - globalStartMs;
+    // Log async
+    db.from('chat_logs').insert({
+      user_id: userId ?? null,
+      messages: body.messages ?? [],
+      response: safeContent,
+      model: ANTHROPIC_MODEL,
+      tokens_used: 0,
+      knowledge_source: toolsInvoked.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
+      pdf_references_found: searchResultCount,
+    }).then(() => {}).catch(() => {});
 
     return new Response(
       JSON.stringify({
@@ -363,7 +369,7 @@ serve(async (req: Request) => {
         knowledgeMode: toolsInvoked.join(',') || 'direct',
         searchResultCount,
         skill_chain: toolsInvoked,
-        execution_time_ms: executionMs,
+        execution_time_ms: Date.now() - globalStartMs,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
