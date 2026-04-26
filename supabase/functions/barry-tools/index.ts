@@ -92,7 +92,7 @@ async function loadAvailablePdfs(db: ReturnType<typeof createClient>): Promise<v
     .select('name').eq('bucket_id', 'manuals').like('name', '%.pdf').limit(500);
   const paths = (data ?? []).map((r: Record<string, unknown>) => String(r.name));
   _pdfPaths = paths;
-  _pdfBasenames = new Map(paths.map(p => [p.split('/').pop()!, p]));
+  _pdfBasenames = new Map(paths.map((p: string) => [p.split('/').pop()!, p]));
 }
 
 function resolveManualPath(manualTitle: string): string | null {
