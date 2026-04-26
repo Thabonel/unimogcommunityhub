@@ -374,6 +374,142 @@ async function toolTranslate(input: Record<string, unknown>): Promise<unknown> {
   }
 }
 
+// ─── Tool: search_rps ────────────────────────────────────────────────────────
+
+async function toolSearchRPS(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const max = Math.min(Number(input.max_results ?? 6), 12);
+  if (!query.trim()) return { ok: false, error: 'query required' };
+
+  const kws = keywords(query);
+  let parts: Record<string, unknown>[] = [];
+
+  if (kws.length) {
+    const { data: fts } = await db.from('rps_parts')
+      .select('niin,nsn,description,group_code,repair_grade,page_number,rps_number,figure_reference')
+      .textSearch('description', kws.join(' & '), { type: 'websearch', config: 'english' })
+      .limit(max);
+    if (fts?.length) {
+      parts = fts;
+    } else {
+      for (const kw of kws.slice(0, 3)) {
+        const { data } = await db.from('rps_parts')
+          .select('niin,nsn,description,group_code,repair_grade,page_number,rps_number,figure_reference')
+          .ilike('description', `%${kw}%`).limit(max);
+        for (const r of data ?? []) {
+          if (!parts.some(p => p.niin === r.niin)) parts.push(r);
+        }
+        if (parts.length >= max) break;
+      }
+    }
+  }
+
+  if (!parts.length) return { ok: true, found: false, instructions: 'No RPS parts found. Try web_search for aftermarket alternatives.' };
+
+  const groupCodes = [...new Set(parts.map(p => String(p.group_code)))];
+  const { data: groups } = await db.from('rps_groups').select('group_code,group_name').in('group_code', groupCodes);
+  const groupMap = Object.fromEntries((groups ?? []).map((g: Record<string, string>) => [g.group_code, g.group_name]));
+
+  return {
+    ok: true,
+    found: true,
+    result_count: Math.min(parts.length, max),
+    results: parts.slice(0, max).map(p => ({
+      niin: p.niin,
+      nsn: p.nsn ?? null,
+      description: p.description,
+      group_code: p.group_code,
+      group_name: groupMap[String(p.group_code)] ?? null,
+      repair_grade: p.repair_grade ?? null,
+      page_number: p.page_number ?? null,
+      rps_number: p.rps_number,
+      figure_reference: p.figure_reference ?? null,
+    })),
+    instructions: 'Present NIIN and description. Repair grade: L=Light, M=Medium, H=Heavy. Always recommend verifying NSN with official TM before ordering.',
+  };
+}
+
+// ─── Tool: find_nearby_services ──────────────────────────────────────────────
+
+async function toolFindNearbyServices(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const specialty = input.specialty ? String(input.specialty) : null;
+
+  // Build filter string for or() — combine query and specialty text search
+  const filters: string[] = [];
+  if (query) {
+    filters.push(`business_name.ilike.%${query}%`, `description.ilike.%${query}%`, `tagline.ilike.%${query}%`);
+  }
+  if (specialty) {
+    filters.push(`business_name.ilike.%${specialty}%`, `description.ilike.%${specialty}%`);
+  }
+
+  let req = db.from('vendors')
+    .select('business_name,tagline,description,location,website_url,phone,email,specialties,is_verified,is_featured')
+    .order('is_featured', { ascending: false })
+    .order('display_order', { ascending: true })
+    .limit(8);
+
+  if (filters.length) req = req.or(filters.join(','));
+
+  const { data: vendors } = await req;
+
+  return {
+    ok: true,
+    found: (vendors?.length ?? 0) > 0,
+    result_count: vendors?.length ?? 0,
+    services: (vendors ?? []).map((v: Record<string, unknown>) => ({
+      name: v.business_name,
+      tagline: v.tagline ?? null,
+      location: v.location ?? null,
+      website: v.website_url ?? null,
+      phone: v.phone ?? null,
+      email: v.email ?? null,
+      specialties: v.specialties ?? [],
+      verified: v.is_verified,
+    })),
+    instructions: (vendors?.length ?? 0) > 0
+      ? 'Present these community vendors. Note if verified. Recommend contacting directly.'
+      : 'No community vendors found. Suggest web_search to find local Unimog specialists.',
+  };
+}
+
+// ─── Tool: search_community_content ─────────────────────────────────────────
+
+async function toolSearchCommunity(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
+  const query = String(input.query ?? '');
+  const docType = input.document_type ? String(input.document_type) : null;
+  if (!query.trim()) return { ok: false, error: 'query required' };
+
+  let req = db.from('community_documents')
+    .select('title,description,document_type,creator_name,download_count,rating_average')
+    .eq('is_public', true)
+    .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+    .order('download_count', { ascending: false })
+    .limit(6);
+
+  if (docType) req = req.eq('document_type', docType);
+
+  const { data: docs } = await req;
+
+  return {
+    ok: true,
+    found: (docs?.length ?? 0) > 0,
+    result_count: docs?.length ?? 0,
+    documents: (docs ?? []).map((d: Record<string, unknown>) => ({
+      title: d.title,
+      description: d.description ?? null,
+      type: d.document_type,
+      author: d.creator_name,
+      downloads: d.download_count ?? 0,
+      rating: d.rating_average ?? null,
+    })),
+    instructions: (docs?.length ?? 0) > 0
+      ? 'Community-contributed documents. Mention the author. Tell user to find them in the Knowledge Base section.'
+      : 'No community documents found for this topic.',
+  };
+}
+
 // ─── Tool registry ───────────────────────────────────────────────────────────
 
 const TOOL_DEFINITIONS = [
@@ -422,6 +558,21 @@ const TOOL_DEFINITIONS = [
     description: 'Translate text between languages. Useful for German Unimog manual text.',
     input_schema: { type: 'object', properties: { text: { type: 'string' }, target_language: { type: 'string', description: 'e.g. "en", "de", "fr"' } }, required: ['text', 'target_language'] },
   },
+  {
+    name: 'search_rps',
+    description: 'Search the RPS illustrated parts catalog for Unimog spare parts by description or component name. Returns NIIN part numbers, group, repair grade, and page references. Use for parts lookup questions.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Part or component name (e.g. "fuel filter", "portal hub seal", "clutch disc")' }, max_results: { type: 'number', description: 'Max results 1-12 (default 6)' } }, required: ['query'] },
+  },
+  {
+    name: 'find_nearby_services',
+    description: 'Find Unimog service providers, mechanics, and specialists from the community vendor directory. Use when the user asks about finding help, workshops, or specialists.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Service type or location (e.g. "restoration", "gearbox rebuild", "Australia")' }, specialty: { type: 'string', description: 'Specialty keyword to filter by' } }, required: [] },
+  },
+  {
+    name: 'search_community_content',
+    description: 'Search community-contributed documents, procedures, checklists, and guides uploaded by members. Use for user-sourced knowledge like expedition prep, conversion guides, field repairs.',
+    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Topic (e.g. "expedition prep", "snorkel install", "pre-trip checklist")' }, document_type: { type: 'string', description: 'Filter by type: powerpoint | excel | pdf | checklist | procedure' } }, required: ['query'] },
+  },
 ];
 
 // ─── Dispatch ────────────────────────────────────────────────────────────────
@@ -444,8 +595,11 @@ async function dispatch(
       case 'search_marketplace':    result = await toolMarketplace(input, db); break;
       case 'get_events':            result = await toolGetEvents(input, db); break;
       case 'convert_units':         result = toolConvertUnits(input); break;
-      case 'translate_text':        result = await toolTranslate(input); break;
-      default:                      result = { ok: false, error: `Unknown tool: ${name}` };
+      case 'translate_text':           result = await toolTranslate(input); break;
+      case 'search_rps':               result = await toolSearchRPS(input, db); break;
+      case 'find_nearby_services':     result = await toolFindNearbyServices(input, db); break;
+      case 'search_community_content': result = await toolSearchCommunity(input, db); break;
+      default:                         result = { ok: false, error: `Unknown tool: ${name}` };
     }
     return JSON.stringify(result);
   } catch (err) {
@@ -462,10 +616,13 @@ Character: practical, direct, always emphasise safety. Light personality — don
 Tool rules:
 1. For any technical Unimog question, call lookup_knowledge_base first, then search_manual if needed.
 2. Always cite specific page numbers from search_manual results.
-3. For weather questions, call get_weather. For current info, call web_search.
-4. If manuals don't cover something, say so — never fabricate specs or procedures.
-5. For "my Unimog" questions, call lookup_user_vehicle first.
-6. For simple conversions or general knowledge, answer directly without tools.
+3. For parts or component lookup questions, call search_rps to find NIIN part numbers.
+4. For weather questions, call get_weather. For current info (prices, news), call web_search.
+5. If manuals don't cover something, say so — never fabricate specs or procedures.
+6. For "my Unimog" questions, call lookup_user_vehicle first.
+7. For finding mechanics, workshops, or specialists, call find_nearby_services.
+8. For community guides, checklists, or member-contributed content, call search_community_content.
+9. For simple conversions or general knowledge, answer directly without tools.
 
 Format: concise markdown, numbered steps for procedures, bold for critical steps.
 Citations: "According to page X of the U435 Workshop Manual..."`;
