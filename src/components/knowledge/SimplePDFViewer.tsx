@@ -1,6 +1,5 @@
 import React from 'react';
 import { PDFViewerLayout } from './PDFViewerLayout';
-import * as pdfjsLib from 'pdfjs-dist';
 import { usePdfSearch } from '@/hooks/use-pdf-search';
 import { PdfCanvas } from './PdfCanvas';
 import { PdfSearchBar } from './pdf-viewer/PdfSearchBar';
@@ -15,6 +14,8 @@ interface SimplePDFViewerProps {
 }
 
 export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFViewerProps) {
+  const [scrollPosition, setScrollPosition] = React.useState(0);
+
   // Use our custom hooks for state management and PDF loading
   const {
     currentPage,
@@ -244,6 +245,9 @@ export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFVie
             pdfDoc={pdfDoc}
             currentPage={currentPage}
             scale={scale}
+            isLoading={isLoading}
+            scrollPosition={scrollPosition}
+            onScroll={setScrollPosition}
             searchTerm={searchTerm}
             searchResults={searchResults}
             currentSearchResultIndex={currentSearchResultIndex}

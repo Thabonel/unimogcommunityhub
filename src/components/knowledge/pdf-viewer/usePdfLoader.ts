@@ -66,7 +66,10 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Worker is already configured globally by pdfjs-dist 3.11.174
+        // Ensure worker is configured — Safari and mobile browsers need this set explicitly
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+        }
 
         // Load PDF with robust options and multiple fallback strategies
         const standardFontDataUrl = resolveStandardFontUrl(attempt);
@@ -100,11 +103,11 @@ export const usePdfLoader = ({
         // Add timeout to prevent hanging
         const pdfPromise = Promise.race([
           loadingTask.promise,
-          new Promise((_, reject) => 
+          new Promise<PDFDocumentProxy>((_, reject) =>
             setTimeout(() => reject(new Error('PDF loading timeout')), 30000)
           )
         ]);
-        
+
         const pdf = await pdfPromise;
         
         console.info('✅ PDF loaded successfully:', {
