@@ -23,9 +23,11 @@ export const usePdfLoader = ({
   useEffect(() => {
     const maxRetries = 2;
     
-    const baseUrl = import.meta.env.BASE_URL ?? '/';
-    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-    const localPdfAssetsBase = `${normalizedBaseUrl}pdfjs/`;
+    // Use absolute URLs so the pdfjs worker can resolve them regardless of its own origin.
+    // A worker loaded from an external CDN (e.g. unpkg) cannot resolve relative paths
+    // like /pdfjs/standard_fonts/ — they'd resolve against the CDN domain, not ours.
+    const siteOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    const localPdfAssetsBase = `${siteOrigin}/pdfjs/`;
 
     const cMapSources = [
       `${localPdfAssetsBase}cmaps/`,
@@ -66,10 +68,11 @@ export const usePdfLoader = ({
           throw new Error('Invalid PDF URL provided');
         }
 
-        // Ensure worker is configured — Safari and mobile browsers need this set explicitly
-        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
-        }
+        // Always force the local worker. Other components (SimplePdfScrollViewer) may have
+        // set it to an external CDN like unpkg.com. When the worker runs from an external
+        // origin, relative paths like /pdfjs/standard_fonts/ resolve against that origin
+        // instead of ours, causing all font loads to 404 and text to render invisible.
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
         // Load PDF with robust options and multiple fallback strategies
         const standardFontDataUrl = resolveStandardFontUrl(attempt);
