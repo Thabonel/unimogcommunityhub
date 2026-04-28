@@ -58,7 +58,7 @@ export const fetchApprovedManuals = async (): Promise<StorageManual[]> => {
       metadata: {
         title: item.metadata?.title || item.name,
         description: item.metadata?.description || "Unimog Technical Manual",
-        pages: item.metadata?.pages || "Unknown"
+        pages: item.metadata?.pages || undefined
       }
     }));
   } catch (error) {
