@@ -35,10 +35,12 @@ export function ManualCard({ manual, onView, onDelete, isAdmin = false }: Manual
       </CardHeader>
       <CardContent className="flex-grow flex flex-col p-3 pt-0">
         <div className="grid grid-cols-2 gap-1 text-xs mb-2">
-          <div>
-            <p className="text-muted-foreground text-xs">{t('manuals.pages')}</p>
-            <p className="font-medium text-xs">{manual.metadata?.pages || t('manuals.unknown')}</p>
-          </div>
+          {manual.metadata?.pages && (
+            <div>
+              <p className="text-muted-foreground text-xs">{t('manuals.pages')}</p>
+              <p className="font-medium text-xs">{manual.metadata.pages}</p>
+            </div>
+          )}
           <div>
             <p className="text-muted-foreground text-xs">{t('manuals.size')}</p>
             <p className="font-medium text-xs">{formatFileSize(fileSize)}</p>
