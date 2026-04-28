@@ -103,6 +103,7 @@ export function PdfCanvas({
         const renderContext = {
           canvasContext: context,
           viewport: pageViewport,
+          renderInteractiveForms: false, // Don't render blank AcroForm boxes over content
         };
 
         // Store the render task so we can cancel it if needed

@@ -80,7 +80,7 @@ export const usePdfLoader = ({
           withCredentials: false,
           disableRange: attempt > 1, // Disable range requests on retries
           disableStream: attempt > 2, // Disable streaming on final attempt
-          isEvalSupported: false, // Disable eval for security
+          isEvalSupported: true, // Required for Type 1 / PostScript font glyph rendering
           disableAutoFetch: attempt > 1, // Disable auto fetching on retries
           disableFontFace: !standardFontDataUrl, // Disable font loading when no source available
           useSystemFonts: !standardFontDataUrl, // Rely on system fonts only when we run out of sources
