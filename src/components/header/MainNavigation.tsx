@@ -50,9 +50,9 @@ export const MainNavigation = ({ isActive }: MainNavigationProps) => {
         </span>
       </Link>
 
-      {/* Adventure dropdown */}
+      {/* Operations dropdown */}
       <NavigationDropdown
-        label={t('nav.adventure', 'Adventure')}
+        label={t('nav.adventure', 'Operations')}
         items={adventureItems}
         isActive={isActive}
         icon={Compass}
