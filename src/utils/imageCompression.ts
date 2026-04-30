@@ -21,16 +21,11 @@ export async function compressImage(
   options: CompressionOptions = {}
 ): Promise<File> {
   const {
-    maxWidth = 1200,
-    maxHeight = 1200,
-    quality = 0.85,
-    maxSizeMB = 2
+    maxWidth = 1024,
+    maxHeight = 1024,
+    quality = 0.82,
+    maxSizeMB = 0.5
   } = options;
-
-  // If file is already small enough, return as is
-  if (file.size <= maxSizeMB * 1024 * 1024) {
-    return file;
-  }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

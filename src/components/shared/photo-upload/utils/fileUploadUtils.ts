@@ -139,31 +139,15 @@ export const uploadFile = async (
     let fileToUpload = file;
     if (type !== 'favicon') {
       const originalSize = file.size;
-      
-      // Show compression notification for large files
-      if (originalSize > 2 * 1024 * 1024) { // > 2MB
+      fileToUpload = await compressImage(file);
+      const savedPercent = Math.round((1 - fileToUpload.size / originalSize) * 100);
+      if (savedPercent > 20) {
         toastFn({
-          title: "Compressing image...",
-          description: `Original size: ${formatFileSize(originalSize)}`,
-        });
-        
-        // Compress the image
-        fileToUpload = await compressImage(file, {
-          maxWidth: 1200,
-          maxHeight: 1200,
-          quality: 0.85,
-          maxSizeMB: 2
-        });
-        
-        const compressedSize = fileToUpload.size;
-        const savedPercent = Math.round((1 - compressedSize / originalSize) * 100);
-        
-        toastFn({
-          title: "Image compressed",
-          description: `Reduced from ${formatFileSize(originalSize)} to ${formatFileSize(compressedSize)} (${savedPercent}% smaller)`,
+          title: "Image optimised",
+          description: `${savedPercent}% smaller (${formatFileSize(originalSize)} → ${formatFileSize(fileToUpload.size)})`,
         });
       }
-      
+
       // Validate the compressed file
       if (!validateFile(fileToUpload, toastFn)) {
         return null;

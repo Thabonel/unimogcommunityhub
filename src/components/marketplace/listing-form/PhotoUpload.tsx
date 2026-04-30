@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { compressImage } from '@/utils/imageCompression';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -15,7 +16,7 @@ interface PhotoUploadProps {
 export function PhotoUpload({ photos, setPhotos }: PhotoUploadProps) {
   const { toast } = useToast();
   
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
@@ -32,7 +33,8 @@ export function PhotoUpload({ photos, setPhotos }: PhotoUploadProps) {
         invalidFiles.push(`${file.name} (invalid file type, must be JPG, PNG or WebP)`);
         continue;
       }
-      newPhotos.push(file);
+      const compressed = await compressImage(file);
+      newPhotos.push(compressed);
     }
 
     if (invalidFiles.length > 0) {
@@ -44,7 +46,7 @@ export function PhotoUpload({ photos, setPhotos }: PhotoUploadProps) {
               <li key={i}>{file}</li>
             ))}
           </ul>
-        ) as unknown as string, // Cast to string to satisfy the toast prop type
+        ) as unknown as string,
         variant: 'destructive',
       });
     }
