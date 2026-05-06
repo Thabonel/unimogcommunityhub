@@ -1,19 +1,6 @@
 
 // Environment variables accessible throughout the application
 
-// Gemini Configuration (replacing OpenAI/Claude)
-export const GEMINI_CONFIG = {
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
-  model: 'gemini-1.5-flash' // Fast and efficient model for Barry AI
-};
-
-// Legacy OpenAI Configuration (deprecated)
-export const OPENAI_CONFIG = {
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
-  model: 'gpt-4o' // Uses the latest available GPT model automatically
-};
-
-
 // App Configuration
 export const APP_CONFIG = {
   appUrl: import.meta.env.VITE_APP_URL ?? 'unimogcommunityhub.com'
