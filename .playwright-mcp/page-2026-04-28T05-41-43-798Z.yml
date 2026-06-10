@@ -1,0 +1,103 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - list [ref=e6]:
+      - listitem [ref=e7]:
+        - link "Skip to main content" [ref=e8] [cursor=pointer]:
+          - /url: "#main-content"
+      - listitem [ref=e9]:
+        - link "Skip to navigation" [ref=e10] [cursor=pointer]:
+          - /url: "#main-navigation"
+      - listitem [ref=e11]:
+        - link "Skip to search" [ref=e12] [cursor=pointer]:
+          - /url: "#search"
+    - banner [ref=e13]:
+      - generic [ref=e14]:
+        - link "Unimog Community Hub Unimog Hub" [ref=e16] [cursor=pointer]:
+          - /url: /
+          - img "Unimog Community Hub" [ref=e19]
+          - generic [ref=e20]: Unimog Hub
+        - generic [ref=e21]:
+          - combobox "Select language" [ref=e22] [cursor=pointer]:
+            - generic:
+              - generic:
+                - generic: 🇬🇧
+            - img [ref=e23]
+          - generic [ref=e25]:
+            - textbox "Search... (⌘K)" [ref=e26]
+            - button [ref=e27] [cursor=pointer]:
+              - img [ref=e28]
+          - button "Login" [ref=e31] [cursor=pointer]:
+            - img
+            - generic [ref=e32]: Login
+    - main [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - link "Home" [ref=e37] [cursor=pointer]:
+              - /url: /
+            - generic [ref=e38]: ">"
+            - link "Knowledge Base" [ref=e39] [cursor=pointer]:
+              - /url: /knowledge
+            - generic [ref=e40]: ">"
+            - generic [ref=e41]: Vehicle Manuals
+          - button "Back" [ref=e42] [cursor=pointer]:
+            - img
+            - text: Back
+          - generic [ref=e43]:
+            - heading "Vehicle Manuals" [level=1] [ref=e44]
+            - paragraph [ref=e45]: Access official Unimog technical documentation, owner's manuals, and service guides.
+          - button "Submit Manual" [ref=e48] [cursor=pointer]
+        - generic [ref=e49]:
+          - heading "Ex-Military Documentation Library" [level=2] [ref=e50]
+          - paragraph [ref=e51]: Official ADF technical manuals for Mercedes-Benz Unimogs (1986-2000s). Includes operator guides, maintenance schedules, technical specs, and field repair procedures.
+        - alert [ref=e52]:
+          - img [ref=e53]
+          - heading "Initializing storage..." [level=5] [ref=e58]
+          - generic [ref=e59]: Setting up the manuals storage. This will only take a moment.
+        - paragraph [ref=e61]: Loading manuals...
+    - contentinfo [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - link "Unimog Hub Logo Unimog Hub" [ref=e66] [cursor=pointer]:
+              - /url: /
+              - img "Unimog Hub Logo" [ref=e67]
+              - generic [ref=e68]: Unimog Hub
+            - paragraph [ref=e69]: The ultimate community for Unimog owners and enthusiasts. Join us to explore, learn, and connect with other off-road adventurers.
+          - generic [ref=e70]:
+            - heading "Company" [level=3] [ref=e71]
+            - list [ref=e72]:
+              - listitem [ref=e73]:
+                - link "About Us" [ref=e74] [cursor=pointer]:
+                  - /url: /about
+                  - generic [ref=e75]: About Us
+              - listitem [ref=e76]:
+                - link "Pricing" [ref=e77] [cursor=pointer]:
+                  - /url: /pricing
+                  - generic [ref=e78]: Pricing
+              - listitem [ref=e79]:
+                - link "Contact" [ref=e80] [cursor=pointer]:
+                  - /url: /contact
+                  - generic [ref=e81]: Contact
+          - generic [ref=e82]:
+            - heading "Legal" [level=3] [ref=e83]
+            - list [ref=e84]:
+              - listitem [ref=e85]:
+                - link "Terms of Service" [ref=e86] [cursor=pointer]:
+                  - /url: /terms
+                  - generic [ref=e87]: Terms of Service
+              - listitem [ref=e88]:
+                - link "Privacy Policy" [ref=e89] [cursor=pointer]:
+                  - /url: /privacy
+                  - generic [ref=e90]: Privacy Policy
+              - listitem [ref=e91]:
+                - link "Cookie Policy" [ref=e92] [cursor=pointer]:
+                  - /url: /cookies
+                  - generic [ref=e93]: Cookie Policy
+        - generic [ref=e95]: © 2026 Unimog Community Hub. All rights reserved.
+  - button "Barry" [ref=e97] [cursor=pointer]:
+    - generic [ref=e98]:
+      - img "Barry" [ref=e100]
+      - img
+  - region "Notifications (F8)":
+    - list

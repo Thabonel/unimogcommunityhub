@@ -35,8 +35,8 @@ export async function callAI(
     switch (config.provider.toLowerCase()) {
       case 'openai':
         return await callOpenAI(messages, config.model_name, config.temperature, config.max_tokens);
-      case 'anthropic':
-        return await callAnthropic(messages, config.model_name, config.temperature, config.max_tokens, apiKey, options);
+      case 'deepseek':
+        return await callDeepSeek(messages, config.model_name, config.temperature, config.max_tokens, apiKey, options);
       case 'google':
         return await callGoogle(messages, config.model_name, config.temperature, config.max_tokens, apiKey);
       default:
@@ -47,12 +47,12 @@ export async function callAI(
       console.warn(`⚠️ Primary failed, using fallback: ${config.fallback_provider}/${config.fallback_model}`);
       const fallbackKey = Deno.env.get(
         config.fallback_provider === 'openai' ? 'OPENAI_API_KEY' :
-        config.fallback_provider === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'GOOGLE_API_KEY'
+        config.fallback_provider === 'deepseek' ? 'DEEPSEEK_API_KEY' : 'GOOGLE_API_KEY'
       );
       if (config.fallback_provider === 'openai') {
         return await callOpenAI(messages, config.fallback_model, config.temperature, config.max_tokens);
-      } else if (config.fallback_provider === 'anthropic' && fallbackKey) {
-        return await callAnthropic(messages, config.fallback_model, config.temperature, config.max_tokens, fallbackKey);
+      } else if (config.fallback_provider === 'deepseek' && fallbackKey) {
+        return await callDeepSeek(messages, config.fallback_model, config.temperature, config.max_tokens, fallbackKey);
       }
     }
     throw error;
@@ -93,7 +93,7 @@ async function callOpenAI(
   };
 }
 
-async function callAnthropic(
+async function callDeepSeek(
   messages: Array<{ role: string; content: string }>,
   model: string,
   temperature: number,
@@ -104,18 +104,9 @@ async function callAnthropic(
     enableExtendedThinking?: boolean;
   }
 ) {
-  const systemMessages = messages.filter(m => m.role === 'system');
-  const conversationMessages = messages.filter(m => m.role !== 'system');
-
-  const anthropicMessages = conversationMessages.map(m => ({
-    role: m.role === 'assistant' ? 'assistant' : 'user',
-    content: m.content,
-  }));
-
   const requestBody: any = {
-    model,
-    system: systemMessages.map(m => m.content).join('\n\n'),
-    messages: anthropicMessages,
+    model: model || 'deepseek-chat',
+    messages,
     temperature,
     max_tokens: maxTokens,
   };
@@ -123,42 +114,28 @@ async function callAnthropic(
   // Add web search tool if enabled (Helper Barry mode)
   if (options?.enableWebSearch) {
     requestBody.tools = [{ type: 'web_search' }];
-    console.log('🌐 Web search enabled for this request');
+    console.log('Web search enabled for this request');
   }
 
-  // Add extended thinking if enabled
-  if (options?.enableExtendedThinking) {
-    requestBody.thinking = {
-      type: 'enabled',
-      budget_tokens: 10000
-    };
-    console.log('🧠 Extended thinking enabled for this request');
-  }
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
-    throw new Error(`Anthropic error: ${await response.text()}`);
+    throw new Error(`DeepSeek error: ${await response.text()}`);
   }
 
   const data = await response.json();
   return {
-    content: data.content[0].text,
-    usage: {
-      total_tokens: data.usage.input_tokens + data.usage.output_tokens,
-      prompt_tokens: data.usage.input_tokens,
-      completion_tokens: data.usage.output_tokens,
-    },
+    content: data.choices[0].message.content,
+    usage: data.usage,
     model,
-    provider: 'anthropic',
+    provider: 'deepseek',
   };
 }
 

@@ -145,14 +145,112 @@ export class AWSTextractOCR {
   }
 }
 
-// Claude Vision OCR integration for fuel receipts with dual tank support
-export class ClaudeVisionOCR {
+// GPT-4o Vision OCR integration for fuel receipts with dual tank support
+export class GPT4OVisionOCR {
   private apiKey: string;
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
+  async processDocument(imageData: Blob): Promise<OCRResult> {
+    const base64Image = await this.blobToBase64(imageData);
+    const mediaType = this.getMediaType(imageData.type);
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 2000,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mediaType};base64,${base64Image}`
+                }
+              },
+              {
+                type: 'text',
+                text: this.getFuelReceiptPrompt()
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`GPT-4o Vision API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    return this.parseResponse(result.choices?.[0]?.message?.content || '');
+  }
+
+  private async blobToBase64(blob: Blob): Promise<string> {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  private getMediaType(type: string): string {
+    const mediaMap: Record<string, string> = {
+      'image/jpeg': 'image/jpeg',
+      'image/png': 'image/png',
+      'image/webp': 'image/webp',
+      'application/pdf': 'application/pdf'
+    };
+    return mediaMap[type] || 'image/jpeg';
+  }
+
+  private parseResponse(text: string): OCRResult {
+    try {
+      const json = JSON.parse(text);
+      return {
+        success: true,
+        data: json
+      };
+    } catch {
+      return {
+        success: true,
+        data: { raw: text }
+      };
+    }
+  }
+
+  private getFuelReceiptPrompt(): string {
+    return `Extract all fuel receipt information from this image.
+Return a JSON object with these fields:
+- fuelType: type of fuel (diesel, petrol, adblue)
+- amount: numeric amount in litres
+- price: total price
+- location: station name or location
+- date: date on receipt
+- vehicleId: any vehicle reference
+
+Only return the JSON, no other text.`;
+  }
+}
+
+// DEPRECATED: use GPT4OVisionOCR instead
+export class ClaudeVisionOCR {
+  private apiKey: string;
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
   async processDocument(imageData: Blob): Promise<OCRResult> {
     const base64Image = await this.blobToBase64(imageData);
     const mediaType = this.getMediaType(imageData.type);

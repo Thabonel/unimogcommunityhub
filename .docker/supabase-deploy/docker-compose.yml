@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  supabase-deploy:
+    build: 
+      context: ../../
+      dockerfile: .docker/supabase-deploy/Dockerfile
+    environment:
+      # Required - Get from Supabase Dashboard > Settings > API
+      - SUPABASE_ACCESS_TOKEN=${SUPABASE_ACCESS_TOKEN}
+      - SUPABASE_PROJECT_ID=${SUPABASE_PROJECT_ID}
+      
+      # Required for OCR functionality
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      
+      # Optional - for Google Vision OCR
+      - GOOGLE_VISION_API_KEY=${GOOGLE_VISION_API_KEY}
+      - UNSTRUCTURED_API_KEY=${UNSTRUCTURED_API_KEY}
+      
+    volumes:
+      # Mount source code for live updates
+      - ../../supabase:/app/supabase:ro
+    working_dir: /app
+    command: ["./deploy.sh"]

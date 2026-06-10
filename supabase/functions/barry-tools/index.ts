@@ -1,6 +1,6 @@
 /**
  * Barry Tools Edge Function — single-file bundle (no local imports)
- * Native Anthropic tool-use. Claude picks tools per question; no context stuffing.
+ * OpenAI-compatible tool-use. DeepSeek picks tools per question; no context stuffing.
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -11,13 +11,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform',
 };
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL_TOOLS') || 'claude-haiku-4-5';
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+const DEEPSEEK_MODEL = Deno.env.get('DEEPSEEK_MODEL_TOOLS') || 'deepseek-chat';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
 
-if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY env var is required');
+if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY env var is required');
 if (!SUPABASE_URL) throw new Error('SUPABASE_URL env var is required');
 if (!SUPABASE_SERVICE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY env var is required');
 
@@ -549,64 +549,100 @@ async function toolSearchCommunity(input: Record<string, unknown>, db: ReturnTyp
 
 const TOOL_DEFINITIONS = [
   {
-    name: 'lookup_knowledge_base',
-    description: 'Check admin-validated knowledge base for pre-approved answers to Unimog questions. Call FIRST for any technical question.',
-    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'The user question' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'lookup_knowledge_base',
+      description: 'Check admin-validated knowledge base for pre-approved answers to Unimog questions. Call FIRST for any technical question.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'The user question' } }, required: ['query'] },
+    },
   },
   {
-    name: 'search_manual',
-    description: 'Search U435 Unimog workshop manuals for procedures, torque specs, fluid capacities, troubleshooting. Always cite page numbers returned.',
-    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Technical topic to search' }, max_results: { type: 'number', description: 'Max results 1-8 (default 5)' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'search_manual',
+      description: 'Search U435 Unimog workshop manuals for procedures, torque specs, fluid capacities, troubleshooting. Always cite page numbers returned.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'Technical topic to search' }, max_results: { type: 'number', description: 'Max results 1-8 (default 5)' } }, required: ['query'] },
+    },
   },
   {
-    name: 'lookup_user_vehicle',
-    description: "Look up the user's registered Unimog vehicles (make, model, year). Call when the question refers to 'my Unimog' or 'my vehicle'.",
-    input_schema: { type: 'object', properties: {}, required: [] },
+    type: 'function',
+    function: {
+      name: 'lookup_user_vehicle',
+      description: "Look up the user's registered Unimog vehicles (make, model, year). Call when the question refers to 'my Unimog' or 'my vehicle'.",
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
   },
   {
-    name: 'get_weather',
-    description: "Get current weather and 7-day forecast. Call when the user asks about weather or trip planning that depends on conditions. Uses user's GPS location automatically if available.",
-    input_schema: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, forecast_days: { type: 'number', description: '1-7 (default 3)' } }, required: [] },
+    type: 'function',
+    function: {
+      name: 'get_weather',
+      description: "Get current weather and 7-day forecast. Call when the user asks about weather or trip planning that depends on conditions. Uses user's GPS location automatically if available.",
+      parameters: { type: 'object', properties: { latitude: { type: 'number' }, longitude: { type: 'number' }, forecast_days: { type: 'number', description: '1-7 (default 3)' } }, required: [] },
+    },
   },
   {
-    name: 'web_search',
-    description: 'Search the web for current information: parts prices, dealer locations, fuel prices, campsite reviews, road conditions, community forums.',
-    input_schema: { type: 'object', properties: { query: { type: 'string' }, count: { type: 'number', description: '1-10 (default 5)' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'web_search',
+      description: 'Search the web for current information: parts prices, dealer locations, fuel prices, campsite reviews, road conditions, community forums.',
+      parameters: { type: 'object', properties: { query: { type: 'string' }, count: { type: 'number', description: '1-10 (default 5)' } }, required: ['query'] },
+    },
   },
   {
-    name: 'search_marketplace',
-    description: "Search the community marketplace for Unimog parts, vehicles, and services. Use when the user asks about buying or finding parts.",
-    input_schema: { type: 'object', properties: { query: { type: 'string' }, category: { type: 'string', description: 'parts | vehicles | services' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'search_marketplace',
+      description: "Search the community marketplace for Unimog parts, vehicles, and services. Use when the user asks about buying or finding parts.",
+      parameters: { type: 'object', properties: { query: { type: 'string' }, category: { type: 'string', description: 'parts | vehicles | services' } }, required: ['query'] },
+    },
   },
   {
-    name: 'get_events',
-    description: 'Get upcoming community events: rallies, meetups, trail rides, workshops.',
-    input_schema: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Days ahead to look (default 90)' } }, required: [] },
+    type: 'function',
+    function: {
+      name: 'get_events',
+      description: 'Get upcoming community events: rallies, meetups, trail rides, workshops.',
+      parameters: { type: 'object', properties: { days_ahead: { type: 'number', description: 'Days ahead to look (default 90)' } }, required: [] },
+    },
   },
   {
-    name: 'convert_units',
-    description: 'Convert between units. Supports: Nm↔ft-lb, bar↔psi↔kPa, liter↔gallon↔quart, km↔miles, kg↔lb, celsius↔fahrenheit, mm↔inch, m↔ft. No API call needed.',
-    input_schema: { type: 'object', properties: { value: { type: 'number' }, from_unit: { type: 'string' }, to_unit: { type: 'string' } }, required: ['value', 'from_unit', 'to_unit'] },
+    type: 'function',
+    function: {
+      name: 'convert_units',
+      description: 'Convert between units. Supports: Nm↔ft-lb, bar↔psi↔kPa, liter↔gallon↔quart, km↔miles, kg↔lb, celsius↔fahrenheit, mm↔inch, m↔ft. No API call needed.',
+      parameters: { type: 'object', properties: { value: { type: 'number' }, from_unit: { type: 'string' }, to_unit: { type: 'string' } }, required: ['value', 'from_unit', 'to_unit'] },
+    },
   },
   {
-    name: 'translate_text',
-    description: 'Translate text between languages. Useful for German Unimog manual text.',
-    input_schema: { type: 'object', properties: { text: { type: 'string' }, target_language: { type: 'string', description: 'e.g. "en", "de", "fr"' } }, required: ['text', 'target_language'] },
+    type: 'function',
+    function: {
+      name: 'translate_text',
+      description: 'Translate text between languages. Useful for German Unimog manual text.',
+      parameters: { type: 'object', properties: { text: { type: 'string' }, target_language: { type: 'string', description: 'e.g. "en", "de", "fr"' } }, required: ['text', 'target_language'] },
+    },
   },
   {
-    name: 'search_rps',
-    description: 'Search the RPS illustrated parts catalog for Unimog spare parts by description or component name. Returns NIIN part numbers, group, repair grade, and page references. Use for parts lookup questions.',
-    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Part or component name (e.g. "fuel filter", "portal hub seal", "clutch disc")' }, max_results: { type: 'number', description: 'Max results 1-12 (default 6)' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'search_rps',
+      description: 'Search the RPS illustrated parts catalog for Unimog spare parts by description or component name. Returns NIIN part numbers, group, repair grade, and page references. Use for parts lookup questions.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'Part or component name (e.g. "fuel filter", "portal hub seal", "clutch disc")' }, max_results: { type: 'number', description: 'Max results 1-12 (default 6)' } }, required: ['query'] },
+    },
   },
   {
-    name: 'find_nearby_services',
-    description: 'Find Unimog service providers, mechanics, and specialists from the community vendor directory. Use when the user asks about finding help, workshops, or specialists.',
-    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Service type or location (e.g. "restoration", "gearbox rebuild", "Australia")' }, specialty: { type: 'string', description: 'Specialty keyword to filter by' } }, required: [] },
+    type: 'function',
+    function: {
+      name: 'find_nearby_services',
+      description: 'Find Unimog service providers, mechanics, and specialists from the community vendor directory. Use when the user asks about finding help, workshops, or specialists.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'Service type or location (e.g. "restoration", "gearbox rebuild", "Australia")' }, specialty: { type: 'string', description: 'Specialty keyword to filter by' } }, required: [] },
+    },
   },
   {
-    name: 'search_community_content',
-    description: 'Search community-contributed documents, procedures, checklists, and guides uploaded by members. Use for user-sourced knowledge like expedition prep, conversion guides, field repairs.',
-    input_schema: { type: 'object', properties: { query: { type: 'string', description: 'Topic (e.g. "expedition prep", "snorkel install", "pre-trip checklist")' }, document_type: { type: 'string', description: 'Filter by type: powerpoint | excel | pdf | checklist | procedure' } }, required: ['query'] },
+    type: 'function',
+    function: {
+      name: 'search_community_content',
+      description: 'Search community-contributed documents, procedures, checklists, and guides uploaded by members. Use for user-sourced knowledge like expedition prep, conversion guides, field repairs.',
+      parameters: { type: 'object', properties: { query: { type: 'string', description: 'Topic (e.g. "expedition prep", "snorkel install", "pre-trip checklist")' }, document_type: { type: 'string', description: 'Filter by type: powerpoint | excel | pdf | checklist | procedure' } }, required: ['query'] },
+    },
   },
 ];
 
@@ -709,26 +745,36 @@ serve(async (req: Request) => {
     let searchCount = 0;
 
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 2048, system: SYSTEM, messages: msgs, tools: TOOL_DEFINITIONS }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
+        body: JSON.stringify({
+          model: DEEPSEEK_MODEL,
+          max_tokens: 2048,
+          stream: false,
+          messages: [{ role: 'system', content: SYSTEM }, ...msgs],
+          tools: TOOL_DEFINITIONS,
+        }),
       });
-      if (!resp.ok) throw new Error(`Claude ${resp.status}: ${await resp.text()}`);
+      if (!resp.ok) throw new Error(`DeepSeek ${resp.status}: ${await resp.text()}`);
 
-      const cr = await resp.json() as { stop_reason: string; content: Array<Record<string, unknown>> };
-      for (const b of cr.content) if (b.type === 'text') finalText = String(b.text);
+      const data = await resp.json() as { choices: Array<Record<string, unknown>> };
+      const choice = data.choices[0];
+      const message = choice.message as Record<string, unknown>;
 
-      if (cr.stop_reason !== 'tool_use') break;
+      if (message.content) finalText = String(message.content);
 
-      const calls = cr.content.filter(b => b.type === 'tool_use');
-      if (!calls.length) break;
-      msgs.push({ role: 'assistant', content: cr.content });
+      if (choice.finish_reason !== 'tool_calls') break;
 
-      const results: Array<Record<string, unknown>> = [];
+      const calls = message.tool_calls as Array<Record<string, unknown>>;
+      if (!calls?.length) break;
+
+      msgs.push({ role: 'assistant', content: message.content ?? null, tool_calls: calls });
+
       for (const call of calls) {
-        const name = String(call.name);
-        const input = (call.input ?? {}) as Record<string, unknown>;
+        const fn = call.function as Record<string, unknown>;
+        const name = String(fn.name);
+        const input = JSON.parse(String(fn.arguments ?? '{}')) as Record<string, unknown>;
         toolsUsed.push(name);
 
         const tTool = Date.now();
@@ -743,7 +789,7 @@ serve(async (req: Request) => {
           latency_ms: toolLatencyMs,
           success: result.ok !== false,
           error_code: result.ok === false ? String(result.error ?? 'unknown').slice(0, 100) : null,
-          claude_iteration: iter + 1,
+          openai_iteration: iter + 1,
         }).then(() => {}).catch(() => {});
 
         if (name === 'search_manual' && result.ok) {
@@ -755,9 +801,8 @@ serve(async (req: Request) => {
           }
         }
 
-        results.push({ type: 'tool_result', tool_use_id: call.id, content: JSON.stringify(result) });
+        msgs.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
       }
-      msgs.push({ role: 'user', content: results });
     }
 
     if (!finalText) finalText = "I wasn't able to generate a complete response. Please try rephrasing your question.";
@@ -766,7 +811,7 @@ serve(async (req: Request) => {
     // Log async — fire and forget
     db.from('chat_logs').insert({
       user_id: userId ?? null, messages: body.messages ?? [], response: content,
-      model: ANTHROPIC_MODEL,
+      model: DEEPSEEK_MODEL,
       knowledge_source: toolsUsed.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
       pdf_references_found: searchCount,
     }).then(() => {}).catch(() => {});

@@ -24,9 +24,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform',
 };
 
-// Configuration
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-const ANTHROPIC_MODEL = Deno.env.get('ANTHROPIC_MODEL_AGENTIC') || 'claude-haiku-4-5';
+// Configuration — DEPRECATED: use DEEPSEEK_API_KEY if needed for rollback
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+const DEEPSEEK_MODEL = Deno.env.get('DEEPSEEK_MODEL') || 'deepseek-chat';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -934,7 +934,7 @@ async function executeEPCSearch(
 
 // ============ SKILL 2.5: QUERY EXPANDER ============
 async function executeQueryExpander(query: string): Promise<{ found: boolean; expandedTerms: string[] }> {
-  if (!ANTHROPIC_API_KEY) {
+  if (!DEEPSEEK_API_KEY) {
     console.warn('[QueryExpander] No API key, using fallback');
     return { found: false, expandedTerms: [query] };
   }
@@ -946,15 +946,14 @@ User question: "${query}"
 Example format: ["combination switch", "Lenkstockschalter", "turn signal lever", "indicator stalk", "column switch", "wiper switch assembly"]`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20250414',
+        model: 'deepseek-chat',
         max_tokens: 200,
         temperature: 0.3,
         messages: [{ role: 'user', content: prompt }]
@@ -966,7 +965,7 @@ Example format: ["combination switch", "Lenkstockschalter", "turn signal lever",
     }
 
     const data = await response.json();
-    const content = data.content[0]?.text?.trim();
+    const content = data.choices?.[0]?.message?.content?.trim();
 
     if (!content) {
       throw new Error('Empty response');
@@ -1029,8 +1028,8 @@ async function executeResponseGenerator(
   conversationHistory: ChatMessage[],
   userContext?: string
 ): Promise<{ content: string; citations: number[] }> {
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY not configured');
+  if (!DEEPSEEK_API_KEY) {
+    throw new Error('DEEPSEEK_API_KEY not configured');
   }
 
   // Build system prompt with clear instructions about real manual access
@@ -1092,22 +1091,24 @@ CRITICAL - ANSWER DIRECTLY WITH SPECIFIC VALUES:
     { role: 'user', content: query }
   ];
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
+      'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
     },
     body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
+      model: 'deepseek-chat',
       max_tokens: 1000,
       temperature: 0.7,
-      system: systemPrompt,
-      messages: messages.map(m => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content
-      }))
+      stream: false,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages.map((m: ChatMessage) => ({
+          role: m.role === 'assistant' ? 'assistant' : 'user',
+          content: m.content
+        }))
+      ]
     })
   });
 
@@ -1117,7 +1118,7 @@ CRITICAL - ANSWER DIRECTLY WITH SPECIFIC VALUES:
   }
 
   const data = await response.json();
-  const content = data.content[0].text;
+  const content = data.choices[0].message.content;
 
   // Extract page citations
   const citations: number[] = [];
@@ -1456,7 +1457,7 @@ serve(async (req) => {
         user_id: user.id,
         messages: sanitizedMessages,
         response: finalContent,
-        model: ANTHROPIC_MODEL,
+        model: 'deepseek-chat',
         knowledge_source: 'openclaw',
         routing_rule: domainResult.domain,
         routing_match: domainResult.task,

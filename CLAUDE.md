@@ -33,24 +33,24 @@ UnimogCommunityHub - React 18 + TypeScript community platform for Unimog enthusi
 
 ## CRITICAL CONFIGURATIONS
 
-### AI SERVICE CONFIGURATION (2025)
+### AI SERVICE CONFIGURATION (2026)
 
-#### General Platform Services (January 2025)
-- **Current Service**: Google Gemini Flash 1.5 (active)
-- **Environment Variable**: `VITE_GEMINI_API_KEY`
+#### General Platform Services
+- **Current Service**: DeepSeek V3 (primary), GPT-4o (Vision/Chat)
+- **Environment Variable**: `DEEPSEEK_API_KEY`, `OPENAI_API_KEY`
 
 #### Barry AI Mechanic (Production v87)
 - **Architecture**: OpenClaw Skill-Based Pipeline (7 skills)
-- **Model**: Claude Sonnet 4.5
-- **Edge Function**: `/supabase/functions/chat-with-barry/index.ts`
-- **Environment Variable**: `ANTHROPIC_API_KEY`
-- **Response Time**: ~3.7s average, cost ~$0.012/query
-- **Features**: Traffic routing (0-100%), A/B testing, auto-fallback, real-time metrics
+- **Model**: DeepSeek V3 (text), GPT-4o (vision)
+- **Edge Functions**: `/supabase/functions/chat-with-barry-agentic/index.ts`, `/supabase/functions/barry-tools/index.ts`
+- **Environment Variables**: `DEEPSEEK_API_KEY` (text), `OPENAI_API_KEY` (vision/chat)
+- **Response Time**: ~2s average, cost ~$0.0003/query
+- **Features**: DeepSeek for backend AI, GPT-4o for user-facing chat and vision tasks
 
 **OpenClaw Pipeline**:
 ```
 User Query → Domain Guard → Knowledge Lookup → Manual/RPS Search (parallel)
-→ Response Generator (Claude Haiku 4.5) → Safety Filter → Response Validator
+→ Response Generator (DeepSeek V3) → Safety Filter → Response Validator
 ```
 
 ### Git Repository Structure & Safety
@@ -66,9 +66,10 @@ User Query → Domain Guard → Knowledge Lookup → Manual/RPS Search (parallel
 **DO NOT** set locally - all development happens on Netlify staging:
 - `VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co`
 - `VITE_SUPABASE_ANON_KEY`
-- `VITE_GEMINI_API_KEY`
+- `OPENAI_API_KEY` (GPT-4o Vision for PDF extraction, invoice OCR, user-facing Barry chat)
+- `DEEPSEEK_API_KEY` (DeepSeek V3 for backend AI: query classification, search, validation, translation)
 - `VITE_MAPBOX_ACCESS_TOKEN`
-- `ANTHROPIC_API_KEY` (edge functions)
+- `SUPABASE_SERVICE_ROLE_KEY`
 
 ### Linear MCP - Automated Issue Tracking
 **MANDATORY**: Claude MUST automatically update Linear without prompts.
