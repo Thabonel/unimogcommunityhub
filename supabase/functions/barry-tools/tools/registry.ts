@@ -6,8 +6,12 @@ import { getWeatherTool } from './get-weather.ts';
 import { webSearchTool } from './web-search.ts';
 import { convertUnitsTool } from './convert-units.ts';
 import { translateTextTool } from './translate-text.ts';
+import { classifyQueryV2Tool } from './classify-query-v2.ts';
+import { searchManualV2Tool } from './search-manual-v2.ts';
 
 export const ALL_TOOLS: RegisteredTool[] = [
+  classifyQueryV2Tool,
+  searchManualV2Tool,
   lookupKnowledgeBaseTool,
   searchManualTool,
   lookupUserVehicleTool,
