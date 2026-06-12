@@ -212,7 +212,7 @@ ETL expects `wis-docs`, `wis-archives`, `wis-media` buckets.
 4. **Test on sample data** (30 minutes):
    ```bash
    VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co \
-   SUPABASE_SERVICE_ROLE_KEY=<key> \
+   SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> \
    npx tsx scripts/run-wis-etl.ts \
      --model U435 \
      --scope procedures \
@@ -433,7 +433,7 @@ SELECT * FROM wis_ingest_jobs ORDER BY created_at DESC LIMIT 10;
 ### WIS ETL Test Run
 ```bash
 VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=<key> \
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> \
 npx tsx scripts/run-wis-etl.ts \
   --model U435 \
   --scope procedures \

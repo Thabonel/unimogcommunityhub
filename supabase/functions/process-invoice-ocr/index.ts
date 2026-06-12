@@ -49,25 +49,34 @@ serve(async (req: Request) => {
 
     console.log(`[Fuel OCR] Processing for user: ${user.id}, media: ${mediaType || 'image/jpeg'}`)
 
-    const openaiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiKey) {
-      throw new Error('OPENAI_API_KEY not configured')
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
+    if (!anthropicKey) {
+      throw new Error('ANTHROPIC_API_KEY not configured')
     }
 
-    console.log('[Fuel OCR] Calling GPT-4o Vision...')
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('[Fuel OCR] Calling Claude Vision...')
+    const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
-        stream: false,
         messages: [{
-          role: 'system',
-          content: `Analyze this fuel receipt. Extract data and respond ONLY with JSON:
+          role: 'user',
+          content: [{
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType || 'image/jpeg',
+              data: imageBase64
+            }
+          }, {
+            type: 'text',
+            text: `Analyze this fuel receipt. Extract data and respond ONLY with JSON:
 
 {
   "station_name": "gas station name",
@@ -85,26 +94,19 @@ serve(async (req: Request) => {
 }
 
 Rules: For dual-tank Unimogs combine entries. Be precise with numbers. Set confidence 0-100.`
-        }, {
-          role: 'user',
-          content: [{
-            type: 'image_url',
-            image_url: {
-              url: `data:${mediaType || 'image/jpeg'};base64,${imageBase64}`
-            }
           }]
         }]
       })
     })
 
-    if (!openaiResponse.ok) {
-      const errText = await openaiResponse.text()
-      console.error('[Fuel OCR] GPT-4o error:', errText)
-      throw new Error(`GPT-4o API error: ${openaiResponse.status}`)
+    if (!claudeResponse.ok) {
+      const errText = await claudeResponse.text()
+      console.error('[Fuel OCR] Claude error:', errText)
+      throw new Error(`Claude API error: ${claudeResponse.status}`)
     }
 
-    const openaiData = await openaiResponse.json()
-    const content = openaiData.choices?.[0]?.message?.content || ''
+    const claudeData = await claudeResponse.json()
+    const content = claudeData.content?.[0]?.text || ''
 
     let fuelData: any = {}
     try {

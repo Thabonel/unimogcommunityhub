@@ -2,7 +2,7 @@
 // Barry Agentic Edge Function - Complete Hybrid Routing System
 // Date: 2025-10-31
 // Version: 30 - INTENT ROUTING: Adds intent/entity classification + clarification + weather gatherer (feature-flagged)
-// Enhancement: 850+ database keywords + DeepSeek semantic analysis for edge cases
+// Enhancement: 850+ database keywords + Claude Haiku semantic analysis for edge cases
 // Technical: Sustainable routing - never needs manual keyword updates again
 // Cost: ~$0.0002 per edge case query (semantic fallback only when keywords don't match)
 // Previous: Version 28 - Database-extracted keywords without semantic fallback
@@ -18,10 +18,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform',
 };
 
-const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
-const DEEPSEEK_MODEL = Deno.env.get('DEEPSEEK_MODEL') || 'deepseek-chat';
-const GPT4O_MODEL = 'gpt-4o';
-// Intent routing feature flag - reserved for future use with classifyIntentWithAI
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
+// Model names configurable via env to avoid hardcoding and keep compatibility with provider updates
+const ANTHROPIC_MODEL_INTENT = Deno.env.get('ANTHROPIC_MODEL_INTENT') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_AGENTIC = Deno.env.get('ANTHROPIC_MODEL_AGENTIC') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_GENERAL = Deno.env.get('ANTHROPIC_MODEL_GENERAL') || 'claude-haiku-4-5';
+const ANTHROPIC_MODEL_SEMANTIC = Deno.env.get('ANTHROPIC_MODEL_SEMANTIC') || 'claude-haiku-4';
+const ANTHROPIC_MODEL_VISION = Deno.env.get('ANTHROPIC_MODEL_VISION') || 'claude-haiku-4-5';
+// Intent routing feature flag - reserved for future use with classifyIntentWithClaude
 // const FEATURE_FLAG_INTENT_ROUTING = (Deno.env.get('FEATURE_FLAG_INTENT_ROUTING') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_WEATHER = (Deno.env.get('FEATURE_FLAG_WEATHER') || '').toLowerCase() === 'true';
 const FEATURE_FLAG_RPS_DETERMINISTIC = (Deno.env.get('FEATURE_FLAG_RPS_DETERMINISTIC') || '').toLowerCase() === 'true';
@@ -378,9 +382,9 @@ type BarryIntent = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function classifyIntentWithAI(prompt: string, messages: any[]): Promise<BarryIntent | null> {
+async function classifyIntentWithClaude(prompt: string, messages: any[]): Promise<BarryIntent | null> {
   try {
-    const systemMessage = `You are an intent classifier for Barry the Unimog mechanic. Read the latest user message in context and output STRICT JSON.
+    const system = `You are an intent classifier for Barry the Unimog mechanic. Read the latest user message in context and output STRICT JSON.
 Output schema:
 {"domain":"unimog_technical|general","task":"procedure|troubleshoot|exploded_view|parts_lookup|weather|other","entities":{"components":["..."],"symptoms":["..."]},"vehicle":null|"U435|...","confidence":0.0-1.0,"needs_clarification":true|false,"clarifying_question":"string or empty"}
 Rules:
@@ -391,32 +395,32 @@ Rules:
 Return ONLY JSON.`;
 
     const body = {
-      model: DEEPSEEK_MODEL,
+      model: ANTHROPIC_MODEL_INTENT,
       max_tokens: 300,
       temperature: 0,
-      stream: false,
+      system,
       messages: [
-        { role: 'system', content: systemMessage },
         ...messages.slice(-5).map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
         { role: 'user', content: prompt }
       ]
     };
 
-    const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'x-api-key': ANTHROPIC_API_KEY!,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify(body)
     });
     if (!res.ok) {
       const t = await res.text();
-      console.log('[Intent] DeepSeek error:', t);
+      console.log('[Intent] Anthropic error:', t);
       return null;
     }
     const data = await res.json();
-    const text = data.choices?.[0]?.message?.content || '';
+    const text = data.content?.[0]?.text || '';
     // Attempt to parse JSON blob from response
     const jsonStart = text.indexOf('{');
     const jsonEnd = text.lastIndexOf('}');
@@ -553,15 +557,10 @@ function formatWebSearchContext(results: WebSearchResult[], query: string): stri
   return context;
 }
 
-// RPS PHASE 7: OCR parts list page using GPT-4o Vision
+// RPS PHASE 7: OCR parts list page using Claude Vision
 async function ocrPartsListPage(pageUrl: string, componentName: string): Promise<string> {
   try {
     console.log(`[OCR] Analyzing parts list page: ${pageUrl}`);
-
-    if (!OPENAI_API_KEY) {
-      console.warn('[OCR] No OPENAI_API_KEY configured');
-      return '';
-    }
 
     // Fetch the image as base64
     const imageResponse = await fetch(pageUrl);
@@ -572,24 +571,26 @@ async function ocrPartsListPage(pageUrl: string, componentName: string): Promise
     const imageBuffer = await imageResponse.arrayBuffer();
     const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
 
-    // Use GPT-4o Vision to OCR the parts list
-    const ocrResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Use Claude Vision to OCR the parts list
+    const ocrResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'x-api-key': ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: GPT4O_MODEL,
+        model: ANTHROPIC_MODEL_VISION,
         max_tokens: 2000,
-        stream: false,
         messages: [{
           role: 'user',
           content: [
             {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/png;base64,${base64Image}`
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: base64Image
               }
             },
             {
@@ -618,7 +619,7 @@ async function ocrPartsListPage(pageUrl: string, componentName: string): Promise
     }
 
     const ocrData = await ocrResponse.json();
-    const extractedText = ocrData.choices[0].message.content;
+    const extractedText = ocrData.content[0].text;
 
     console.log(`[OCR] Extracted ${extractedText.length} characters`);
     return extractedText;
@@ -1189,8 +1190,8 @@ const BARRY_PERSONALITY_TEMPLATES = {
   ],
 };
 
-// Format the full manual index for AI context
-function formatManualIndex(indexEntries: any[]): string {
+// Format the full manual index for Claude's context
+function formatManualIndexForClaude(indexEntries: any[]): string {
   if (!indexEntries || indexEntries.length === 0) {
     return 'No manual index available.';
   }
@@ -1210,8 +1211,8 @@ function formatManualIndex(indexEntries: any[]): string {
   return formattedIndex;
 }
 
-// Format manual_chunks entries for AI context (replaces faulty u435_manual_index)
-function formatManualChunks(chunks: any[]): string {
+// Format manual_chunks entries for Claude's context (replaces faulty u435_manual_index)
+function formatManualChunksForClaude(chunks: any[]): string {
   if (!chunks || chunks.length === 0) {
     return 'No manual content available.';
   }
@@ -1251,7 +1252,7 @@ function formatManualChunks(chunks: any[]): string {
 }
 
 // OpenAI embedding configuration
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
 
 // Generate embedding for a query using OpenAI
@@ -1688,8 +1689,8 @@ serve(async (req) => {
       });
     }
 
-    // Note: Do not hard-fail if API keys are missing.
-    // We will guard actual AI calls later and return graceful responses.
+    // Note: Do not hard-fail if ANTHROPIC_API_KEY is missing.
+    // We will guard actual Claude calls later and return graceful responses.
 
     // Get the request body
     const { messages, location, image } = await req.json();
@@ -1700,29 +1701,30 @@ serve(async (req) => {
       });
     }
 
-    // PHOTO DIAGNOSTICS: If user sent an image, analyze it with GPT-4o Vision first
+    // PHOTO DIAGNOSTICS: If user sent an image, analyze it with Claude Vision first
     let imageAnalysis = '';
-    const mediaType = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(image?.mediaType) ? image.mediaType : 'image/jpeg';
-    if (image && image.data && OPENAI_API_KEY && image.data.length < 4_500_000) {
+    if (image && image.data && ANTHROPIC_API_KEY && image.data.length < 4_500_000) {
       try {
         console.log('[Photo] Analyzing user-uploaded image...');
-        const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        const visionResponse = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${OPENAI_API_KEY}`
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: GPT4O_MODEL,
+            model: ANTHROPIC_MODEL_VISION,
             max_tokens: 500,
-            stream: false,
             messages: [{
               role: 'user',
               content: [
                 {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:${mediaType};base64,${image.data}`
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(image.mediaType) ? image.mediaType : 'image/jpeg',
+                    data: image.data
                   }
                 },
                 {
@@ -1736,7 +1738,7 @@ serve(async (req) => {
 
         if (visionResponse.ok) {
           const visionData = await visionResponse.json();
-          imageAnalysis = visionData.choices?.[0]?.message?.content || '';
+          imageAnalysis = visionData.content?.[0]?.text || '';
           console.log(`[Photo] Vision analysis: ${imageAnalysis.substring(0, 100)}...`);
         } else {
           console.warn(`[Photo] Vision API returned ${visionResponse.status}`);
@@ -1869,7 +1871,7 @@ serve(async (req) => {
       console.log('[Subscription Gatherer] Free user asked general question, allowing response');
     }
 
-    // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate AI call)
+    // RPS PHASE 7 GATHERER: Detect and inject RPS context (NO separate Claude call)
     // This follows the "forever architecture" - gatherers inject context, core function routes
     let rpsContext = '';
     let rpsIllustrations: any[] = [];
@@ -1978,7 +1980,7 @@ serve(async (req) => {
               }
             }
 
-            // Format context AFTER filtering - pass filtered pages to avoid AI citing missing images
+            // Format context AFTER filtering - pass filtered pages to avoid Claude citing missing images
             rpsContext = formatRPSGroupContext(rpsResult.group, rpsResult.parts, filtered.existing);
 
             // Build illustration references for frontend using existing pages only
@@ -2008,7 +2010,7 @@ serve(async (req) => {
       }
     }
 
-    // NIIN LOOKUP GATHERER: Detect and inject NIIN context (NO separate AI call)
+    // NIIN LOOKUP GATHERER: Detect and inject NIIN context (NO separate Claude call)
     // Follows "forever architecture" - gatherer injects context, core function routes
     let niinContext = '';
 
@@ -2266,25 +2268,25 @@ Use this data to answer weather questions. Be specific with temperatures and con
       return false;
     }
 
-    // PHASE 2: Semantic fallback using DeepSeek for edge cases
+    // PHASE 2: Semantic fallback using Claude Haiku for edge cases
     async function semanticVehiclePartCheck(text: string): Promise<boolean> {
       try {
-        if (!DEEPSEEK_API_KEY) {
-          console.warn('[Semantic Fallback] No DEEPSEEK_API_KEY; skipping semantic check');
+        if (!ANTHROPIC_API_KEY) {
+          console.warn('[Semantic Fallback] No ANTHROPIC_API_KEY; skipping semantic check');
           return false;
         }
-        console.log(`[Semantic Fallback] Analyzing query with DeepSeek (semantic gate)...`);
+        console.log(`[Semantic Fallback] Analyzing query with Claude (semantic gate)...`);
 
-        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: DEEPSEEK_MODEL,
+            model: ANTHROPIC_MODEL_SEMANTIC,
             max_tokens: 10,
-            stream: false,
             messages: [{
               role: 'user',
               content: `Does this query ask about vehicle parts, vehicle repair, vehicle maintenance, or vehicle systems? Answer only YES or NO.\n\nQuery: "${text}"\n\nAnswer:`
@@ -2299,14 +2301,14 @@ Use this data to answer weather questions. Be specific with temperatures and con
         }
 
         const data = await response.json();
-        const raw = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) ? String(data.choices[0].message.content) : '';
+        const raw = (data && data.content && data.content[0] && data.content[0].text) ? String(data.content[0].text) : '';
         const answer = raw.trim().toUpperCase();
         const isVehicleQuery = answer === 'YES';
 
         console.log(`[Semantic Fallback] Response: ${answer} (isVehicleQuery: ${isVehicleQuery})`);
         return isVehicleQuery;
       } catch (error) {
-        console.error(`[Semantic Fallback] Error calling DeepSeek:`, error);
+        console.error(`[Semantic Fallback] Error calling Claude Haiku:`, error);
         return false; // Fail gracefully - default to non-technical
       }
     }
@@ -2493,7 +2495,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
             return true;
           });
 
-          // Format search results with FULL content for AI (not just 150-char previews)
+          // Format search results with FULL content for Claude (not just 150-char previews)
           const formattedSections = deduped.map((chunk, i) => {
             const title = chunk.section_title || 'Manual Section';
             const manual = chunk.manual_title || 'U435 Workshop Manual';
@@ -2504,7 +2506,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
 
           console.log(`[RAG] Formatted ${deduped.length} sections, ${formattedSections.length} characters`);
 
-          // Track which pages were provided to AI (for citation validation)
+          // Track which pages were provided to Claude (for citation validation)
           const providedPages = deduped.map(c => c.page_number).filter(Boolean);
 
           // Convert search results to index entries for reference extraction
@@ -2530,7 +2532,7 @@ Use this data to answer weather questions. Be specific with temperatures and con
 
           const combinedIndex = [...workshopIndexEntries, ...rpsIndexEntries];
 
-          // STEP 2: Give the AI ONLY the relevant sections with full content
+          // STEP 2: Give Claude ONLY the relevant sections with full content
           const imageContext = imageAnalysis
             ? `\nThe user uploaded a photo. Visual analysis: ${imageAnalysis}\nUse this analysis to inform your response about the identified component.\n`
             : '';
@@ -2552,45 +2554,43 @@ CRITICAL INSTRUCTIONS:
 
 Always cite specific page numbers and manual names in your response. Be practical and direct.`;
 
-          // STEP 3: Call DeepSeek with the full index
-          if (!DEEPSEEK_API_KEY) {
-            console.warn('[Agentic] Missing DEEPSEEK_API_KEY; returning graceful message.');
+          // STEP 3: Call Claude with the full index
+          if (!ANTHROPIC_API_KEY) {
+            console.warn('[Agentic] Missing ANTHROPIC_API_KEY; returning graceful message.');
             // Merge RPS illustrations if any, so UI still shows something
             if (rpsIllustrations.length > 0) {
               manualReferences = [...manualReferences, ...rpsIllustrations];
             }
             return new Response(JSON.stringify({
-              content: 'I\u2019m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
+              content: 'I’m having trouble reaching my AI engine to select exact pages right now. Please try again in a moment.',
               manualReferences: manualReferences,
               knowledgeMode: knowledgeMode,
               searchResultCount: manualReferences.length,
               degraded: true
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
           }
-          const aiResponseRaw = await fetch('https://api.deepseek.com/v1/chat/completions', {
+          const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+              'x-api-key': ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-              model: DEEPSEEK_MODEL,
+              model: ANTHROPIC_MODEL_AGENTIC,
               max_tokens: 1200,
               temperature: 0.5,
-              stream: false,
-              messages: [
-                { role: 'system', content: agenticSystemPrompt },
-                ...messages.map(m => ({
-                  role: m.role === 'assistant' ? 'assistant' : 'user',
-                  content: m.content
-                }))
-              ]
+              system: agenticSystemPrompt,
+              messages: messages.map(m => ({
+                role: m.role === 'assistant' ? 'assistant' : 'user',
+                content: m.content
+              }))
             })
           });
 
-          if (!aiResponseRaw.ok) {
-            const error = await aiResponseRaw.text();
-            console.error('DeepSeek API error:', error);
+          if (!anthropicResponse.ok) {
+            const error = await anthropicResponse.text();
+            console.error('Claude API error:', error);
 
             // Deterministic manual fallback: search manual_chunks content directly
             try {
@@ -2650,7 +2650,7 @@ Always cite specific page numbers and manual names in your response. Be practica
 
               const content = manualReferences.length > 0
                 ? 'Here are the most relevant manual pages and diagrams based on your request.'
-                : 'I couldn\u2019t reach my AI engine just now. Please try again shortly.';
+                : 'I couldn’t reach my AI engine just now. Please try again shortly.';
 
               return new Response(JSON.stringify({
                 content,
@@ -2658,7 +2658,7 @@ Always cite specific page numbers and manual names in your response. Be practica
                 knowledgeMode,
                 searchResultCount: manualReferences.length,
                 degraded: manualReferences.length === 0,
-                error: manualReferences.length === 0 ? 'ai_error' : undefined
+                error: manualReferences.length === 0 ? 'anthropic_error' : undefined
               }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
             } catch (e) {
               console.warn('[Deterministic Manual Fallback] Error:', e);
@@ -2667,25 +2667,25 @@ Always cite specific page numbers and manual names in your response. Be practica
                 manualReferences = [...manualReferences, ...rpsIllustrations];
               }
               return new Response(JSON.stringify({
-                content: 'I couldn\u2019t reach my AI engine to select exact pages. Please try again shortly.',
+                content: 'I couldn’t reach my AI engine to select exact pages. Please try again shortly.',
                 manualReferences,
                 knowledgeMode,
                 searchResultCount: manualReferences.length,
                 degraded: true,
-                error: 'ai_error'
+                error: 'anthropic_error'
               }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
             }
           }
 
-          const aiData = await aiResponseRaw.json();
-          const aiResponse = aiData.choices[0].message.content;
+          const claudeData = await anthropicResponse.json();
+          const claudeResponse = claudeData.content[0].text;
 
-          console.log('AI response:', aiResponse);
+          console.log('Claude response:', claudeResponse);
 
-          // STEP 4: Extract page references from AI response
+          // STEP 4: Extract page references from Claude's response
           // Look for patterns like "page 737" or "U435_19_Wheel_Hub_Front.pdf"
-          const pageMatches = aiResponse.matchAll(/page\s+(\d+)/gi);
-          const pdfMatches = aiResponse.matchAll(/(U435_[^\s,\.]+\.pdf)/gi);
+          const pageMatches = claudeResponse.matchAll(/page\s+(\d+)/gi);
+          const pdfMatches = claudeResponse.matchAll(/(U435_[^\s,\.]+\.pdf)/gi);
 
           const referencedPages = new Set<number>();
           const referencedPDFs = new Set<string>();
@@ -2739,10 +2739,10 @@ Always cite specific page numbers and manual names in your response. Be practica
                 manual_type: 'RPS'
               }));
               rpsIllustrations = [...rpsIllustrations, ...add];
-              console.log(`[Agentic] Added ${add.length} RPS pages from AI citations`);
+              console.log(`[Agentic] Added ${add.length} RPS pages from Claude citations`);
             }
             if (filtered.missing.length > 0) {
-              console.warn(`[Agentic] AI cited missing RPS pages: ${filtered.missing.join(', ')}`);
+              console.warn(`[Agentic] Claude cited missing RPS pages: ${filtered.missing.join(', ')}`);
             }
           }
 
@@ -2772,7 +2772,7 @@ Always cite specific page numbers and manual names in your response. Be practica
                 chapter_filename: chapterInfo.filename,
                 system_category: entry.system_category || 'general',
                 has_safety_warning: entry.has_safety_warning || false,
-                match_type: 'ai_selected',
+                match_type: 'claude_selected',
                 match_score: 1.0,
                 manual_type: 'U435',
                 is_maintenance_manual: (entry.chapter_filename && entry.chapter_filename.includes('Maint_')) || false
@@ -2794,9 +2794,9 @@ Always cite specific page numbers and manual names in your response. Be practica
           await supabaseClient.from('chat_logs').insert({
             user_id: user.id,
             messages: messages,
-            response: aiResponse,
-            model: 'deepseek-chat-agentic',
-            tokens_used: (aiData.usage?.prompt_tokens || 0) + (aiData.usage?.completion_tokens || 0),
+            response: claudeResponse,
+            model: 'claude-haiku-4-5-agentic',
+            tokens_used: (claudeData.usage?.input_tokens || 0) + (claudeData.usage?.output_tokens || 0),
             knowledge_source: `agentic_full_index_${routingDecision.rule}`,
             has_location: !!location,
             routing_rule: routingDecision.rule,
@@ -2814,7 +2814,7 @@ Always cite specific page numbers and manual names in your response. Be practica
                 await upsertComponentTaskRefs(supabaseAdmin, componentId, taskForCache, rpsPages, manualPages, 0.9);
               }
               const signature = buildSignature(taskForCache, cacheComponent);
-              await setCachedAnswer(supabaseAdmin, signature, taskForCache, cacheComponent, aiResponse, manualReferences, CACHE_TTL_SECONDS);
+              await setCachedAnswer(supabaseAdmin, signature, taskForCache, cacheComponent, claudeResponse, manualReferences, CACHE_TTL_SECONDS);
             } catch (e) {
               console.warn('[Cache] persist answer error:', e);
             }
@@ -2837,14 +2837,14 @@ Always cite specific page numbers and manual names in your response. Be practica
             }
           }
 
-          // Return AI response
+          // Return Claude's intelligent response
           return new Response(JSON.stringify({
-            content: aiResponse,
+            content: claudeResponse,
             manualReferences: manualReferences,
             affiliateProducts: affiliateProducts.length > 0 ? affiliateProducts : undefined,
             knowledgeMode: knowledgeMode,
             searchResultCount: manualReferences.length,
-            usage: aiData.usage
+            usage: claudeData.usage
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200
@@ -2868,7 +2868,7 @@ Always cite specific page numbers and manual names in your response. Be practica
           }
           // Cache full answer
           const signature = buildSignature(taskForCache, cacheComponent);
-          // We don't have aiResponse in this scope if error path; only cache when manualReferences exist and content was returned
+          // We don't have claudeResponse in this scope if error path; only cache when manualReferences exist and content was returned
           // No-op here; setCachedAnswer is called in the success path below as well
         } catch (e) {
           console.warn('[Cache] store refs error:', e);
@@ -2936,10 +2936,10 @@ Always cite specific page numbers and manual names in your response. Be practica
       }
     }
 
-    // Only call AI for general questions (not Unimog technical)
+    // Only call Claude for general questions (not Unimog technical)
     console.log('=== KNOWLEDGE MODE CHECK ===');
     console.log('knowledgeMode:', knowledgeMode);
-    console.log('Will call AI API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search' || knowledgeMode === 'affiliate_products');
+    console.log('Will call Claude API:', knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search' || knowledgeMode === 'affiliate_products');
     console.log('===========================');
 
     if (knowledgeMode === 'general' || knowledgeMode === 'rps_catalog_component' || knowledgeMode === 'niin_lookup' || knowledgeMode === 'rps_group_code' || knowledgeMode === 'rps_item_number' || knowledgeMode === 'rps_description_search' || knowledgeMode === 'weather' || knowledgeMode === 'web_search' || knowledgeMode === 'affiliate_products') {
@@ -2961,55 +2961,53 @@ Always cite specific page numbers and manual names in your response. Be practica
       // Record this request for rate limiting
       await supabaseClient.from('chat_rate_limits').insert({ user_id: user.id });
 
-      // Call DeepSeek API for general questions
-      if (!DEEPSEEK_API_KEY) {
-        console.warn('[General] Missing DEEPSEEK_API_KEY; returning graceful message.');
+      // Call Anthropic API for general questions (Claude Haiku 4.5)
+      if (!ANTHROPIC_API_KEY) {
+        console.warn('[General] Missing ANTHROPIC_API_KEY; returning graceful message.');
         return new Response(JSON.stringify({
-          content: 'I\u2019m having trouble reaching my AI engine right now. Please try again shortly.',
+          content: 'I’m having trouble reaching my AI engine right now. Please try again shortly.',
           knowledgeMode: knowledgeMode,
           degraded: true
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
-      const aiGeneralResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: DEEPSEEK_MODEL,
+          model: ANTHROPIC_MODEL_GENERAL,
           max_tokens: 600,
           temperature: 0.7,
-          stream: false,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages.map(m => ({
-              role: m.role === 'assistant' ? 'assistant' : 'user',
-              content: m.content
-            }))
-          ]
+          system: systemPrompt,
+          messages: messages.map(m => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content
+          }))
         })
       });
 
-      if (!aiGeneralResponse.ok) {
-        const error = await aiGeneralResponse.text();
-        console.error('DeepSeek API error:', error);
+      if (!anthropicResponse.ok) {
+        const error = await anthropicResponse.text();
+        console.error('Anthropic API error:', error);
         return new Response(JSON.stringify({ error: 'Failed to get response from AI' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
 
-      const generalData = await aiGeneralResponse.json();
-      const responseContent = generalData.choices[0].message.content;
+      const data = await anthropicResponse.json();
+      const responseContent = data.content[0].text;
 
       // Log the chat for analytics with routing telemetry
       await supabaseClient.from('chat_logs').insert({
         user_id: user.id,
         messages: messages,
         response: responseContent,
-        model: 'deepseek-chat-general',
-        tokens_used: (generalData.usage?.prompt_tokens || 0) + (generalData.usage?.completion_tokens || 0),
+        model: 'claude-haiku-4-5-general',
+        tokens_used: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
         knowledge_source: `${knowledgeMode}_${routingDecision.rule}`,
         has_location: !!location,
         routing_rule: routingDecision.rule,
@@ -3046,7 +3044,7 @@ Always cite specific page numbers and manual names in your response. Be practica
         affiliateProducts: affiliateProducts.length > 0 ? affiliateProducts : undefined,
         knowledgeMode: knowledgeMode,
         searchResultCount: rpsIllustrations.length,
-        usage: generalData.usage
+        usage: data.usage
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200

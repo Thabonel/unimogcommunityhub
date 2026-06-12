@@ -109,7 +109,7 @@ jobs:
     - name: Create test environment
       run: |
         echo "VITE_SUPABASE_URL=https://test.supabase.co" >> .env
-        echo "VITE_SUPABASE_ANON_KEY=test_key_for_build_only" >> .env
+        echo "VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY> >> .env
         echo "VITE_MAPBOX_ACCESS_TOKEN=pk.test" >> .env
         
     - name: Type check

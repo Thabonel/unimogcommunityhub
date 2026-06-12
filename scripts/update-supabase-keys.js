@@ -34,8 +34,8 @@ async function updateSupabaseKeys() {
     
     if (anonKey.trim()) {
       envContent = envContent.replace(
-        /VITE_SUPABASE_ANON_KEY=.*/,
-        `VITE_SUPABASE_ANON_KEY=${anonKey.trim()}`
+        /VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
+        `VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
       );
       console.log('✅ Updated anon key');
     }
@@ -45,16 +45,16 @@ async function updateSupabaseKeys() {
     
     if (serviceKey.trim()) {
       // Check if service role key exists in .env
-      if (envContent.includes('SUPABASE_SERVICE_ROLE_KEY=')) {
+      if (envContent.includes('SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> {
         envContent = envContent.replace(
-          /SUPABASE_SERVICE_ROLE_KEY=.*/,
-          `SUPABASE_SERVICE_ROLE_KEY=${serviceKey.trim()}`
+          /SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
+          `SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
         );
       } else {
         // Add it after the anon key
         envContent = envContent.replace(
-          /(VITE_SUPABASE_ANON_KEY=.*)/,
-          `$1\nSUPABASE_SERVICE_ROLE_KEY=${serviceKey.trim()}`
+          /(VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
+          `$1\nSUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
         );
       }
       console.log('✅ Updated service role key');

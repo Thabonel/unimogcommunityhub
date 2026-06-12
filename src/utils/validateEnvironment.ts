@@ -101,7 +101,7 @@ export function getEnvironmentErrorMessage(result: ValidationResult): string {
   message += '1. Create a .env file in the project root\n';
   message += '2. Add the required environment variables:\n';
   message += '   VITE_SUPABASE_URL=https://your-project.supabase.co\n';
-  message += '   VITE_SUPABASE_ANON_KEY=your-anon-key\n';
+  message += '   VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
   message += '3. Restart the development server\n\n';
   
   message += 'For Production (Netlify):\n';

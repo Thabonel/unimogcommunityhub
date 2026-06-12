@@ -4,7 +4,7 @@
 # Calls the Supabase Edge Function repeatedly to process all pages
 
 EDGE_FUNCTION_URL="https://ydevatqwkoccxhtejdor.supabase.co/functions/v1/process-rps-ocr"
-SUPABASE_ANON_KEY=$(grep VITE_SUPABASE_ANON_KEY .env.example | cut -d'=' -f2)
+SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY> VITE_SUPABASE_ANON_KEY .env.example | cut -d'=' -f2)
 
 # Check if we can get the anon key
 if [ -z "$SUPABASE_ANON_KEY" ] || [ "$SUPABASE_ANON_KEY" = "your_anon_key_here" ]; then

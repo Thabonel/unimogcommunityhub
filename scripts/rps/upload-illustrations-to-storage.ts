@@ -4,7 +4,7 @@
  * Uploads all 930 RPS page illustrations to the rps_illustrations bucket
  *
  * Usage:
- *   export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
+ *   export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
  *   npx tsx scripts/rps/upload-illustrations-to-storage.ts
  */
 
@@ -18,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = <SUPABASE_SERVICE_ROLE_KEY>
 
 if (!SUPABASE_SERVICE_ROLE_KEY) {
   console.error('SUPABASE_SERVICE_ROLE_KEY environment variable not set');

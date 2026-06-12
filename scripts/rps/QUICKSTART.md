@@ -7,9 +7,9 @@ Barry can't show parts lists because the RPS parts data isn't in the database ye
 
 ```bash
 # 1. Set your API keys (one time)
-export ANTHROPIC_API_KEY=your_anthropic_api_key
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 export VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 
 # 2. Run the automated setup (30-45 minutes, costs ~$2.50)
 cd /Users/thabonel/Code/unimogcommunityhub/scripts/rps
@@ -63,13 +63,13 @@ npx tsx import-to-database.ts
 
 ### "Anthropic API key not set"
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-api03-...
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 ```
 
 ### "Supabase credentials not set"
 ```bash
 export VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJI...
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 Get service role key: Supabase Dashboard → Settings → API → service_role

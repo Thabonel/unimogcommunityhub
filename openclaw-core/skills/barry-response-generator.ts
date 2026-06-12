@@ -1,6 +1,6 @@
 /**
  * Barry Response Generator Skill
- * Generates responses using DeepSeek with proper citations
+ * Generates responses using Claude with proper citations
  */
 
 import {
@@ -13,7 +13,7 @@ import {
 import { BARRY_PERSONA, MODEL_CONFIG } from '../config/barry-config';
 
 /**
- * Build the system prompt for DeepSeek
+ * Build the system prompt for Claude
  */
 function buildSystemPrompt(
   task: string,
@@ -56,7 +56,7 @@ CRITICAL RULES:
 }
 
 /**
- * Extract citations from response
+ * Extract citations from Claude's response
  */
 function extractCitations(
   response: string,
@@ -134,46 +134,41 @@ function extractCitations(
 }
 
 /**
- * Call DeepSeek API to generate response
+ * Call Claude API to generate response
  */
-async function callDeepSeek(
+async function callClaude(
   systemPrompt: string,
   messages: Array<{ role: string; content: string }>,
   apiKey: string
 ): Promise<{ content: string; usage: { input_tokens: number; output_tokens: number } }> {
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model: MODEL_CONFIG.agentic,
       max_tokens: 1000,
       temperature: 0.7,
-      stream: false,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages.map(m => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: m.content
-        }))
-      ]
+      system: systemPrompt,
+      messages: messages.map(m => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.content
+      }))
     })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
+    throw new Error(`Claude API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
   return {
-    content: data.choices[0].message.content,
-    usage: {
-      input_tokens: data.usage.prompt_tokens,
-      output_tokens: data.usage.completion_tokens
-    }
+    content: data.content[0].text,
+    usage: data.usage
   };
 }
 
@@ -191,11 +186,11 @@ export async function executeResponseGenerator(
     const { query, task, manual_context, rps_context, conversation_history } = input;
 
     // Get API key from environment
-    const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) {
       return {
         success: false,
-        error: 'DEEPSEEK_API_KEY not configured',
+        error: 'ANTHROPIC_API_KEY not configured',
         executionTimeMs: performance.now() - startTime,
         skillName
       };
@@ -210,9 +205,9 @@ export async function executeResponseGenerator(
       { role: 'user', content: query }
     ];
 
-    // Call DeepSeek
-    console.log(`[ResponseGenerator] Calling DeepSeek...`);
-    const { content } = await callDeepSeek(systemPrompt, messages, apiKey);
+    // Call Claude
+    console.log(`[ResponseGenerator] Calling Claude ${MODEL_CONFIG.agentic}...`);
+    const { content } = await callClaude(systemPrompt, messages, apiKey);
 
     // Extract citations from response
     const citations = extractCitations(content, manual_context);

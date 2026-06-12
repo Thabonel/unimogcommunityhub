@@ -15,7 +15,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_SERVICE_KEY) {
   console.error('❌ SUPABASE_SERVICE_ROLE_KEY environment variable is required');
   console.log('Please set it in your .env file or export it:');
-  console.log('export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"');
+  console.log('export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   process.exit(1);
 }
 

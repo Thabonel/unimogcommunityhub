@@ -6,7 +6,7 @@ const path = require('path');
 
 // Load environment variables from package.json scripts or set directly
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = <SUPABASE_SERVICE_ROLE_KEY>
 
 if (!SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');

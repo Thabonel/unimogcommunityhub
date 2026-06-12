@@ -69,9 +69,7 @@ if (process.env.VITE_SUPABASE_URL) {
 // Check for API key format
 if (process.env.VITE_SUPABASE_ANON_KEY) {
   const key = process.env.VITE_SUPABASE_ANON_KEY;
-  if (key.startsWith('sb_publishable_')) {
-    console.log('\n✅ VITE_SUPABASE_ANON_KEY: New Supabase publishable key format');
-  } else if (key.length < 100) {
+  if (key.length < 100) {
     console.log('\n⚠️  Warning: VITE_SUPABASE_ANON_KEY appears to be too short');
     console.log(`  Expected: A JWT token (usually 200+ characters)`);
     console.log(`  Current length: ${key.length} characters`);

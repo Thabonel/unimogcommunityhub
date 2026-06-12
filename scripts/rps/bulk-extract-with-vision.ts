@@ -54,7 +54,7 @@ async function extractionStrategy() {
   console.log('Recommended Approach (Most Efficient):');
   console.log('================================');
   console.log('PRIORITY 1: Configure API Key (2 minutes)');
-  console.log('  export ANTHROPIC_API_KEY="your-api-key"');
+  console.log('  export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
   console.log('  Then re-run: npx tsx scripts/rps/extract-agent2-pages-201-400.ts\n');
 
   console.log('PRIORITY 2: Restore Database Access (5 minutes)');

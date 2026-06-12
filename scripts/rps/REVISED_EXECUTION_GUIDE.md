@@ -85,7 +85,7 @@ Barry confusion: NONE
 
 1. **Set environment variable:**
 ```bash
-export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 2. **Verify Phase 6 mapping:**
@@ -284,7 +284,7 @@ WHERE mc.id = mc_backup.id
 **Next action:** Set SERVICE_ROLE_KEY and run test mode
 
 ```bash
-export SUPABASE_SERVICE_ROLE_KEY="your_key"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 cd /Users/thabonel/Code/unimogcommunityhub/scripts/rps
 ./run-phase8-reindex.sh test
 ```

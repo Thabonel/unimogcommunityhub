@@ -8,7 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
 interface PageAnalysis {
   pageNumber: number;
@@ -59,31 +59,30 @@ serve(async (req) => {
       console.log(`Analyzing pages ${batchStart}-${batchEnd}...`)
 
       try {
-        const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${DEEPSEEK_API_KEY || ''}`
+            'x-api-key': ANTHROPIC_API_KEY || '',
+            'anthropic-version': '2023-06-01'
           },
           body: JSON.stringify({
-            model: 'deepseek-chat',
+            model: 'claude-sonnet-4-20250514',
             max_tokens: 4000,
-            stream: false,
-            messages: [
-              {
-                role: 'user',
-                content: [
-                  {
-                    type: 'document',
-                    source: {
-                      type: 'base64',
-                      media_type: 'application/pdf',
-                      data: base64
-                    }
-                  },
-                  {
-                    type: 'text',
-                    text: `Analyze pages ${batchStart} to ${batchEnd} of this PDF for visual content.
+            messages: [{
+              role: 'user',
+              content: [
+                {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: 'application/pdf',
+                    data: base64
+                  }
+                },
+                {
+                  type: 'text',
+                  text: `Analyze pages ${batchStart} to ${batchEnd} of this PDF for visual content.
 
 For EACH page, respond in this exact JSON format:
 {
@@ -117,12 +116,12 @@ Only analyze pages ${batchStart} to ${batchEnd}. Return valid JSON only.`
 
         if (!response.ok) {
           const errorText = await response.text()
-          console.error(`DeepSeek API error: ${response.status} - ${errorText}`)
+          console.error(`Claude API error: ${response.status} - ${errorText}`)
           continue
         }
 
         const result = await response.json()
-        const textContent = result.choices?.[0]?.message?.content || ''
+        const textContent = result.content?.[0]?.text || ''
 
         try {
           const jsonMatch = textContent.match(/\{[\s\S]*\}/)

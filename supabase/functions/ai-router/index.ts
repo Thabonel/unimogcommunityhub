@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-type Provider = 'openai' | 'gemini'
+type Provider = 'openai' | 'anthropic' | 'gemini'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +27,8 @@ function decideRoute(input: string, constraints?: { requireJson?: boolean; useTo
   const candidates = [
     { provider: 'gemini' as Provider, model: 'gemini-1.5-flash', latency: 700, costClass: 'low' as const, reason: 'Fast & low-cost' },
     { provider: 'openai' as Provider, model: 'gpt-4o-mini', latency: 900, costClass: 'medium' as const, reason: 'Balanced speed & quality' },
+    { provider: 'anthropic' as Provider, model: 'claude-3-5-haiku-latest', latency: 1100, costClass: 'medium' as const, reason: 'Structured output & speed' },
+    { provider: 'anthropic' as Provider, model: 'claude-3-5-sonnet-latest', latency: 2400, costClass: 'high' as const, reason: 'Higher quality' },
     { provider: 'openai' as Provider, model: 'gpt-4o', latency: 2200, costClass: 'high' as const, reason: 'High quality multimodal' },
     { provider: 'gemini' as Provider, model: 'gemini-1.5-pro', latency: 2000, costClass: 'high' as const, reason: 'Long context, higher quality' },
   ]
@@ -52,7 +54,7 @@ function decideRoute(input: string, constraints?: { requireJson?: boolean; useTo
     return { provider: pick.provider, model: pick.model, reason: 'Moderate task routed to balanced cost/quality', estimatedCostClass: pick.costClass }
   }
 
-  pick = candidates[2] // gpt-4o
+  pick = candidates[3] // claude sonnet
   return { provider: pick.provider, model: pick.model, reason: 'Large/complex task routed to more capable model', estimatedCostClass: pick.costClass }
 }
 
@@ -123,7 +125,8 @@ serve(async (req) => {
         }
         // Fallback: compute once, stream as single event
         try {
-          if (provider === 'gemini') text = await callGemini(model, input)
+          if (provider === 'anthropic') text = await callAnthropic(model, input)
+          else if (provider === 'gemini') text = await callGemini(model, input)
           else throw new Error('Unsupported provider')
           ok = true
         } catch (e) {
@@ -162,6 +165,8 @@ serve(async (req) => {
       try {
         if (provider === 'openai') {
           text = await callOpenAI(model, input)
+        } else if (provider === 'anthropic') {
+          text = await callAnthropic(model, input)
         } else if (provider === 'gemini') {
           text = await callGemini(model, input)
         } else {
@@ -244,62 +249,60 @@ async function callOpenAI(model: string, input: string): Promise<string> {
   return String(content)
 }
 
-async function callDeepSeek(model: string, input: string): Promise<string> {
-  const key = Deno.env.get('DEEPSEEK_API_KEY')
-  if (!key) throw new Error('Missing DEEPSEEK_API_KEY')
-  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+async function callAnthropic(model: string, input: string): Promise<string> {
+  const key = Deno.env.get('ANTHROPIC_API_KEY')
+  if (!key) throw new Error('Missing ANTHROPIC_API_KEY')
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: model === 'deepseek-chat' ? model : 'deepseek-chat',
+      model,
+      max_tokens: 1024,
       messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
         { role: 'user', content: input },
       ],
-      temperature: 0.2,
-      max_tokens: 1024,
     }),
   })
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${body}`)
+    throw new Error(`Anthropic error ${res.status}: ${body}`)
   }
   const data = await res.json()
-  const content = data?.choices?.[0]?.message?.content
-  if (!content) throw new Error('DeepSeek: empty response')
+  const content = data?.content?.[0]?.text
+  if (!content) throw new Error('Anthropic: empty response')
   return String(content)
 }
 
 async function callGemini(model: string, input: string): Promise<string> {
-  const key = Deno.env.get('DEEPSEEK_API_KEY')
-  if (!key) throw new Error('Missing DEEPSEEK_API_KEY')
-  const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  const key = Deno.env.get('GEMINI_API_KEY') ?? Deno.env.get('VITE_GEMINI_API_KEY')
+  if (!key) throw new Error('Missing GEMINI_API_KEY')
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`
+  const res = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: input },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: input }],
+        },
       ],
-      temperature: 0.2,
-      max_tokens: 1024,
+      generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
     }),
   })
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`DeepSeek error ${res.status}: ${body}`)
+    throw new Error(`Gemini error ${res.status}: ${body}`)
   }
   const data = await res.json()
-  const content = data?.choices?.[0]?.message?.content
-  if (!content) throw new Error('DeepSeek: empty response')
-  return String(content)
+  const parts = data?.candidates?.[0]?.content?.parts
+  const text = Array.isArray(parts) ? parts.map((p: any) => p?.text || '').join('') : ''
+  if (!text) throw new Error('Gemini: empty response')
+  return String(text)
 }
 
 async function streamOpenAI(model: string, input: string, supabase: ReturnType<typeof createClient>, userId: string, decision: { provider: string; model: string; reason: string; estimatedCostClass: string }) {

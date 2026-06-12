@@ -15,7 +15,7 @@ config({ path: join(__dirname, '..', '.env') });
 
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 
 if (!SERVICE_ROLE_KEY || !SUPABASE_URL || !OPENAI_API_KEY) {
   console.error('Missing required environment variables');

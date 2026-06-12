@@ -17,7 +17,7 @@ if (!SERVICE_ROLE_KEY) {
   console.log('\nTo get your service role key:');
   console.log('1. Go to https://supabase.com/dashboard/project/ydevatqwkoccxhtejdor/settings/api');
   console.log('2. Copy the "service_role" key (starts with eyJ...)');
-  console.log('3. Add to .env file: SUPABASE_SERVICE_ROLE_KEY=your_key_here');
+  console.log('3. Add to .env file: SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   process.exit(1);
 }
 

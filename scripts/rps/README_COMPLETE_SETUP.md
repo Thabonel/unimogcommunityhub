@@ -26,9 +26,9 @@ This directory contains a complete automated pipeline to:
 
 ```bash
 # 1. Set environment variables
-export ANTHROPIC_API_KEY=your_anthropic_key_here
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 export VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 
 # 2. Run complete setup (extraction + upload)
 cd /Users/thabonel/Code/unimogcommunityhub/scripts/rps
@@ -125,9 +125,9 @@ npm install @anthropic-ai/sdk @supabase/supabase-js dotenv tsx
 
 2. **Set environment variables:**
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-api03-...
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 export VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJI...
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 Get service role key from: Supabase Dashboard → Settings → API → service_role

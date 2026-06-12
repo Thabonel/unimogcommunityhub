@@ -24,8 +24,8 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const SUPABASE_URL = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const SUPABASE_KEY = <SUPABASE_ANON_KEY>
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 const REQUEST_DELAY_MS = 1500; // Slightly longer delay between requests

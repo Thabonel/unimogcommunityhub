@@ -30,7 +30,7 @@ ls -lh /Users/thabonel/Code/Work/RPS-02155-Unimog-GS-Base-Scale.pdf
 ### 2. Set Environment Variables
 ```bash
 export VITE_SUPABASE_URL="https://ydevatqwkoccxhtejdor.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 
 # Verify
 echo $VITE_SUPABASE_URL

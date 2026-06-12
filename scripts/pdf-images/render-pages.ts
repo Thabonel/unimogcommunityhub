@@ -16,7 +16,7 @@ import { createCanvas } from '@napi-rs/canvas';
 import sharp from 'sharp';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_SERVICE_ROLE_KEY = <SUPABASE_SERVICE_ROLE_KEY> || '';
 
 interface RenderOptions {
   filename: string;

@@ -25,7 +25,7 @@ pip install pymupdf
 ### 2. Environment Variables
 ```bash
 export VITE_SUPABASE_URL="https://ydevatqwkoccxhtejdor.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 ```
 
 ### 3. PDF File

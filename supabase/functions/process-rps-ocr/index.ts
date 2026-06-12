@@ -20,7 +20,7 @@ interface PartsListPage {
 }
 
 async function ocrImageWithGPT4Vision(imageUrl: string, groupInfo: string): Promise<string> {
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+  const OPENAI_API_KEY = <OPENAI_API_KEY>
   if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY not configured');
   }

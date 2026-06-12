@@ -444,7 +444,7 @@ We do NOT use local development - all development happens directly on Netlify st
 ```bash
 # Required - Supabase (ALWAYS SET IN NETLIFY)
 VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 VITE_SUPABASE_PROJECT_ID=ydevatqwkoccxhtejdor
 
 # Required - Maps (ALWAYS SET IN NETLIFY)

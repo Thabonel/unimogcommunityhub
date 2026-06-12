@@ -8,7 +8,7 @@ All preparation complete. PDF verified at correct location.
 
 ### Step 1: Set Environment Variable
 ```bash
-export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 
 # Verify it's set
 echo $SUPABASE_SERVICE_ROLE_KEY
@@ -103,7 +103,7 @@ WHERE manual_title = 'RPS Catalog'
 ### Environment
 ```bash
 VITE_SUPABASE_URL=https://ydevatqwkoccxhtejdor.supabase.co  # Auto-set
-SUPABASE_SERVICE_ROLE_KEY=<you need to set this>
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> need to set this>
 ```
 
 ---

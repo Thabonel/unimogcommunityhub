@@ -20,7 +20,7 @@ You have two options to create the test user:
 
 ```bash
 # Set your service role key
-export SUPABASE_SERVICE_ROLE_KEY="your-service-role-key-here"
+export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 
 # Run the creation script
 npx tsx scripts/create-test-user.ts

@@ -17,7 +17,7 @@ CORRECT: ...ImFub24iLCJpYX...     ✅ (no spaces)
 3. **Find:** `VITE_SUPABASE_ANON_KEY`
 4. **Replace with this correct key** (copy this entire line, no spaces!):
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkZXZhdHF3a29jY3hodGVqZG9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMyMjAxNjEsImV4cCI6MjA1ODc5NjE2MX0.kbjmP9__CU21gJfZwyKbw0GVfjX_PL7jmVTZsY-W8uY
+<JWT_TOKEN>
 ```
 5. **Click Save**
 6. **Go to Deploys tab**

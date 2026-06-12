@@ -1,6 +1,6 @@
 /**
  * Barry Query Expander Skill
- * Expands user queries into technical manual terminology using DeepSeek
+ * Expands user queries into technical manual terminology using Claude Haiku
  * Phase 1 of Barry AI Transformation Plan - The Macro Fix for synonym problems
  */
 
@@ -19,12 +19,12 @@ export interface QueryExpanderOutput {
   found: boolean;
   expanded_terms: string[];
   original_query: string;
-  expansion_method: 'deepseek' | 'fallback';
+  expansion_method: 'claude_haiku' | 'fallback';
 }
 
 /**
  * Fallback expansion using simple keyword extraction
- * Used when DeepSeek API fails or returns invalid JSON
+ * Used when Claude API fails or returns invalid JSON
  */
 function generateFallbackTerms(query: string): string[] {
   const queryLower = query.toLowerCase();
@@ -57,41 +57,37 @@ function generateFallbackTerms(query: string): string[] {
 }
 
 /**
- * Call DeepSeek to expand query into technical terms
+ * Call Claude Haiku to expand query into technical terms
  */
-async function expandQueryWithDeepSeek(query: string): Promise<string[]> {
-  const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+async function expandQueryWithClaude(query: string): Promise<string[]> {
+  const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
-  if (!DEEPSEEK_API_KEY) {
-    throw new Error('DEEPSEEK_API_KEY not configured');
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
   }
 
-  const systemPrompt = 'You are a Unimog technical terminology expert. Given a user question about a Unimog, return a JSON array of alternative search terms that workshop manuals and parts catalogs would use. Include German technical terms (like Lenkstockschalter), Mercedes part terminology, component assembly names, and common mechanic slang. Return ONLY the JSON array, nothing else.';
+  const prompt = `You are a Unimog technical terminology expert. Given this user question about a Unimog, return a JSON array of alternative search terms that workshop manuals and parts catalogs would use. Include German technical terms (like Lenkstockschalter), Mercedes part terminology, component assembly names, and common mechanic slang. Return ONLY the JSON array, nothing else.
 
-  const userPrompt = `User question: "${query}"
+User question: "${query}"
 
 Example format: ["combination switch", "Lenkstockschalter", "turn signal lever", "indicator stalk", "column switch", "wiper switch assembly"]`;
 
   try {
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'claude-haiku-4-5-20250414',
         max_tokens: 200,
-        temperature: 0.3,
-        stream: false,
+        temperature: 0.3, // Lower temperature for more consistent JSON output
         messages: [
           {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
             role: 'user',
-            content: userPrompt
+            content: prompt
           }
         ]
       })
@@ -99,14 +95,14 @@ Example format: ["combination switch", "Lenkstockschalter", "turn signal lever",
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`DeepSeek API error: ${response.status} - ${error}`);
+      throw new Error(`Claude API error: ${response.status} - ${error}`);
     }
 
     const data = await response.json();
-    const content = data.choices[0]?.message?.content?.trim();
+    const content = data.content[0]?.text?.trim();
 
     if (!content) {
-      throw new Error('Empty response from DeepSeek API');
+      throw new Error('Empty response from Claude API');
     }
 
     // Parse JSON response
@@ -130,11 +126,11 @@ Example format: ["combination switch", "Lenkstockschalter", "turn signal lever",
 
     } catch (parseError) {
       console.error('[QueryExpander] JSON parse error:', parseError, 'Content:', content);
-      throw new Error('Invalid JSON response from DeepSeek');
+      throw new Error('Invalid JSON response from Claude');
     }
 
   } catch (error) {
-    console.error('[QueryExpander] DeepSeek API error:', error);
+    console.error('[QueryExpander] Claude API error:', error);
     throw error;
   }
 }
@@ -156,16 +152,16 @@ export async function executeQueryExpander(
     console.log(`[QueryExpander] Expanding query: ${query.substring(0, 100)}...`);
 
     let expandedTerms: string[];
-    let expansionMethod: 'deepseek' | 'fallback' = 'deepseek';
+    let expansionMethod: 'claude_haiku' | 'fallback' = 'claude_haiku';
 
     try {
-      // Attempt DeepSeek expansion first
-      expandedTerms = await expandQueryWithDeepSeek(query);
-      console.log(`[QueryExpander] DeepSeek expansion: ${expandedTerms.length} terms`);
+      // Attempt Claude expansion first
+      expandedTerms = await expandQueryWithClaude(query);
+      console.log(`[QueryExpander] Claude expansion: ${expandedTerms.length} terms`);
 
-    } catch (deepseekError) {
-      // Fallback to hardcoded mappings if DeepSeek fails
-      console.warn(`[QueryExpander] DeepSeek failed, using fallback:`, deepseekError);
+    } catch (claudeError) {
+      // Fallback to hardcoded mappings if Claude fails
+      console.warn(`[QueryExpander] Claude failed, using fallback:`, claudeError);
       expandedTerms = generateFallbackTerms(query);
       expansionMethod = 'fallback';
     }

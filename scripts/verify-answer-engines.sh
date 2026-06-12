@@ -3,7 +3,7 @@
 # Verify AI Router, Streaming, and Canonical APIs
 # Usage:
 #   SUPABASE_URL=... \
-#   SUPABASE_ANON_KEY=... \
+#   SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY> \
 #   ADMIN_JWT=... \
 #   ./scripts/verify-answer-engines.sh
 #
@@ -14,7 +14,7 @@
 set -u
 
 SUPABASE_URL=${SUPABASE_URL:-}
-SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
+SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 ADMIN_JWT=${ADMIN_JWT:-}
 
 PASS=0

@@ -3,14 +3,14 @@
  * Updates embeddings to 1536 dimensions using text-embedding-3-small
  *
  * Usage:
- * SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... OPENAI_API_KEY=... npx ts-node regenerate-embeddings.ts
+ * SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> OPENAI_API_KEY=<OPENAI_API_KEY> npx ts-node regenerate-embeddings.ts
  */
 
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const SUPABASE_SERVICE_ROLE_KEY = <SUPABASE_SERVICE_ROLE_KEY> || '';
+const OPENAI_API_KEY = <OPENAI_API_KEY> || '';
 const EMBEDDING_MODEL = 'text-embedding-3-small';
 const TARGET_DIMENSION = 1536;
 const BATCH_SIZE = 10;

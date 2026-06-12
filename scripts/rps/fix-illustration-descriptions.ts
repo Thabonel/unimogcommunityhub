@@ -9,7 +9,7 @@
  *
  * Usage:
  *   export VITE_SUPABASE_URL="https://ydevatqwkoccxhtejdor.supabase.co"
- *   export SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
+ *   export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
  *   npx tsx scripts/rps/fix-illustration-descriptions.ts
  */
 

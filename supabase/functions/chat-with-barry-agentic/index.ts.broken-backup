@@ -15,7 +15,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 // Model names configurable via env to avoid hardcoding and keep compatibility with provider updates
 const ANTHROPIC_MODEL_INTENT = Deno.env.get('ANTHROPIC_MODEL_INTENT') || 'claude-haiku-4-5';
 const ANTHROPIC_MODEL_AGENTIC = Deno.env.get('ANTHROPIC_MODEL_AGENTIC') || 'claude-haiku-4-5';

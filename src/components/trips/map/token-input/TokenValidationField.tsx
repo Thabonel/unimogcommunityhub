@@ -27,7 +27,7 @@ const TokenValidationField = ({
     <div className="space-y-2">
       <div className="flex gap-2">
         <Input
-          placeholder="pk.eyJ1Ijoi..."
+          placeholder="<MAPBOX_PUBLIC_TOKEN>"
           value={token}
           onChange={handleTokenChange}
           className="font-mono flex-1"

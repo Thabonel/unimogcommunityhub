@@ -39,7 +39,7 @@ For complete extraction of all 135 pages with full accuracy:
 ###Option 1: User-Assisted Extraction
 User runs the extraction script locally with their ANTHROPIC_API_KEY:
 ```bash
-export ANTHROPIC_API_KEY="your-key-here"
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 npx tsx scripts/rps/extract-agent2-pages-201-400.ts
 ```
 

@@ -17,7 +17,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('SUPABASE_SERVICE_ROLE_KEY (or anon key as fallback):', !!supabaseServiceKey);
   console.log('\n💡 Make sure your .env file contains:');
   console.log('VITE_SUPABASE_URL=https://your-project.supabase.co');
-  console.log('SUPABASE_SERVICE_ROLE_KEY=your_service_role_key');
+  console.log('SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   process.exit(1);
 }
 

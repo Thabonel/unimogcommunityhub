@@ -21,7 +21,7 @@ fi
 if [ -z "$OPENAI_API_KEY" ]; then
   echo "Error: OPENAI_API_KEY environment variable not set"
   echo "Please set it and try again:"
-  echo "  export OPENAI_API_KEY='your-key-here'"
+  echo "  export OPENAI_API_KEY=<OPENAI_API_KEY>
   exit 1
 fi
 

@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
 // Known Unimog-related sites to seed discovery
 const SEED_SITES = {
@@ -53,45 +53,40 @@ interface DiscoverySuggestion {
 }
 
 async function discoverSourcesWithAI(type: 'trip' | 'guide'): Promise<DiscoverySuggestion[]> {
-  if (!DEEPSEEK_API_KEY) {
-    console.warn('[Discovery] No DEEPSEEK_API_KEY configured');
+  if (!ANTHROPIC_API_KEY) {
+    console.warn('[Discovery] No ANTHROPIC_API_KEY configured');
     return [];
   }
 
   const prompt = type === 'trip' ? DISCOVERY_PROMPTS.trips : DISCOVERY_PROMPTS.guides;
 
   try {
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'claude-haiku-4-5',
         max_tokens: 1000,
         temperature: 0.3,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a research assistant helping discover Unimog-related websites for a community platform.
+        system: `You are a research assistant helping discover Unimog-related websites for a community platform.
 Only suggest legitimate, publicly accessible websites.
 Focus on quality over quantity.
-Return valid JSON only.`
-          },
-          { role: 'user', content: prompt }
-        ]
+Return valid JSON only.`,
+        messages: [{ role: 'user', content: prompt }]
       })
     });
 
     if (!response.ok) {
-      console.error('[Discovery] DeepSeek API error:', response.status);
+      console.error('[Discovery] Claude API error:', response.status);
       return [];
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const content = data.content[0].text;
 
     // Parse JSON from response
     const jsonMatch = content.match(/\[[\s\S]*\]/);

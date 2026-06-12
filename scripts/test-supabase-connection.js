@@ -50,9 +50,9 @@ async function testConnection() {
         console.log(`   https://supabase.com/dashboard/project/${process.env.VITE_SUPABASE_PROJECT_ID}/settings/api\n`);
         console.log('2. Copy the "anon" public key (under Project API keys)\n');
         console.log('3. Update your .env file with:');
-        console.log('   VITE_SUPABASE_ANON_KEY=<your-new-anon-key>\n');
+        console.log('   VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
         console.log('4. If you need admin access, also add:');
-        console.log('   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>');
+        console.log('   SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
       }
     } else {
       console.log('✅ Table access successful');

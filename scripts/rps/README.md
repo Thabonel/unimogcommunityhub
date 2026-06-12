@@ -13,7 +13,7 @@ npm install @anthropic-ai/sdk dotenv
 
 Add to `.env.local`:
 ```bash
-ANTHROPIC_API_KEY=your_api_key_here
+ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 ```
 
 ## Directory Structure
@@ -107,7 +107,7 @@ Full catalog (26 groups): ~$2.50
 
 ### API Key Not Found
 ```bash
-export ANTHROPIC_API_KEY=your_key_here
+export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
 ```
 
 ### Rate Limits

@@ -49,7 +49,7 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onClose }) => {
             <Input
               id="mapbox-token"
               type="text"
-              placeholder="Enter pk.eyJ1..."
+              placeholder="Enter <MAPBOX_PUBLIC_TOKEN>"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
               className="font-mono text-sm"

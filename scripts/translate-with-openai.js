@@ -218,8 +218,8 @@ async function main() {
     if (!process.env.OPENAI_API_KEY) {
       console.error('❌ OPENAI_API_KEY environment variable not set');
       console.error('\nOptions:');
-      console.error('1. Add to .env file: OPENAI_API_KEY=your_key');
-      console.error('2. Run with: OPENAI_API_KEY=your_key node scripts/translate-with-openai.js');
+      console.error('1. Add to .env file: OPENAI_API_KEY=<OPENAI_API_KEY>
+      console.error('2. Run with: OPENAI_API_KEY=<OPENAI_API_KEY> node scripts/translate-with-openai.js');
       console.error('\nNote: This is the same API key used for Barry AI');
       process.exit(1);
     }

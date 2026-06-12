@@ -7,7 +7,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY = <SUPABASE_ANON_KEY>
 
 if (!SUPABASE_ANON_KEY) {
   console.error('VITE_SUPABASE_ANON_KEY environment variable not set');

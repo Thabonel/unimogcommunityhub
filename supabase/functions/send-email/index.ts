@@ -14,7 +14,7 @@ interface EmailRequest {
   html?: string;
 }
 
-const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
+const MAILGUN_API_KEY = <MAILGUN_API_KEY>
 const MAILGUN_DOMAIN = "unimogcommunityhub.com";
 const MAILGUN_API_URL = `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`;
 

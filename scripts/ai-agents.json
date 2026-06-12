@@ -111,14 +111,14 @@
       "supabase": {
         "enabled": true,
         "projectId": "ydevatqwkoccxhtejdor",
-        "accessToken": "YOUR_SUPABASE_TOKEN",
+        "accessToken": "omitted",
         "localDev": true
       }
     },
     "devops": {
       "pulumi": {
         "enabled": true,
-        "accessToken": "YOUR_PULUMI_TOKEN",
+        "accessToken": "omitted",
         "stack": "development",
         "backend": "local"
       },

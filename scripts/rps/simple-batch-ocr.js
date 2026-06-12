@@ -25,19 +25,19 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const SUPABASE_URL = 'https://ydevatqwkoccxhtejdor.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const SUPABASE_KEY = <SUPABASE_ANON_KEY>
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 
 // Check for required environment variables
 if (!OPENAI_API_KEY) {
   console.error('❌ Error: OPENAI_API_KEY environment variable not set');
-  console.error('Please run: export OPENAI_API_KEY="your-key-here"');
+  console.error('Please run: export OPENAI_API_KEY=<OPENAI_API_KEY>
   process.exit(1);
 }
 
 if (!SUPABASE_KEY) {
   console.error('❌ Error: SUPABASE_SERVICE_ROLE_KEY environment variable not set');
-  console.error('Please run: export SUPABASE_SERVICE_ROLE_KEY="your-key-here"');
+  console.error('Please run: export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   process.exit(1);
 }
 

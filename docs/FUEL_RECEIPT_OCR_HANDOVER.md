@@ -154,8 +154,8 @@ if (vehicles.length === 1) {
 ### 2. **Configure Environment Variables** (Critical - 15 minutes)
 **Required in Supabase Dashboard → Settings → Environment Variables**:
 ```bash
-ANTHROPIC_API_KEY=your_claude_api_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
 GOOGLE_VISION_API_KEY=optional_google_vision_key
 UNSTRUCTURED_API_KEY=optional_unstructured_key
 ```

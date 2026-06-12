@@ -11,7 +11,7 @@ import https from 'https';
 
 const EDGE_FUNCTION_URL = process.env.VITE_SUPABASE_URL?.replace('https://', '') || 'your-project.supabase.co';
 const EDGE_FUNCTION_PATH = '/functions/v1/process-rps-ocr';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key-here';
+const SUPABASE_ANON_KEY = <SUPABASE_ANON_KEY> || 'your-anon-key-here';
 
 async function callEdgeFunction() {
   return new Promise((resolve, reject) => {

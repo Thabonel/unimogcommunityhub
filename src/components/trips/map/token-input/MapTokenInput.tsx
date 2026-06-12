@@ -78,7 +78,7 @@ const MapTokenInput: React.FC<MapTokenInputProps> = ({ onTokenSave }) => {
                   <FormLabel>Mapbox Token</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="pk.eyJ1..." 
+                      placeholder="<MAPBOX_PUBLIC_TOKEN>" 
                       {...field} 
                       className="font-mono text-sm"
                     />

@@ -86,7 +86,7 @@ WHERE table_name = 'chat_logs' AND column_name = 'intent';
 SELECT * FROM vw_recent_wis_properties LIMIT 5;
 
 # 4. Test
-export VITE_SUPABASE_ANON_KEY="your_key"
+export VITE_SUPABASE_ANON_KEY=<SUPABASE_ANON_KEY>
 npx tsx tests/specs_flow_test.ts
 ```
 

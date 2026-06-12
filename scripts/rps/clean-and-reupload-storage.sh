@@ -17,7 +17,7 @@ echo ""
 # Get service role key from environment
 if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
   echo "❌ ERROR: SUPABASE_SERVICE_ROLE_KEY not set"
-  echo "   Run: export SUPABASE_SERVICE_ROLE_KEY='your_service_role_key'"
+  echo "   Run: export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   exit 1
 fi
 

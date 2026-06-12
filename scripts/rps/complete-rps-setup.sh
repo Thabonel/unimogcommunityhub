@@ -11,7 +11,7 @@ echo ""
 # Check for required environment variables
 if [ -z "$ANTHROPIC_API_KEY" ]; then
     echo "❌ Error: ANTHROPIC_API_KEY not set"
-    echo "   Export it: export ANTHROPIC_API_KEY=your_key_here"
+    echo "   Export it: export ANTHROPIC_API_KEY=<ANTHROPIC_API_KEY>
     exit 1
 fi
 

@@ -25,7 +25,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 // Language code to full name mapping

@@ -50,7 +50,7 @@ Review, verify, edit, or delete AI translations.
 # OpenAI SDK already installed (openai@5.12.2 in devDependencies)
 
 # Set API key (same key used for Barry AI)
-export OPENAI_API_KEY=your_openai_key
+export OPENAI_API_KEY=<OPENAI_API_KEY>
 
 # Run translation (takes ~5 minutes for 200 strings × 3 languages)
 node scripts/translate-with-openai.js
@@ -448,7 +448,7 @@ After deployment, you'll see:
 
 1. **Run translation script:**
    ```bash
-   export OPENAI_API_KEY=your_key
+   export OPENAI_API_KEY=<OPENAI_API_KEY>
    node scripts/translate-with-openai.js
    ```
 

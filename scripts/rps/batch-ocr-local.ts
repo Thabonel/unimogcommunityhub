@@ -5,7 +5,7 @@
  * Generates SQL file to update the database
  *
  * Usage:
- *   OPENAI_API_KEY=your_key SUPABASE_URL=url SUPABASE_SERVICE_ROLE_KEY=key npx tsx scripts/rps/batch-ocr-local.ts
+ *   OPENAI_API_KEY=<OPENAI_API_KEY> SUPABASE_URL=url SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> npx tsx scripts/rps/batch-ocr-local.ts
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -14,8 +14,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = <SUPABASE_SERVICE_ROLE_KEY>
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENAI_API_KEY) {
   console.error('Missing required environment variables:');

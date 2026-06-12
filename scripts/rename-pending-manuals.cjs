@@ -9,7 +9,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
   console.error('Get it from: https://supabase.com/dashboard/project/ydevatqwkoccxhtejdor/settings/api');
-  console.error('Then run: export SUPABASE_SERVICE_ROLE_KEY="your-key-here"');
+  console.error('Then run: export SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY>
   process.exit(1);
 }
 

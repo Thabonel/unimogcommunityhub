@@ -35,7 +35,6 @@ claude-config-updated.json
 *.config.json
 *-config.json
 secrets.json
-opencode.json
 # Codex MCP configuration (may contain service role key)
 .codex/config.toml
 # Additional security for env files

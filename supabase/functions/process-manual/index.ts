@@ -8,8 +8,9 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
+const OPENAI_API_KEY = <OPENAI_API_KEY>
 const OPENAI_EMBEDDING_URL = 'https://api.openai.com/v1/embeddings'
+const ANTHROPIC_API_KEY = <ANTHROPIC_API_KEY>
 
 // Configuration for chunking
 const CHUNK_SIZE = 1500
@@ -52,9 +53,9 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   return chunks.filter(chunk => chunk.trim().length > 50)
 }
 
-// PDF text extraction using GPT-4o Vision API
+// PDF text extraction using Claude Vision API
 async function extractTextFromPDF(buffer: Uint8Array, filename: string) {
-  console.log('Extracting text from PDF using GPT-4o Vision API...')
+  console.log('Extracting text from PDF using Claude Vision API...')
 
   // Count pages from PDF structure
   const rawText = new TextDecoder('latin1').decode(buffer)
@@ -76,33 +77,30 @@ async function extractTextFromPDF(buffer: Uint8Array, filename: string) {
     console.log(`Processing pages ${batchStart + 1} to ${batchEnd}...`)
 
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`
+          'x-api-key': ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'gpt-4o',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 8000,
-          stream: false,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a PDF text extraction assistant. Extract all text content accurately from the provided document pages.'
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:application/pdf;base64,${base64}`
-                  }
-                },
-                {
-                  type: 'text',
-                  text: `Extract the text content from pages ${batchStart + 1} to ${batchEnd} of this PDF document.
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: {
+                  type: 'base64',
+                  media_type: 'application/pdf',
+                  data: base64
+                }
+              },
+              {
+                type: 'text',
+                text: `Extract the text content from pages ${batchStart + 1} to ${batchEnd} of this PDF document.
 For each page, output in this exact format:
 ---PAGE X---
 [page content here]
@@ -110,21 +108,20 @@ For each page, output in this exact format:
 
 Where X is the page number. Extract ALL text including headings, paragraphs, tables, specifications, and technical data.
 Focus on accurate extraction of technical terms, part numbers, and specifications.`
-                }
-              ]
-            }
-          ]
+              }
+            ]
+          }]
         })
       })
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error(`GPT-4o Vision API error: ${response.status} - ${errorText}`)
+        console.error(`Claude API error: ${response.status} - ${errorText}`)
         continue
       }
 
       const result = await response.json()
-      const textContent = result.choices?.[0]?.message?.content || ''
+      const textContent = result.content?.[0]?.text || ''
 
       // Parse the extracted pages
       const pageRegex = /---PAGE (\d+)---([\s\S]*?)---END PAGE \d+---/g
@@ -158,7 +155,7 @@ Focus on accurate extraction of technical terms, part numbers, and specification
     }
   }
 
-  console.log(`Extracted ${docs.length} pages from PDF using GPT-4o Vision`)
+  console.log(`Extracted ${docs.length} pages from PDF using Claude Vision`)
   return docs
 }
 

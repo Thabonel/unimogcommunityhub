@@ -37,7 +37,7 @@ export const getMapboxTokenFromAnySource = (): string | null => {
   if (window.location.hostname.includes('staging') || window.location.hostname.includes('netlify')) {
     console.warn('mapbox-helper: Using temporary demo token for staging');
     // This is a restricted public token for testing only
-    return 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+    return '<MAPBOX_PUBLIC_TOKEN>';
   }
   
   console.warn('mapbox-helper: No token found in any source');

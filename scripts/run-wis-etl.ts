@@ -6,7 +6,7 @@
  * - Upserts procedures + steps and updates ingest job checkpoints via RPCs
  *
  * Usage examples:
- *   VITE_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... \
+ *   VITE_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SERVICE_ROLE_KEY> \
  *   tsx scripts/run-wis-etl.ts --model U435 --scope all --source \
  *     /Volumes/UnimogManuals/wis-samples
  */
