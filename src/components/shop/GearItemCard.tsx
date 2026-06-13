@@ -1,4 +1,4 @@
-import { ExternalLink, Globe } from 'lucide-react';
+import { ExternalLink, Globe, ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { GearItem } from '@/data/gearCatalog';
@@ -12,7 +12,22 @@ export function GearItemCard({ item }: GearItemCardProps) {
   const primaryLabel = item.primaryCtaLabel ?? 'Check on Amazon Australia';
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col overflow-hidden">
+      {item.imageUrl ? (
+        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+          <img
+            src={item.imageUrl}
+            alt={item.title}
+            className="object-contain w-full h-full p-4"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className="aspect-[4/3] bg-muted flex items-center justify-center">
+          <ImageIcon className="h-10 w-10 text-muted-foreground/40" />
+        </div>
+      )}
+
       <CardHeader className="pb-2">
         <CardTitle className="text-sm sm:text-base leading-snug">
           {item.title}

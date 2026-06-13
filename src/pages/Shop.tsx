@@ -32,6 +32,7 @@ interface DbProduct {
   short_description: string | null;
   category: string;
   affiliate_provider: string;
+  image_url: string | null;
 }
 
 const Shop = () => {
@@ -40,7 +41,7 @@ const Shop = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('affiliate_products')
-        .select('id, title, short_description, category, affiliate_provider')
+        .select('id, title, short_description, category, affiliate_provider, image_url')
         .eq('is_active', true)
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
@@ -58,6 +59,7 @@ const Shop = () => {
       why: p.short_description ?? '',
       amazonAuSearchUrl: titleToAuSearch(p.title),
       localSearchUrl: titleToLocalSearch(p.title),
+      imageUrl: p.image_url ?? undefined,
     }));
 
     // Curated items first, then DB items (skip duplicates by title match)

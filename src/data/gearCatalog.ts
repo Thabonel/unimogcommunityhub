@@ -26,6 +26,8 @@ export interface GearItem {
   /** Override for non-Amazon items (e.g. direct supplier links) */
   primaryCtaLabel?: string;
   primaryUrl?: string;
+  /** Product image URL (Amazon product image or CDN) */
+  imageUrl?: string;
 }
 
 export const GEAR_CATEGORIES = [
