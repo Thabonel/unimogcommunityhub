@@ -80,6 +80,7 @@ export const gearCatalog: GearItem[] = [
     primaryCtaLabel: 'Visit supplier',
     primaryUrl: 'https://rvsnappad.com/discount/RVTT10',
     localSearchUrl: googleSearch('RV snap pads levelling jack pads'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61y8P5W6trL._AC_UL320_.jpg',
   },
 
   // -- Water & Plumbing --
