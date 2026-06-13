@@ -146,6 +146,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Same UV protection in a larger format. Better value for regular application across the whole vehicle.',
     amazonAuSearchUrl: amazonAuSearch('303 protectant gallon bulk refill'),
     localSearchUrl: googleSearch('303 protectant gallon bulk refill'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71DkO8-EgnL._AC_UL320_.jpg',
   },
   {
     id: 'frost-king-coil-cleaner',
@@ -203,6 +204,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Keeps the toilet blade seal supple and leak-free. Prevents the most common RV toilet issue.',
     amazonAuSearchUrl: amazonAuSearch('Thetford toilet seal conditioner lubricant'),
     localSearchUrl: googleSearch('Thetford toilet seal conditioner lubricant'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61tOWTdQFVL._AC_UL320_.jpg',
   },
   {
     id: 'liquified-toilet-treatment',
@@ -211,6 +213,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Breaks down waste and controls odour in the black tank. Use after every dump.',
     amazonAuSearchUrl: amazonAuSearch('RV liquid toilet waste tank treatment'),
     localSearchUrl: googleSearch('RV liquid toilet waste tank treatment'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71kBRCbKvEL._AC_UL320_.jpg',
   },
 
   // -- Camping & RV Accessories --
@@ -221,6 +224,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Stick-on wall holder that keeps brooms, mops, and rods secure while driving. No drilling.',
     amazonAuSearchUrl: amazonAuSearch('Command broom gripper holder adhesive'),
     localSearchUrl: googleSearch('Command broom gripper holder adhesive'),
+    imageUrl: 'https://m.media-amazon.com/images/I/711tNu6iLeL._AC_UL320_.jpg',
   },
   {
     id: 'rv-screen-door-handle',
@@ -229,6 +233,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Replacement handle that fits most RV screen doors. Sturdier than the factory original.',
     amazonAuSearchUrl: amazonAuSearch('RV screen door handle replacement'),
     localSearchUrl: googleSearch('RV screen door handle replacement'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61ob0dTE3fL._AC_UL320_.jpg',
   },
   {
     id: 'paper-towel-holder',
@@ -237,5 +242,6 @@ export const gearCatalog: GearItem[] = [
     why: 'Weighted base keeps it upright on the move. One-handed tear-off.',
     amazonAuSearchUrl: amazonAuSearch('weighted paper towel holder countertop'),
     localSearchUrl: googleSearch('weighted paper towel holder countertop'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61Vjtacz5YL._AC_UL320_.jpg',
   },
 ];
