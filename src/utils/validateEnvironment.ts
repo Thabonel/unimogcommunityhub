@@ -29,9 +29,9 @@ export function validateEnvironment(): ValidationResult {
   // Required: Supabase Anon Key
   if (!supabaseAnonKey) {
     errors.push('VITE_SUPABASE_ANON_KEY is not configured');
-  } else if (!supabaseAnonKey.startsWith('eyJ')) {
-    errors.push('VITE_SUPABASE_ANON_KEY must be a valid JWT token');
-  } else if (supabaseAnonKey.length < 100) {
+  } else if (!supabaseAnonKey.startsWith('eyJ') && !supabaseAnonKey.startsWith('sb_publi_')) {
+    errors.push('VITE_SUPABASE_ANON_KEY must be a valid JWT or Supabase publishable key');
+  } else if (supabaseAnonKey.startsWith('eyJ') && supabaseAnonKey.length < 100) {
     errors.push('VITE_SUPABASE_ANON_KEY appears to be truncated');
   }
 
