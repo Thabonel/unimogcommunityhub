@@ -50,6 +50,8 @@ export const gearCatalog: GearItem[] = [
     why: 'Lightweight, interlocking ramps that make levelling on uneven ground quick and easy.',
     amazonAuSearchUrl: amazonAuSearch('RV levelling ramps interlocking'),
     localSearchUrl: googleSearch('RV levelling ramps interlocking'),
+    imageUrl: 'https://m.media-amazon.com/images/I/617ebpXN++L._AC_UL320_.jpg',
+    imageUrl: 'https://m.media-amazon.com/images/I/617ebpXN++L._AC_UL320_.jpg',
   },
   {
     id: 'x-chocks',
@@ -58,6 +60,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Eliminates rocking by wedging between dual tyres. Essential for stability when parked.',
     amazonAuSearchUrl: amazonAuSearch('X-Chock wheel stabilizer RV'),
     localSearchUrl: googleSearch('X-Chock wheel stabilizer RV'),
+    imageUrl: 'https://m.media-amazon.com/images/I/91WVdBJtfpL._AC_UL320_.jpg',
   },
   {
     id: 'maxxhaul-wheel-chocks',
@@ -66,6 +69,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Heavy-duty rubber chocks prevent rolling on inclines. A safety basic for any heavy vehicle.',
     amazonAuSearchUrl: amazonAuSearch('heavy duty rubber wheel chocks'),
     localSearchUrl: googleSearch('heavy duty rubber wheel chocks'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71gKKh0v-cL._AC_UL320_.jpg',
   },
   {
     id: 'rv-snappads',
@@ -86,6 +90,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Flexible, kink-resistant hose rated for potable water. No plastic taste.',
     amazonAuSearchUrl: amazonAuSearch('RV drinking water hose food safe'),
     localSearchUrl: googleSearch('RV drinking water hose food safe'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61Cm5glbYzL._AC_SR160,134_CB1169409_QL70_.jpg',
   },
   {
     id: 'water-pressure-regulator',
@@ -94,6 +99,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Protects your plumbing from high-pressure campground hookups. Cheap insurance.',
     amazonAuSearchUrl: amazonAuSearch('RV water pressure regulator adjustable'),
     localSearchUrl: googleSearch('RV water pressure regulator adjustable'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71EWKbsPlkL._AC_UL320_.jpg',
   },
   {
     id: 'camco-water-filter',
@@ -102,6 +108,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Filters sediment and improves taste when filling from unfamiliar sources.',
     amazonAuSearchUrl: amazonAuSearch('RV inline water filter camping'),
     localSearchUrl: googleSearch('RV inline water filter camping'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61MtIxy1TtL._AC_UL320_.jpg',
   },
   {
     id: 'low-point-drain-valve',
@@ -110,6 +117,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Stainless steel replacement for plastic drain valves. Reliable winterisation and water system maintenance.',
     amazonAuSearchUrl: amazonAuSearch('RV low point drain valve stainless steel'),
     localSearchUrl: googleSearch('RV low point drain valve stainless steel'),
+    imageUrl: 'https://m.media-amazon.com/images/I/51HqYczYKmL._AC_UL320_.jpg',
   },
   {
     id: 'winterizing-blow-out-plug',
@@ -118,6 +126,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Connects to an air compressor to clear water lines before cold storage. Prevents freeze damage.',
     amazonAuSearchUrl: amazonAuSearch('RV winterizing blow out plug water'),
     localSearchUrl: googleSearch('RV winterizing blow out plug water'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71eoiX7j8SL._AC_UL320_.jpg',
   },
 
   // -- Cleaning & Protection --
@@ -128,6 +137,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Protects rubber seals, vinyl, and plastics from UV degradation. Extends the life of exterior surfaces.',
     amazonAuSearchUrl: amazonAuSearch('303 automotive UV protectant spray'),
     localSearchUrl: googleSearch('303 automotive UV protectant spray'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71mFuMk4s6S._AC_UL320_.jpg',
   },
   {
     id: '303-protectant-bulk',
@@ -144,6 +154,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Cleans air-conditioner coils and improves cooling efficiency. Spray on, rinse off.',
     amazonAuSearchUrl: amazonAuSearch('foaming coil cleaner air conditioner'),
     localSearchUrl: googleSearch('foaming coil cleaner air conditioner'),
+    imageUrl: 'https://m.media-amazon.com/images/I/510e6V6mQoL._AC_UL320_.jpg',
   },
   {
     id: 'boeshield-t9',
@@ -152,6 +163,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Displaces moisture and leaves a protective film on metal surfaces. Great for locks, hinges, and exposed hardware.',
     amazonAuSearchUrl: amazonAuSearch('Boeshield T9 corrosion inhibitor lubricant'),
     localSearchUrl: googleSearch('Boeshield T9 corrosion inhibitor lubricant'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71aFPdG8L2L._AC_UL320_.jpg',
   },
   {
     id: 'crc-electronics-cleaner',
@@ -160,6 +172,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Cleans electrical connections and switches without residue. Fixes intermittent faults fast.',
     amazonAuSearchUrl: amazonAuSearch('CRC electronics contact cleaner spray'),
     localSearchUrl: googleSearch('CRC electronics contact cleaner spray'),
+    imageUrl: 'https://m.media-amazon.com/images/I/71-LoG9MZsL._AC_UL320_.jpg',
   },
 
   // -- Tools & Maintenance --
@@ -170,6 +183,7 @@ export const gearCatalog: GearItem[] = [
     why: 'One tool, eleven bits. Covers Phillips, flat, square, and Torx. Lives in the door pocket.',
     amazonAuSearchUrl: amazonAuSearch('Klein Tools 11 in 1 screwdriver multi bit'),
     localSearchUrl: googleSearch('Klein Tools 11 in 1 screwdriver multi bit'),
+    imageUrl: 'https://m.media-amazon.com/images/I/51STKX9aldL._AC_UL320_.jpg',
   },
   {
     id: 'dimmer-switch-parts',
@@ -178,6 +192,7 @@ export const gearCatalog: GearItem[] = [
     why: 'Common failure point in older RVs. Keep a spare to avoid a dark evening.',
     amazonAuSearchUrl: amazonAuSearch('RV 12V dimmer switch replacement'),
     localSearchUrl: googleSearch('RV 12V dimmer switch replacement'),
+    imageUrl: 'https://m.media-amazon.com/images/I/61DIj5YtCKL._AC_UL320_.jpg',
   },
 
   // -- Toilet & Sanitation --
