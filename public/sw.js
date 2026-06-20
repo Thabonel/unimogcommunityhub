@@ -1,8 +1,8 @@
 // Service Worker for Unimog Community Hub
-// Version 2.1.0 - Fix stale asset handling after deployments
+// Version 2.1.1 - Fix PWA update loop on iOS
 
-const CACHE_NAME = 'unimog-hub-v2.1';
-const VERSION = '2.1.0';
+const CACHE_NAME = 'unimog-hub-v2.1.1';
+const VERSION = '2.1.1';
 
 // Assets to pre-cache on install (critical files only)
 const PRECACHE_ASSETS = [
