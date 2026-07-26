@@ -47,4 +47,22 @@ describe('normaliseBarryToolsResponse', () => {
     expect(result.manualReferences).toHaveLength(1);
     expect(result.manualReferences[0].title).toBe('U435 Workshop Manual');
   });
+
+  it('drops references that cannot open a supporting document', () => {
+    const result = normaliseBarryToolsResponse({
+      manualReferences: [
+        { page_number: 0, storage_url: 'https://example.com/manual.pdf' },
+        { page_number: 12 },
+        { page_number: 13, storage_url: '   ' },
+        { page_number: 14, storage_url: 'https://example.com/manual.pdf#page=14' },
+      ],
+    });
+
+    expect(result.manualReferences).toEqual([
+      expect.objectContaining({
+        page_number: 14,
+        storage_url: 'https://example.com/manual.pdf#page=14',
+      }),
+    ]);
+  });
 });

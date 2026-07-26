@@ -9,7 +9,7 @@ export interface BarryToolsRequest {
 
 type BarryToolsManualReference = {
   page_number: number;
-  storage_url: string;
+  storage_url?: string;
   title?: string;
 };
 
@@ -27,17 +27,21 @@ function normaliseManualReferences(rawRefs: BarryToolsManualReference[] | undefi
   const result: ManualReference[] = [];
 
   for (const ref of rawRefs ?? []) {
-    const key = `${ref.page_number}|${ref.storage_url}`;
+    const pageNumber = Number(ref.page_number);
+    const storageUrl = ref.storage_url?.trim();
+    if (!Number.isFinite(pageNumber) || pageNumber <= 0 || !storageUrl) continue;
+
+    const key = `${pageNumber}|${storageUrl}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
     result.push({
       type: 'manual',
       title: ref.title ?? 'U435 Workshop Manual',
-      page_number: ref.page_number,
-      original_page: ref.page_number,
-      pdf_page: ref.page_number,
-      storage_url: ref.storage_url,
+      page_number: pageNumber,
+      original_page: pageNumber,
+      pdf_page: pageNumber,
+      storage_url: storageUrl,
       manual_type: 'manual',
     });
   }

@@ -68,14 +68,6 @@ export function EnhancedBarryChat({
     }
   }, [messages]);
 
-  // Notify parent when new manual references arrive for preloading
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === 'assistant' && lastMessage.manualReferences) {
-      onReferencesReceived?.(lastMessage.manualReferences);
-    }
-  }, [messages, onReferencesReceived]);
-
   // Pass latest assistant response content to parent for highlight extraction
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
@@ -83,6 +75,14 @@ export function EnhancedBarryChat({
       onResponseContent?.(lastMessage.content);
     }
   }, [messages, onResponseContent]);
+
+  // Notify parent after response content is available so the opened PDF can highlight it
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant' && lastMessage.manualReferences) {
+      onReferencesReceived?.(lastMessage.manualReferences);
+    }
+  }, [messages, onReferencesReceived]);
 
   // Auto-send pending message from context
   useEffect(() => {

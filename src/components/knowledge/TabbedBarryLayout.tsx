@@ -19,8 +19,13 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [latestReferences, setLatestReferences] = useState<ManualReference[]>([]);
   const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'manual'>('chat');
-  const [lastResponseContent, setLastResponseContent] = useState<string>('');
   const { isMobile } = useMobile();
+  const lastResponseContentRef = React.useRef('');
+  const isMobileRef = React.useRef(isMobile);
+
+  React.useEffect(() => {
+    isMobileRef.current = isMobile;
+  }, [isMobile]);
 
   // Preload PDFs in background when Barry returns manual references
   usePdfPreloader(latestReferences);
@@ -51,29 +56,14 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
     return undefined;
   }
 
-  const handleCitationClick = (reference: ManualReference) => {
+  const handleCitationClick = React.useCallback((reference: ManualReference) => {
+    if (!reference.storage_url) return;
+
     const tabId = `${reference.title}-${reference.pdf_page || reference.original_page}`;
 
     // Extract highlight term from Barry's last response
-    const highlightTerm = extractHighlightTerm(lastResponseContent);
+    const highlightTerm = extractHighlightTerm(lastResponseContentRef.current);
 
-    // Check if tab already exists
-    const existingTab = openPdfTabs.find(tab => tab.id === tabId);
-    if (existingTab) {
-      // Update searchHighlight if we have a new term
-      if (highlightTerm && existingTab.searchHighlight !== highlightTerm) {
-        setOpenPdfTabs(prev => prev.map(tab =>
-          tab.id === tabId ? { ...tab, searchHighlight: highlightTerm } : tab
-        ));
-      }
-      setActiveTabId(tabId);
-      if (isMobile) {
-        setMobileActiveTab('manual');
-      }
-      return;
-    }
-
-    // Create new tab with search highlight from Barry's answer
     const newTab: ManualTab = {
       id: tabId,
       manualTitle: reference.title,
@@ -82,13 +72,37 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
       searchHighlight: highlightTerm
     };
 
-    setOpenPdfTabs(prev => [...prev, newTab]);
+    setOpenPdfTabs(prev => {
+      const existingTab = prev.find(tab => tab.id === tabId);
+      if (!existingTab) return [...prev, newTab];
+      if (!highlightTerm || existingTab.searchHighlight === highlightTerm) return prev;
+      return prev.map(tab =>
+        tab.id === tabId ? { ...tab, searchHighlight: highlightTerm } : tab
+      );
+    });
     setActiveTabId(tabId);
 
-    if (isMobile) {
+    if (isMobileRef.current) {
       setMobileActiveTab('manual');
     }
-  };
+  }, []);
+
+  const handleReferencesReceived = React.useCallback((references: ManualReference[]) => {
+    setLatestReferences(references);
+
+    const primaryReference = references.find(reference =>
+      Boolean(reference.storage_url)
+      && Number(reference.pdf_page || reference.original_page || reference.page_number) > 0
+    );
+
+    if (primaryReference) {
+      handleCitationClick(primaryReference);
+    }
+  }, [handleCitationClick]);
+
+  const handleResponseContent = React.useCallback((content: string) => {
+    lastResponseContentRef.current = content;
+  }, []);
 
   const handleCloseTab = (tabId: string) => {
     setOpenPdfTabs(prev => prev.filter(tab => tab.id !== tabId));
@@ -120,8 +134,8 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
               location={location}
               userModel={userModel}
               onCitationClick={handleCitationClick}
-              onReferencesReceived={setLatestReferences}
-              onResponseContent={setLastResponseContent}
+              onReferencesReceived={handleReferencesReceived}
+              onResponseContent={handleResponseContent}
               className="h-full"
             />
           </TabsContent>
@@ -154,8 +168,8 @@ export function TabbedBarryLayout({ className, location, userModel }: TabbedBarr
             location={location}
             userModel={userModel}
             onCitationClick={handleCitationClick}
-            onReferencesReceived={setLatestReferences}
-            onResponseContent={setLastResponseContent}
+            onReferencesReceived={handleReferencesReceived}
+            onResponseContent={handleResponseContent}
           />
         </ResizablePanel>
 
