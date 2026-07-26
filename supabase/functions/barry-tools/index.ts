@@ -152,6 +152,7 @@ async function collectToolManualReferences(
   db: ReturnType<typeof createClient>,
 ): Promise<number> {
   if (result.ok === false) return 0;
+  const initialCount = references.length;
 
   if (toolName === 'search_manual' || toolName === 'search_manual_v2') {
     const rows = (result.results as Array<Record<string, unknown>>) ?? [];
@@ -159,7 +160,7 @@ async function collectToolManualReferences(
       const title = row.section_title ?? row.title ?? row.manual_title;
       addManualReference(references, row.page_number, row.storage_url, title);
     }
-    return rows.length;
+    return references.length - initialCount;
   }
 
   if (toolName !== 'lookup_knowledge_base') return 0;
@@ -176,7 +177,7 @@ async function collectToolManualReferences(
         ?? manualStorageUrl(String(ref.chapter_filename ?? ref.filename ?? ref.manual_title ?? ''), Number(page));
       addManualReference(references, page, url, manualTitle);
     }
-    return rawReferences.length;
+    return references.length - initialCount;
   }
 
   if (!rawReferences || typeof rawReferences !== 'object') return 0;
@@ -193,7 +194,7 @@ async function collectToolManualReferences(
       manualTitle,
     );
   }
-  return pages.length;
+  return references.length - initialCount;
 }
 
 function keywords(q: string): string[] {
@@ -201,6 +202,18 @@ function keywords(q: string): string[] {
     'could','should','to','of','in','for','on','with','at','by','from','how','what','where','when',
     'why','which','who','my','your','i','me','you','can','may','might','be','been']);
   return [...new Set(q.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(w => w.length > 2 && !stop.has(w)))];
+}
+
+const TECHNICAL_QUERY_TERMS = [
+  'axle', 'brake', 'clutch', 'differential', 'engine', 'fluid', 'gearbox',
+  'hydraulic', 'leak', 'maintenance', 'oil', 'part number', 'portal', 'repair',
+  'seal', 'spec', 'steering', 'suspension', 'torque', 'transmission',
+  'troubleshoot', 'wiring',
+];
+
+function isTechnicalQuery(query: string): boolean {
+  const lower = query.toLowerCase();
+  return TECHNICAL_QUERY_TERMS.some(term => lower.includes(term));
 }
 
 async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
@@ -885,6 +898,60 @@ serve(async (req: Request) => {
     const manualRefs: ManualReference[] = [];
     const toolsUsed: string[] = [];
     let searchCount = 0;
+    const groundingResults: Array<{ source: string; result: Record<string, unknown> }> = [];
+
+    if (isTechnicalQuery(safeQuery)) {
+      const knowledgeResult = await toolKnowledgeBase({ query: safeQuery }, db) as Record<string, unknown>;
+      toolsUsed.push('lookup_knowledge_base');
+      searchCount += await collectToolManualReferences(
+        'lookup_knowledge_base',
+        knowledgeResult,
+        manualRefs,
+        db,
+      );
+      if (knowledgeResult.found) {
+        groundingResults.push({ source: 'validated_knowledge_base', result: knowledgeResult });
+      }
+
+      const v2Result = await toolSearchManualV2(
+        { query: safeQuery, max_results: 5 },
+        db,
+      ) as Record<string, unknown>;
+      const v2ReferenceCount = await collectToolManualReferences(
+        'search_manual_v2',
+        v2Result,
+        manualRefs,
+        db,
+      );
+
+      if (v2Result.ok !== false && v2Result.found && v2ReferenceCount > 0) {
+        toolsUsed.push('search_manual_v2');
+        searchCount += v2ReferenceCount;
+        groundingResults.push({ source: 'structured_manual_search', result: v2Result });
+      } else {
+        const legacyResult = await toolSearchManual(
+          { query: safeQuery, max_results: 5 },
+          db,
+        ) as Record<string, unknown>;
+        toolsUsed.push('search_manual');
+        searchCount += await collectToolManualReferences(
+          'search_manual',
+          legacyResult,
+          manualRefs,
+          db,
+        );
+        if (legacyResult.found) {
+          groundingResults.push({ source: 'manual_search', result: legacyResult });
+        }
+      }
+    }
+
+    const groundingInstruction = groundingResults.length > 0
+      ? `\n\nRetrieved evidence for this technical question:\n${JSON.stringify(groundingResults)}
+Base technical claims, specifications, part numbers, fluid types, capacities, and procedures only on this evidence. Cite the returned manual page numbers. If the evidence does not support a requested detail, say that the manuals found do not verify it.`
+      : isTechnicalQuery(safeQuery)
+        ? '\n\nNo supporting manual evidence was retrieved. Do not provide specifications, part numbers, fluid types, capacities, or repair procedures. Explain that the documentation could not verify them and suggest safe inspection or professional diagnosis steps only.'
+        : '';
 
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
       const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -894,7 +961,7 @@ serve(async (req: Request) => {
           model: DEEPSEEK_MODEL,
           max_tokens: 2048,
           stream: false,
-          messages: [{ role: 'system', content: SYSTEM }, ...msgs],
+          messages: [{ role: 'system', content: SYSTEM + groundingInstruction }, ...msgs],
           tools: TOOL_DEFINITIONS,
         }),
       });
