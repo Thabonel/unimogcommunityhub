@@ -6,7 +6,12 @@ describe('normaliseBarryToolsResponse', () => {
     const result = normaliseBarryToolsResponse({
       content: 'Test answer',
       manualReferences: [
-        { page_number: 42, storage_url: 'https://example.com/manual.pdf#page=42', title: 'Axle Service' },
+        {
+          page_number: 934,
+          pdf_page: 934,
+          storage_url: 'https://example.com/workshop-manual.pdf#page=934',
+          title: 'Steering Box',
+        },
       ],
       knowledgeMode: 'search_manual',
       searchResultCount: 1,
@@ -22,11 +27,11 @@ describe('normaliseBarryToolsResponse', () => {
     expect(result.manualReferences).toEqual([
       {
         type: 'manual',
-        title: 'Axle Service',
-        page_number: 42,
-        original_page: 42,
-        pdf_page: 42,
-        storage_url: 'https://example.com/manual.pdf#page=42',
+        title: 'Steering Box',
+        page_number: 934,
+        original_page: 934,
+        pdf_page: 934,
+        storage_url: 'https://example.com/workshop-manual.pdf#page=934',
         manual_type: 'manual',
       },
     ]);

@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { Loader2, AlertTriangle, ExternalLink, Search } from 'lucide-react';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 interface SimplePdfScrollViewerProps {
   pdfUrl: string;
@@ -83,14 +83,10 @@ export function SimplePdfScrollViewer({
   const [highlightCount, setHighlightCount] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedPagesRef = useRef<Set<number>>(new Set());
-
-  React.useEffect(() => {
-    console.log('SimplePdfScrollViewer: Loading PDF from URL:', pdfUrl);
-    console.log('SimplePdfScrollViewer: Initial page:', initialPage);
-    if (searchHighlight) {
-      console.log('SimplePdfScrollViewer: Search highlight term:', searchHighlight);
-    }
-  }, [pdfUrl, initialPage, searchHighlight]);
+  const pagesToRender = React.useMemo(() => {
+    if (numPages === 0) return [];
+    return [Math.min(Math.max(initialPage, 1), numPages)];
+  }, [initialPage, numPages]);
 
   React.useEffect(() => {
     const updateWidth = () => {
@@ -227,10 +223,6 @@ export function SimplePdfScrollViewer({
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
-          options={{
-            cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-            cMapPacked: true,
-          }}
           loading={
             <div className="flex flex-col items-center justify-center p-12 min-h-[400px]">
               <Loader2 className="h-16 w-16 animate-spin text-primary mb-4" />
@@ -240,22 +232,22 @@ export function SimplePdfScrollViewer({
           }
         >
           {numPages > 0 &&
-            Array.from({ length: numPages }, (_, index) => (
+            pagesToRender.map(pageNumber => (
               <div
-                key={index + 1}
-                data-page-number={index + 1}
+                key={pageNumber}
+                data-page-number={pageNumber}
                 className="mb-4 shadow-md bg-white"
               >
                 <Page
-                  pageNumber={index + 1}
+                  pageNumber={pageNumber}
                   width={containerWidth}
                   renderTextLayer={true}
                   renderAnnotationLayer={false}
-                  onRenderSuccess={() => onPageRenderSuccess(index + 1)}
+                  onRenderSuccess={() => onPageRenderSuccess(pageNumber)}
                   loading={
                     <div className="flex flex-col items-center justify-center p-8 min-h-[600px] bg-white">
                       <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                      <div className="text-sm text-muted-foreground">Loading page {index + 1}...</div>
+                      <div className="text-sm text-muted-foreground">Loading page {pageNumber}...</div>
                     </div>
                   }
                 />

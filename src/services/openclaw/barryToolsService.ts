@@ -9,6 +9,7 @@ export interface BarryToolsRequest {
 
 type BarryToolsManualReference = {
   page_number: number;
+  pdf_page?: number;
   storage_url?: string;
   title?: string;
 };
@@ -40,7 +41,7 @@ function normaliseManualReferences(rawRefs: BarryToolsManualReference[] | undefi
       title: ref.title ?? 'U435 Workshop Manual',
       page_number: pageNumber,
       original_page: pageNumber,
-      pdf_page: pageNumber,
+      pdf_page: Number(ref.pdf_page) > 0 ? Number(ref.pdf_page) : pageNumber,
       storage_url: storageUrl,
       manual_type: 'manual',
     });

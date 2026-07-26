@@ -187,13 +187,19 @@ function manualStorageUrl(manualTitle: string, pageNumber: number): string {
   return `${SUPA_STORAGE}/manuals/${encodeURI(path)}#page=${pageNumber}`;
 }
 
-type ManualReference = { page_number: number; storage_url: string; title?: string };
+type ManualReference = {
+  page_number: number;
+  pdf_page?: number;
+  storage_url: string;
+  title?: string;
+};
 
 function addManualReference(
   references: ManualReference[],
   pageNumber: unknown,
   storageUrl: unknown,
   title?: unknown,
+  pdfPage?: unknown,
 ): void {
   const page = Number(pageNumber);
   const url = typeof storageUrl === 'string' ? storageUrl.trim() : '';
@@ -204,6 +210,9 @@ function addManualReference(
 
   references.push({
     page_number: page,
+    pdf_page: Number.isFinite(Number(pdfPage)) && Number(pdfPage) > 0
+      ? Number(pdfPage)
+      : page,
     storage_url: url,
     title: typeof title === 'string' && title.trim() ? title.trim() : undefined,
   });
@@ -222,7 +231,7 @@ async function collectToolManualReferences(
     const rows = (result.results as Array<Record<string, unknown>>) ?? [];
     for (const row of rows) {
       const title = row.section_title ?? row.title ?? row.manual_title;
-      addManualReference(references, row.page_number, row.storage_url, title);
+      addManualReference(references, row.page_number, row.storage_url, title, row.pdf_page);
     }
     return references.length - initialCount;
   }
@@ -237,9 +246,17 @@ async function collectToolManualReferences(
       const ref = raw as Record<string, unknown>;
       const page = ref.page_number ?? ref.pdf_page ?? ref.original_page;
       const manualTitle = ref.manual_title ?? ref.title ?? ref.chapter_filename ?? ref.filename;
-      const url = ref.storage_url
-        ?? manualStorageUrl(String(ref.chapter_filename ?? ref.filename ?? ref.manual_title ?? ''), Number(page));
-      addManualReference(references, page, url, manualTitle);
+      const storageUrl = manualStorageUrl(
+        String(ref.chapter_filename ?? ref.filename ?? ref.manual_title ?? ''),
+        Number(page),
+      );
+      addManualReference(
+        references,
+        page,
+        ref.storage_url ?? storageUrl,
+        manualTitle,
+        ref.pdf_page ?? page,
+      );
     }
     return references.length - initialCount;
   }
@@ -256,6 +273,7 @@ async function collectToolManualReferences(
       page,
       manualStorageUrl(pdfIdentifier, Number(page)),
       manualTitle,
+      page,
     );
   }
   return references.length - initialCount;
@@ -353,18 +371,19 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
     }
   }
 
-  const results = chunks
-    .map(c => {
-      const url = manualStorageUrl(String(c.manual_title ?? ''), Number(c.page_number));
-      if (!url) return null;
+  const resolvedResults = chunks.map(c => {
+      const storageUrl = manualStorageUrl(String(c.manual_title ?? ''), Number(c.page_number));
+      if (!storageUrl) return null;
       return {
         page_number: c.page_number,
+        pdf_page: c.page_number,
         section_title: c.section_title ?? null,
         manual_title: c.manual_title ?? null,
-        storage_url: url,
+        storage_url: storageUrl,
         content_preview: String(c.content ?? '').slice(0, 400),
       };
-    })
+    });
+  const results = resolvedResults
     .filter((r): r is NonNullable<typeof r> => r !== null)
     .slice(0, max);
 
@@ -404,18 +423,22 @@ async function toolSearchManualV2(input: Record<string, unknown>, db: ReturnType
       return { ok: true, found: false, instructions: 'No structured v2 content found. Use search_manual for legacy content.' };
     }
 
-    const results = (data as Array<Record<string, unknown>>).map(r => ({
-      block_id: r.block_id,
-      block_type: r.block_type,
-      title: r.title ?? null,
-      page_number: r.page_number,
-      source_page_reference: r.source_page_reference,
-      manual_title: r.manual_title,
-      chapter_title: r.chapter_title,
-      content_preview: String(r.content_text ?? '').slice(0, 500),
-      rank: r.rank,
-      storage_url: manualStorageUrl(String(r.manual_title ?? ''), Number(r.page_number)),
-    }));
+    const results = (data as Array<Record<string, unknown>>).map(r => {
+      const storageUrl = manualStorageUrl(String(r.manual_title ?? ''), Number(r.page_number));
+      return {
+        block_id: r.block_id,
+        block_type: r.block_type,
+        title: r.title ?? null,
+        page_number: r.page_number,
+        pdf_page: r.page_number,
+        source_page_reference: r.source_page_reference,
+        manual_title: r.manual_title,
+        chapter_title: r.chapter_title,
+        content_preview: String(r.content_text ?? '').slice(0, 500),
+        rank: r.rank,
+        storage_url: storageUrl,
+      };
+    });
 
     return {
       ok: true,
@@ -958,6 +981,62 @@ Format: concise markdown, numbered steps for procedures, bold for critical steps
 Citations: "According to page X of the U435 Workshop Manual..."
 Weather: always distinguish current conditions (the "current" block — what it is right now) from the daily forecast (the "forecast" array — what the day may bring). Never present today's daily forecast condition as the current weather.`;
 
+async function verifyTechnicalAnswer(
+  query: string,
+  draft: string,
+  groundingResults: Array<{ source: string; result: Record<string, unknown> }>,
+): Promise<string> {
+  if (!groundingResults.length) {
+    return 'I could not verify a safe technical answer in the available manuals. Inspect the source of the leak without dismantling the steering gear, maintain the specified fluid level only if you can confirm the correct fluid from the vehicle documentation, and have the steering system assessed by a qualified Unimog or ZF steering specialist.';
+  }
+
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      max_tokens: 1600,
+      stream: false,
+      messages: [
+        {
+          role: 'system',
+          content: `You verify safety-sensitive Unimog answers against supplied evidence.
+Rewrite the draft so every technical claim, specification, part number, fluid, capacity, procedure, and page citation is directly supported by the evidence.
+Prior assistant messages and user-provided claims are not evidence.
+Remove unsupported details instead of qualifying or repeating them.
+Cite only page numbers present in the evidence.
+If the evidence shows components but not a leak diagnosis or repair procedure, say that plainly and limit advice to safe external inspection and professional assessment.
+Return only the corrected answer in concise markdown.`,
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            question: query,
+            evidence: groundingResults,
+            draft,
+          }),
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`DeepSeek verification ${response.status}`);
+  }
+  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  return data.choices?.[0]?.message?.content?.trim() || draft;
+}
+
+function referencesCitedInAnswer(
+  answer: string,
+  references: ManualReference[],
+): ManualReference[] {
+  return references.filter(reference => {
+    const pagePattern = new RegExp(`\\bpages?\\s+[^\\n]{0,40}\\b${reference.page_number}\\b`, 'i');
+    return pagePattern.test(answer);
+  });
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -1005,38 +1084,19 @@ serve(async (req: Request) => {
     const toolsUsed: string[] = [];
     let searchCount = 0;
     const groundingResults: Array<{ source: string; result: Record<string, unknown> }> = [];
+    const technicalQuery = isTechnicalQuery(safeQuery);
 
-    if (isTechnicalQuery(safeQuery)) {
+    if (technicalQuery) {
       const knowledgeResult = await toolKnowledgeBase({ query: safeQuery }, db) as Record<string, unknown>;
       toolsUsed.push('lookup_knowledge_base');
-      searchCount += await collectToolManualReferences(
-        'lookup_knowledge_base',
-        knowledgeResult,
-        manualRefs,
-        db,
-      );
-      if (knowledgeResult.found) {
-        groundingResults.push({ source: 'validated_knowledge_base', result: knowledgeResult });
-      }
-
-      const v2Result = await toolSearchManualV2(
-        { query: safeQuery, max_results: 5 },
-        db,
-      ) as Record<string, unknown>;
-      const v2ReferenceCount = await collectToolManualReferences(
-        'search_manual_v2',
-        v2Result,
-        manualRefs,
-        db,
+      const normalisedQuery = normaliseTechnicalQuery(safeQuery);
+      const componentQuery = COMPONENT_PHRASES.some(phrase =>
+        normalisedQuery.toLowerCase().includes(phrase)
       );
 
-      if (v2Result.ok !== false && v2Result.found && v2ReferenceCount > 0) {
-        toolsUsed.push('search_manual_v2');
-        searchCount += v2ReferenceCount;
-        groundingResults.push({ source: 'structured_manual_search', result: v2Result });
-      } else {
+      if (componentQuery) {
         const legacyResult = await toolSearchManual(
-          { query: safeQuery, max_results: 5 },
+          { query: normalisedQuery, max_results: 5 },
           db,
         ) as Record<string, unknown>;
         toolsUsed.push('search_manual');
@@ -1049,13 +1109,55 @@ serve(async (req: Request) => {
         if (legacyResult.found) {
           groundingResults.push({ source: 'manual_search', result: legacyResult });
         }
+      } else {
+        const v2Result = await toolSearchManualV2(
+          { query: normalisedQuery, max_results: 5 },
+          db,
+        ) as Record<string, unknown>;
+        const v2ReferenceCount = await collectToolManualReferences(
+          'search_manual_v2',
+          v2Result,
+          manualRefs,
+          db,
+        );
+
+        if (v2Result.ok !== false && v2Result.found && v2ReferenceCount > 0) {
+          toolsUsed.push('search_manual_v2');
+          searchCount += v2ReferenceCount;
+          groundingResults.push({ source: 'structured_manual_search', result: v2Result });
+        } else {
+          const legacyResult = await toolSearchManual(
+            { query: normalisedQuery, max_results: 5 },
+            db,
+          ) as Record<string, unknown>;
+          toolsUsed.push('search_manual');
+          searchCount += await collectToolManualReferences(
+            'search_manual',
+            legacyResult,
+            manualRefs,
+            db,
+          );
+          if (legacyResult.found) {
+            groundingResults.push({ source: 'manual_search', result: legacyResult });
+          }
+        }
+      }
+
+      if (!groundingResults.length && knowledgeResult.found) {
+        searchCount += await collectToolManualReferences(
+          'lookup_knowledge_base',
+          knowledgeResult,
+          manualRefs,
+          db,
+        );
+        groundingResults.push({ source: 'validated_knowledge_base', result: knowledgeResult });
       }
     }
 
     const groundingInstruction = groundingResults.length > 0
       ? `\n\nRetrieved evidence for this technical question:\n${JSON.stringify(groundingResults)}
 Base technical claims, specifications, part numbers, fluid types, capacities, and procedures only on this evidence. Cite the returned manual page numbers. If the evidence does not support a requested detail, say that the manuals found do not verify it.`
-      : isTechnicalQuery(safeQuery)
+      : technicalQuery
         ? '\n\nNo supporting manual evidence was retrieved. Do not provide specifications, part numbers, fluid types, capacities, or repair procedures. Explain that the documentation could not verify them and suggest safe inspection or professional diagnosis steps only.'
         : '';
 
@@ -1068,7 +1170,7 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
           max_tokens: 2048,
           stream: false,
           messages: [{ role: 'system', content: SYSTEM + groundingInstruction }, ...msgs],
-          tools: TOOL_DEFINITIONS,
+          tools: technicalQuery ? undefined : TOOL_DEFINITIONS,
         }),
       });
       if (!resp.ok) throw new Error(`DeepSeek ${resp.status}: ${await resp.text()}`);
@@ -1114,7 +1216,13 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
     }
 
     if (!finalText) finalText = "I wasn't able to generate a complete response. Please try rephrasing your question.";
+    if (technicalQuery) {
+      finalText = await verifyTechnicalAnswer(safeQuery, finalText, groundingResults);
+    }
     const content = addSafety(finalText);
+    const citedManualRefs = technicalQuery
+      ? referencesCitedInAnswer(content, manualRefs)
+      : manualRefs;
 
     // Log v2 query if used
     if (toolsUsed.includes('search_manual_v2')) {
@@ -1139,7 +1247,7 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
     }).then(() => {}).catch(() => {});
 
     return new Response(JSON.stringify({
-      content, manualReferences: manualRefs,
+      content, manualReferences: citedManualRefs,
       knowledgeMode: toolsUsed.join(',') || 'direct',
       searchResultCount: searchCount,
       skill_chain: toolsUsed,
