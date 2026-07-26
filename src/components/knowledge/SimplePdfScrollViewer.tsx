@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Loader2, AlertTriangle, Search } from 'lucide-react';
+import { Loader2, AlertTriangle, ExternalLink, Search } from 'lucide-react';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -112,7 +112,7 @@ export function SimplePdfScrollViewer({
     }
   }, [numPages, initialPage]);
 
-  // Safety timeout: if PDF hasn't loaded in 20s, show error
+  // Large workshop manuals can take time to initialise even with range requests
   React.useEffect(() => {
     if (!isLoading) return;
     const timer = setTimeout(() => {
@@ -120,7 +120,7 @@ export function SimplePdfScrollViewer({
         setError('PDF took too long to load. The file may not be available.');
         setIsLoading(false);
       }
-    }, 20000);
+    }, 60000);
     return () => clearTimeout(timer);
   }, [isLoading]);
 
@@ -191,6 +191,15 @@ export function SimplePdfScrollViewer({
           <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-3" />
           <p className="font-medium mb-2 text-foreground">PDF Not Available</p>
           <p className="text-sm text-muted-foreground">{error}</p>
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-2 text-sm text-primary hover:underline"
+          >
+            Open PDF directly
+            <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
       </div>
     );

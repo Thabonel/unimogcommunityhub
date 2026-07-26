@@ -98,12 +98,28 @@ function normaliseManualIdentifier(value: string): string {
 async function loadAvailablePdfs(db: ReturnType<typeof createClient>): Promise<void> {
   if (_pdfPaths) return;
 
-  const [{ data: manuals }, { data: v2Manuals }] = await Promise.all([
+  const [{ data: chunkPaths }, { data: manuals }, { data: v2Manuals }] = await Promise.all([
+    db.from('manual_chunks')
+      .select('manual_title,pdf_storage_path')
+      .not('pdf_storage_path', 'is', null)
+      .limit(1000),
     db.from('manuals').select('filename,title').not('filename', 'is', null).limit(1000),
     db.from('barry_v2_manuals').select('filename,title,storage_path').limit(1000),
   ]);
 
   const records: Array<{ aliases: string[]; path: string }> = [];
+  const seenChunkPaths = new Set<string>();
+  for (const row of chunkPaths ?? []) {
+    const storagePath = String(row.pdf_storage_path ?? '');
+    if (!storagePath.toLowerCase().endsWith('.pdf') || seenChunkPaths.has(storagePath)) continue;
+    seenChunkPaths.add(storagePath);
+    records.push({
+      path: storagePath,
+      aliases: [storagePath, String(row.manual_title ?? '')]
+        .map(normaliseManualIdentifier)
+        .filter(Boolean),
+    });
+  }
   for (const row of manuals ?? []) {
     const filename = String(row.filename ?? '');
     if (!filename.toLowerCase().endsWith('.pdf')) continue;
@@ -252,6 +268,24 @@ function keywords(q: string): string[] {
   return [...new Set(q.toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/).filter(w => w.length > 2 && !stop.has(w)))];
 }
 
+const COMPONENT_PHRASES = [
+  'air compressor',
+  'fuel injector',
+  'oil pan',
+  'portal hub',
+  'power steering',
+  'steering box',
+  'steering gear',
+  'transfer case',
+  'wheel hub',
+];
+
+function normaliseTechnicalQuery(query: string): string {
+  return query
+    .replace(/\bsteeringbox\b/gi, 'steering box')
+    .replace(/\bgearbox\b/gi, 'gear box');
+}
+
 const TECHNICAL_QUERY_TERMS = [
   'axle', 'brake', 'clutch', 'differential', 'engine', 'fluid', 'gearbox',
   'hydraulic', 'leak', 'maintenance', 'oil', 'part number', 'portal', 'repair',
@@ -265,7 +299,7 @@ function isTechnicalQuery(query: string): boolean {
 }
 
 async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
-  const query = String(input.query ?? '');
+  const query = normaliseTechnicalQuery(String(input.query ?? ''));
   const max = Math.min(Number(input.max_results ?? 5), 8);
   if (!query.trim()) return { ok: false, error: 'query required' };
 
@@ -273,8 +307,32 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
 
   const kws = keywords(query);
   let chunks: Record<string, unknown>[] = [];
+  const lowerQuery = query.toLowerCase();
+  const componentPhrase = COMPONENT_PHRASES.find(phrase => lowerQuery.includes(phrase));
 
-  if (kws.length) {
+  if (componentPhrase) {
+    const { data } = await db.from('manual_chunks')
+      .select('content,section_title,page_number,manual_title')
+      .or(`content.ilike.%${componentPhrase}%,section_title.ilike.%${componentPhrase}%`)
+      .limit(30);
+    if (data?.length) {
+      chunks = data
+        .map(row => {
+          const searchable = `${row.section_title ?? ''} ${row.content ?? ''}`.toLowerCase();
+          let relevance = searchable.split(componentPhrase).length - 1;
+          if (lowerQuery.includes('leak')) {
+            relevance += (searchable.split('seal').length - 1) * 3;
+            relevance += searchable.split('oil').length - 1;
+          }
+          return { row, relevance };
+        })
+        .sort((a, b) => b.relevance - a.relevance)
+        .slice(0, max)
+        .map(item => item.row);
+    }
+  }
+
+  if (!chunks.length && kws.length) {
     const { data: fts } = await db.from('manual_chunks')
       .select('content,section_title,page_number,manual_title')
       .textSearch('content', kws.join(' & '), { type: 'websearch', config: 'english' })
