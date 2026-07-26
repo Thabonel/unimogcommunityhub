@@ -85,33 +85,81 @@ const SUPA_STORAGE = `${SUPABASE_URL}/storage/v1/object/public`;
 // some preserve literal spaces, and some live under workshop/ or rps/ subfolders.
 // We list once per cold start and resolve manual_title → real storage path.
 let _pdfPaths: string[] | null = null;
-let _pdfBasenames: Map<string, string> | null = null;
+let _pdfAliases: Array<{ aliases: string[]; path: string }> | null = null;
+
+function normaliseManualIdentifier(value: string): string {
+  return value
+    .replace(/\.pdf$/i, '')
+    .replace(/\(\d+\)$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
 
 async function loadAvailablePdfs(db: ReturnType<typeof createClient>): Promise<void> {
   if (_pdfPaths) return;
-  const { data } = await db.schema('storage').from('objects')
-    .select('name').eq('bucket_id', 'manuals').like('name', '%.pdf').limit(500);
-  const paths = (data ?? []).map((r: Record<string, unknown>) => String(r.name));
+
+  const [{ data: manuals }, { data: v2Manuals }] = await Promise.all([
+    db.from('manuals').select('filename,title').not('filename', 'is', null).limit(1000),
+    db.from('barry_v2_manuals').select('filename,title,storage_path').limit(1000),
+  ]);
+
+  const records: Array<{ aliases: string[]; path: string }> = [];
+  for (const row of manuals ?? []) {
+    const filename = String(row.filename ?? '');
+    if (!filename.toLowerCase().endsWith('.pdf')) continue;
+    records.push({
+      path: filename,
+      aliases: [filename, String(row.title ?? '')]
+        .map(normaliseManualIdentifier)
+        .filter(Boolean),
+    });
+  }
+  for (const row of v2Manuals ?? []) {
+    const filename = String(row.filename ?? '');
+    const storagePath = String(row.storage_path ?? filename);
+    if (!storagePath.toLowerCase().endsWith('.pdf')) continue;
+    records.push({
+      path: storagePath,
+      aliases: [filename, storagePath, String(row.title ?? '')]
+        .map(normaliseManualIdentifier)
+        .filter(Boolean),
+    });
+  }
+
+  if (!records.length) {
+    const { data: storageFiles } = await db.storage.from('manuals').list('', {
+      limit: 1000,
+      sortBy: { column: 'name', order: 'asc' },
+    });
+    for (const file of storageFiles ?? []) {
+      if (!file.name.toLowerCase().endsWith('.pdf')) continue;
+      records.push({
+        path: file.name,
+        aliases: [normaliseManualIdentifier(file.name)],
+      });
+    }
+  }
+
+  const paths = [...new Set(records.map(record => record.path))];
   _pdfPaths = paths;
-  _pdfBasenames = new Map(paths.map((p: string) => [p.split('/').pop()!, p]));
+  _pdfAliases = records;
 }
 
 function resolveManualPath(manualTitle: string): string | null {
-  if (!manualTitle || !_pdfBasenames) return null;
-  const stripped = manualTitle.replace(/\.pdf$/i, '');
-  const candidates = [
-    stripped.replace(/\s+/g, '-') + '.pdf',  // most common: spaces → dashes
-    stripped + '.pdf',                        // literal spaces preserved
-  ];
-  for (const name of candidates) {
-    const path = _pdfBasenames.get(name);
-    if (path) return path;
-  }
+  if (!manualTitle || !_pdfAliases) return null;
+  const identifier = normaliseManualIdentifier(manualTitle);
+  if (!identifier) return null;
 
-  const normalisedTitle = stripped.toLowerCase().replace(/[^a-z0-9]/g, '');
-  for (const [name, path] of _pdfBasenames) {
-    const normalisedName = name.replace(/\.pdf$/i, '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (normalisedName === normalisedTitle) return path;
+  for (const record of _pdfAliases) {
+    if (record.aliases.includes(identifier)) return record.path;
+  }
+  for (const record of _pdfAliases) {
+    if (record.aliases.some(alias =>
+      alias.length >= 12
+      && (alias.includes(identifier) || identifier.includes(alias))
+    )) {
+      return record.path;
+    }
   }
 
   return null;
