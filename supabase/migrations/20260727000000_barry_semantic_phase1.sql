@@ -447,6 +447,7 @@ seed(alias_text, concept_key, alias_type, confidence, context_key) AS (VALUES
   ('gap', 'property.clearance', 'owner_term', 0.800, NULL),
   ('fluid type', 'property.fluid_specification', 'owner_term', 0.900, NULL),
   ('part no', 'property.part_number', 'abbreviation', 0.900, NULL),
+  ('seal ring', 'part.sealing_ring', 'workshop_term', 0.900, NULL),
   ('atf', 'fluid.atf', 'abbreviation', 1.000, NULL)
 )
 INSERT INTO public.barry_semantic_aliases (

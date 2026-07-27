@@ -49,7 +49,8 @@
     "knip": "knip",
     "knip:production": "knip --production",
     "knip:dependencies": "knip --dependencies",
-    "knip:exports": "knip --exports"
+    "knip:exports": "knip --exports",
+    "barry:evidence:backfill": "tsx scripts/barry-backfill/run-barry-evidence-backfill.ts"
   },
   "overrides": {
     "dotenv": "^16.4.5"

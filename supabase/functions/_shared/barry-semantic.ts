@@ -733,6 +733,7 @@ const aliases: SemanticAliasDefinition[] = [
   { aliasText: 'gap', conceptKey: 'property.clearance', aliasType: 'owner_term', confidence: 0.8 },
   { aliasText: 'fluid type', conceptKey: 'property.fluid_specification', aliasType: 'owner_term', confidence: 0.9 },
   { aliasText: 'part no', conceptKey: 'property.part_number', aliasType: 'abbreviation', confidence: 0.9 },
+  { aliasText: 'seal ring', conceptKey: 'part.sealing_ring', aliasType: 'workshop_term', confidence: 0.9 },
   { aliasText: 'atf', conceptKey: 'fluid.atf', aliasType: 'abbreviation', confidence: 1 },
 ];
 

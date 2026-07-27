@@ -6,11 +6,12 @@
 - **Repository:** `unimogcommunityhub`
 - **Working directory:** `/Users/thabonel/Code/unimogcommunityhub`
 - **Branch:** `main`
-- **Requested scope:** Phase 0 and Phase 1 of `docs/BARRY_GROUNDED_ANSWERS_PRD.md` only
-- **Current state:** Implementation, final verification, review, and commit complete; staging push recorded below
+- **Requested scope:** Phase 0 and Phase 1 of `docs/BARRY_GROUNDED_ANSWERS_PRD.md`; Phase 2 added on 2026-07-27 (see Phase 2 Addendum below)
+- **Current state:** Phase 0, Phase 1, and Phase 2 implementation, verification, review, and commit complete; staging pushes recorded below
 - **Production deployment:** Not authorized and not performed
-- **Database migration:** Validated on an isolated local PostgreSQL 14 scratch database; not applied to any Supabase project
-- **Later PRD phases:** Not started
+- **Database migration:** Phase 1 and Phase 2 migrations validated on isolated local PostgreSQL 14 databases; not applied to any Supabase project
+- **Staging Supabase backend:** Does not exist. The project owner waived the requirement on 2026-07-27 ("there is no staging supabase, its not necessary"). Phase 1 activation and smoke tests remain pending indefinitely; production must not be used as a substitute.
+- **Later PRD phases:** Phase 3 retrieval and beyond not started
 
 The user asked for incremental implementation covering:
 
@@ -645,3 +646,52 @@ When finished, report:
 - later phases explicitly not started;
 - unrelated files preserved.
 
+
+## Phase 2 Addendum (2026-07-27)
+
+Phase 2 (semantic evidence backfill) was implemented after the owner waived the staging-backend requirement. Phase 3 was not started.
+
+### Gate A outcome
+
+No dedicated staging Supabase project exists. The account holds only the production project plus unrelated applications. The owner directed that staging infrastructure is unnecessary. Phase 1 staging activation and smoke tests were not performed and remain pending; production was not used as a substitute.
+
+### Implemented
+
+- `supabase/migrations/20260728000000_barry_semantic_phase2.sql`: `barry_backfill_runs`, `barry_documents`, `barry_evidence_units`; `barry_evidence_concepts` extended with `evidence_unit_id`, `model_scope`, `backfill_run_id`, `provenance`; service-role-only `rollback_barry_backfill_run`; RLS mirroring Phase 1. Additive and idempotent.
+- `scripts/barry-backfill/`: deterministic document-role and page-type classification; evidence adapters for `manual_chunk`, `barry_v2_content_block`, `rps_part`, `rps_illustration`, and `barry_v2_specification`; pg store with idempotent upserts; dry-run store; coverage aggregation; CLI with dry-run default, source/document/page filters, batch limits, resume cursor, coverage, and rollback.
+- One governed ontology addition from verified RPS terminology: `seal ring` alias for `part.sealing_ring`, added to the runtime registry and Phase 1 migration seed with parity.
+- Tests: 38 new (12 classification, 14 adapter, 7 backfill behavior, 5 migration contract... see counts below). Legacy retrieval untouched; `barry-tools` unchanged in Phase 2.
+
+### Verification results
+
+- Targeted tests: 68 passed (30 Phase 1 + 38 Phase 2).
+- Semantic benchmark: 20/20, 100% concept recall, 100% claim-class recall, 100% ambiguity recall, zero forbidden-concept violations.
+- `npx tsc --noEmit`: passed.
+- Edge bundle (esbuild): passed.
+- Full suite: 234 passed, 88 failed; failure set identical to the pre-existing Phase 1 baseline (no new failures).
+- `npm run build`: passed (20.2s).
+- Secret scan: clean; no project URLs, JWTs, or keys in task files.
+
+### Pilot execution (local PostgreSQL 14, read-only production extract)
+
+- Phase 1 and Phase 2 migrations each applied twice; idempotent.
+- Steering pilot: 74 documents, 440 evidence units, 1,006 annotations (252 approved, 754 proposed), 199 controlled review items.
+- Re-apply produced zero duplicates. Resume cursor verified. Rollback verified and ownership-corrected (first creating run owns rows).
+- Coverage measured: see `docs/BARRY_SEMANTIC_COVERAGE_BASELINE.md`.
+- Disputed pages 605, 609, 928, 934, 946, and 952 individually audited against actual content: see `docs/BARRY_PHASE2_STEERING_PILOT_AUDIT.md`.
+- Zero parts-catalogue units classified as procedures; zero operation/property annotations on diagram or parts-list pages; zero model-assisted annotations.
+
+### Phase 2 known limitations
+
+- No staging or production application of either migration; the pilot database was local and temporary.
+- `barry_v2_specifications` has NULL `chapter_id` (joins through `block_id`) and NULL `system_tag`; no steering specification records exist.
+- RPS part applicability is unverified (`vehicle_model` NULL); 216 RPS annotations remain proposed.
+- Duplicate 1185-page manuals (`u1700lunimog435sm`, `unimog435sm-u1700l`) inflate block coverage pending Phase 6 deduplication.
+- `manual_chunks` "RPS Catalog" is not verifiably linked to an RPS number; RPS records register as `rps_catalog:{rps_number}` documents.
+
+### Phase 2 documentation
+
+- `docs/BARRY_PHASE2_EVIDENCE_BACKFILL_DESIGN.md`
+- `docs/BARRY_PHASE2_STEERING_PILOT_AUDIT.md`
+- `docs/BARRY_SEMANTIC_COVERAGE_BASELINE.md`
+- `docs/BARRY_EVIDENCE_BACKFILL_RUNBOOK.md`
