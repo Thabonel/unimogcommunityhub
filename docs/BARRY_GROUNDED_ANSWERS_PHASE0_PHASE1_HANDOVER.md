@@ -695,3 +695,33 @@ No dedicated staging Supabase project exists. The account holds only the product
 - `docs/BARRY_PHASE2_STEERING_PILOT_AUDIT.md`
 - `docs/BARRY_SEMANTIC_COVERAGE_BASELINE.md`
 - `docs/BARRY_EVIDENCE_BACKFILL_RUNBOOK.md`
+
+## Phase 3 Addendum (2026-07-27, shadow mode only)
+
+PRD Phase 3 was implemented in shadow mode. User-visible behavior is unchanged; no semantic retrieval, claim verification, citation reconciliation, or PDF work is live.
+
+### Implemented
+
+- `supabase/functions/_shared/barry-evidence-policy.ts`: executable document-role and page-type permission matrices, applicability decisions, numeric/unit/part-number deterministic checks, citation identity, deduplication, and reconciliation.
+- `supabase/functions/_shared/barry-retrieval-planner.ts`: runtime role/page-type inference, one-hop bounded relationship expansion, auditable scoring with versioned weights (`1.0.0-shadow-phase3`), applicability exclusion, ambiguity penalties.
+- `supabase/functions/_shared/barry-semantic.ts`: exported `matchSemanticConcepts` (two-pass context-aware matcher) shared by the planner.
+- `supabase/functions/barry-tools/index.ts`: shadow planning over legacy retrieval candidates with a redacted `shadow_retrieval` summary in the existing fire-and-forget telemetry row. Shadow failure degrades to `{ error: 'shadow_retrieval_unavailable' }` and cannot affect the response.
+- `docs/BARRY_PHASE3_SHADOW_RETRIEVAL.md`.
+
+### Verification results
+
+- Targeted tests: 94 passed (68 Phase 1/2 + 26 Phase 3).
+- Semantic benchmark: 20/20, 100% recall all metrics, zero forbidden-concept violations.
+- `npx tsc --noEmit`: passed.
+- Edge bundle (esbuild): passed; planner and policy modules inline correctly.
+- Full suite: 260 passed, 88 failed; failure set hash identical to the Phase 1/2 pre-existing baseline.
+- `npm run build`: passed (21.6s).
+- Secret scan: clean; no project URLs, JWTs, or keys in task files.
+
+### Phase 3 known limitations
+
+- Shadow telemetry requires `barry_grounding_runs` to exist in the environment; it is still not applied to any Supabase project. Until then the insert fails silently by design.
+- Embedding scoring is unavailable in this pipeline and excluded from shadow weights.
+- Runtime role/page-type inference is conservative; most candidates classify `unknown` until the Phase 2 annotations exist in a live database.
+- Live citation reconciliation awaits Phase 4 claim mapping; only the deterministic functions and shadow comparison exist.
+- Phase 4 was not started.

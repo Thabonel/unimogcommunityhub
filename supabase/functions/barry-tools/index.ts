@@ -9,6 +9,10 @@ import {
   buildSemanticQueryFrame,
   createSemanticGroundingTelemetry,
 } from '../_shared/barry-semantic.ts';
+import {
+  planSemanticRetrieval,
+  type ShadowEvidenceCandidate,
+} from '../_shared/barry-retrieval-planner.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1041,6 +1045,100 @@ function referencesCitedInAnswer(
   });
 }
 
+function buildShadowCandidates(
+  groundingResults: Array<{ source: string; result: Record<string, unknown> }>,
+): ShadowEvidenceCandidate[] {
+  const candidates: ShadowEvidenceCandidate[] = [];
+  for (const entry of groundingResults) {
+    const rows = (entry.result.results as Array<Record<string, unknown>>) ?? [];
+    rows.forEach((row, index) => {
+      candidates.push({
+        candidateId: `${entry.source}:${index}:${String(row.page_number ?? 'na')}`,
+        source: entry.source,
+        title: typeof (row.section_title ?? row.title) === 'string' ? String(row.section_title ?? row.title) : undefined,
+        manualTitle: typeof row.manual_title === 'string' ? row.manual_title : undefined,
+        pageNumber: Number.isFinite(Number(row.page_number)) ? Number(row.page_number) : undefined,
+        storageUrl: typeof row.storage_url === 'string' ? row.storage_url : undefined,
+        contentPreview: typeof row.content_preview === 'string' ? row.content_preview : undefined,
+        blockType: typeof row.block_type === 'string' ? row.block_type : undefined,
+        retrievalRank: Number.isFinite(Number(row.rank)) ? Number(row.rank) : undefined,
+      });
+    });
+
+    if (entry.source !== 'validated_knowledge_base') continue;
+    const references = Array.isArray(entry.result.manual_references)
+      ? entry.result.manual_references as Array<Record<string, unknown>>
+      : [];
+    references.forEach((reference, index) => {
+      const page = Number(reference.page_number ?? reference.pdf_page);
+      candidates.push({
+        candidateId: `${entry.source}:${index}:${Number.isFinite(page) ? page : 'na'}`,
+        source: entry.source,
+        title: typeof (reference.manual_title ?? reference.title) === 'string'
+          ? String(reference.manual_title ?? reference.title)
+          : undefined,
+        manualTitle: typeof reference.manual_title === 'string' ? reference.manual_title : undefined,
+        pageNumber: Number.isFinite(page) ? page : undefined,
+        storageUrl: typeof reference.storage_url === 'string' ? reference.storage_url : undefined,
+      });
+    });
+  }
+  return candidates;
+}
+
+function buildShadowRetrievalTelemetry(
+  groundingResults: Array<{ source: string; result: Record<string, unknown> }>,
+  citedManualRefs: ManualReference[],
+  semanticFrame: NonNullable<ReturnType<typeof buildSemanticQueryFrame>>,
+): Record<string, unknown> {
+  try {
+    const candidates = buildShadowCandidates(groundingResults);
+    if (!candidates.length) return { considered: 0 };
+
+    const plan = planSemanticRetrieval(semanticFrame, candidates);
+  const shadowKeys = new Map(
+    plan.ranked.map((entry) => [entry.candidateId, entry]),
+  );
+  const candidateByPage = new Map(
+    candidates.map((candidate) => [`${candidate.pageNumber}|${candidate.storageUrl ?? ''}`, candidate.candidateId]),
+  );
+
+  let overlapCount = 0;
+  let shadowExcludedCitedCount = 0;
+  const excludedIds = new Set(plan.excluded.map((entry) => entry.candidateId));
+  for (const reference of citedManualRefs) {
+    const candidateId = candidateByPage.get(`${reference.page_number}|${reference.storage_url}`);
+    if (!candidateId) continue;
+    if (excludedIds.has(candidateId)) {
+      shadowExcludedCitedCount += 1;
+    } else if ((shadowKeys.get(candidateId)?.score ?? 0) > 0) {
+      overlapCount += 1;
+    }
+  }
+
+  const exclusionReasons: Record<string, number> = {};
+  for (const exclusion of plan.excluded) {
+    exclusionReasons[exclusion.reasonCode] = (exclusionReasons[exclusion.reasonCode] ?? 0) + 1;
+  }
+
+  return {
+    weights_version: plan.weightsVersion,
+    considered: plan.considered,
+    ranked_count: plan.ranked.length,
+    excluded_count: plan.excluded.length,
+    exclusion_reasons: exclusionReasons,
+    expansion_count: plan.expansions.length,
+    expansions: plan.expansions,
+    positive_score_count: plan.ranked.filter((entry) => entry.score > 0).length,
+    legacy_citation_count: citedManualRefs.length,
+    overlap_count: overlapCount,
+    shadow_excluded_cited_count: shadowExcludedCitedCount,
+  };
+  } catch {
+    return { error: 'shadow_retrieval_unavailable' };
+  }
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 serve(async (req: Request) => {
@@ -1275,6 +1373,7 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
           })),
           ambiguities: semanticFrame.ambiguities,
           confidence: semanticFrame.confidence,
+          shadow_retrieval: buildShadowRetrievalTelemetry(groundingResults, citedManualRefs, semanticFrame),
         },
         latency_ms: Date.now() - t0,
       }).then(() => {}).catch(() => {});

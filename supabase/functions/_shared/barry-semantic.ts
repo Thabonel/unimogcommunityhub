@@ -866,6 +866,63 @@ function containsPhrase(normalizedQuery: string, phrase: string): boolean {
   return ` ${normalizedQuery} `.includes(` ${normalizeSemanticText(phrase)} `);
 }
 
+export interface SemanticConceptMatch {
+  conceptKey: string;
+  conceptType: SemanticConceptType;
+  inHeading: boolean;
+}
+
+export function matchSemanticConcepts(
+  headingText: string,
+  bodyText: string,
+  registry: SemanticRegistry = PHASE1_SEMANTIC_REGISTRY,
+  conceptTypes?: ReadonlySet<SemanticConceptType>,
+): SemanticConceptMatch[] {
+  const normalizedHeading = normalizeSemanticText(headingText);
+  const normalizedBody = normalizeSemanticText(bodyText);
+  const matches = new Map<string, SemanticConceptMatch>();
+  const resolved = new Set<string>();
+
+  const annotatable = registry.concepts.filter((concept) =>
+    !conceptTypes || conceptTypes.has(concept.conceptType));
+
+  for (const concept of annotatable) {
+    const inHeading = containsPhrase(normalizedHeading, concept.canonicalName);
+    const inBody = containsPhrase(normalizedBody, concept.canonicalName);
+    if (inHeading || inBody) {
+      matches.set(concept.conceptKey, {
+        conceptKey: concept.conceptKey,
+        conceptType: concept.conceptType,
+        inHeading,
+      });
+      resolved.add(concept.conceptKey);
+    }
+  }
+
+  for (const requireContext of [false, true]) {
+    for (const alias of registry.aliases) {
+      const isContextual = Boolean(alias.contextConceptKeys?.length);
+      if (isContextual !== requireContext) continue;
+      if (isContextual && !alias.contextConceptKeys!.some((key) => resolved.has(key))) continue;
+      if (matches.has(alias.conceptKey)) continue;
+      const concept = annotatable.find((entry) => entry.conceptKey === alias.conceptKey);
+      if (!concept) continue;
+      const inHeading = containsPhrase(normalizedHeading, alias.aliasText);
+      const inBody = containsPhrase(normalizedBody, alias.aliasText);
+      if (inHeading || inBody) {
+        matches.set(concept.conceptKey, {
+          conceptKey: concept.conceptKey,
+          conceptType: concept.conceptType,
+          inHeading,
+        });
+        resolved.add(concept.conceptKey);
+      }
+    }
+  }
+
+  return [...matches.values()];
+}
+
 function unique(values: string[]): string[] {
   return [...new Set(values)];
 }
