@@ -5,6 +5,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  buildSemanticQueryFrame,
+  createSemanticGroundingTelemetry,
+} from '../_shared/barry-semantic.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -1085,6 +1089,9 @@ serve(async (req: Request) => {
     let searchCount = 0;
     const groundingResults: Array<{ source: string; result: Record<string, unknown> }> = [];
     const technicalQuery = isTechnicalQuery(safeQuery);
+    const semanticFrame = technicalQuery
+      ? buildSemanticQueryFrame(safeQuery, { queryId: crypto.randomUUID() })
+      : null;
 
     if (technicalQuery) {
       const knowledgeResult = await toolKnowledgeBase({ query: safeQuery }, db) as Record<string, unknown>;
@@ -1245,6 +1252,33 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
       knowledge_source: toolsUsed.includes('lookup_knowledge_base') ? 'knowledge_base' : 'tool_use',
       pdf_references_found: searchCount,
     }).then(() => {}).catch(() => {});
+
+    if (semanticFrame) {
+      const telemetry = createSemanticGroundingTelemetry(semanticFrame);
+      db.from('barry_grounding_runs').insert({
+        ...telemetry,
+        semantic_frame_redacted: {
+          vehicle_model_concept_key: semanticFrame.vehicleModelConceptKey ?? null,
+          vehicle_variant_concept_keys: semanticFrame.vehicleVariantConceptKeys,
+          system_concept_keys: semanticFrame.systemConceptKeys,
+          component_concept_keys: semanticFrame.componentConceptKeys,
+          symptom_concept_keys: semanticFrame.symptomConceptKeys,
+          operation_concept_keys: semanticFrame.operationConceptKeys,
+          property_concept_keys: semanticFrame.propertyConceptKeys,
+          fluid_concept_keys: semanticFrame.fluidConceptKeys,
+          part_concept_keys: semanticFrame.partConceptKeys,
+          tool_concept_keys: semanticFrame.toolConceptKeys,
+          hazard_concept_keys: semanticFrame.hazardConceptKeys,
+          constraints: semanticFrame.constraints.map((constraint) => ({
+            property_concept_key: constraint.propertyConceptKey,
+            operator: constraint.operator,
+          })),
+          ambiguities: semanticFrame.ambiguities,
+          confidence: semanticFrame.confidence,
+        },
+        latency_ms: Date.now() - t0,
+      }).then(() => {}).catch(() => {});
+    }
 
     return new Response(JSON.stringify({
       content, manualReferences: citedManualRefs,

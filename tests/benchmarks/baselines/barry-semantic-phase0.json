@@ -1,0 +1,25 @@
+{
+  "benchmark": "barry-semantic-phase1",
+  "capturedAt": "2026-07-27T10:50:53.636Z",
+  "caseCount": 20,
+  "legacyBaseline": {
+    "queryTypeCoverage": 0.7,
+    "systemTagCoverage": 0.4,
+    "modelTagCoverage": 0.95
+  },
+  "phase1Target": {
+    "passRate": 1,
+    "conceptRecall": 1,
+    "claimRecall": 1,
+    "ambiguityRecall": 1,
+    "forbiddenConceptViolations": 0
+  },
+  "phase1Result": {
+    "passedCases": 20,
+    "passRate": 1,
+    "conceptRecall": 1,
+    "claimRecall": 1,
+    "ambiguityRecall": 1,
+    "forbiddenConceptViolations": 0
+  }
+}

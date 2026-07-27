@@ -85,7 +85,7 @@ function scoreTerms(query: string, terms: string[]): number {
   return terms.reduce((score, term) => score + (query.includes(term) ? 1 : 0), 0);
 }
 
-function classify(query: string) {
+export function classifyQueryV2(query: string) {
   const normalized = query.toLowerCase().replace(/[^\w\s']/g, ' ').replace(/\s+/g, ' ').trim();
   const scoredTypes = QUERY_PATTERNS
     .map((pattern) => ({ type: pattern.type, score: scoreTerms(normalized, pattern.terms) }))
@@ -132,7 +132,7 @@ async function execute(
 
   return {
     ok: true,
-    data: classify(query),
+    data: classifyQueryV2(query),
     metadata: { latency_ms: Date.now() - t0, source: 'barry_v2_classifier', timestamp: new Date().toISOString() },
   };
 }

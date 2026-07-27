@@ -43,6 +43,7 @@
     "wis:all": "npm run wis:extract && npm run wis:upload",
     "barry:test": "node scripts/test-barry-wis.js",
     "barry:wis": "node scripts/test-barry-wis.js",
+    "barry:semantic:benchmark": "tsx scripts/run-barry-semantic-benchmark.ts",
     "setup:pdf-assets": "node scripts/setup-pdf-assets.js",
     "postinstall": "node scripts/setup-pdf-assets.js",
     "knip": "knip",
