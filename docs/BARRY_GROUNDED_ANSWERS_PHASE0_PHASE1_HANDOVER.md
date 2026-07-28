@@ -725,3 +725,19 @@ PRD Phase 3 was implemented in shadow mode. User-visible behavior is unchanged; 
 - Runtime role/page-type inference is conservative; most candidates classify `unknown` until the Phase 2 annotations exist in a live database.
 - Live citation reconciliation awaits Phase 4 claim mapping; only the deterministic functions and shadow comparison exist.
 - Phase 4 was not started.
+
+## Production Activation Addendum (2026-07-27)
+
+The project owner applied the Phase 1 and Phase 2 migrations to the production Supabase project via the SQL editor and explicitly authorized the `barry-tools` function deployment. Read-only verification confirmed:
+
+- all 10 semantic tables exist with RLS enabled;
+- one active semantic version (`1.0.0-phase1`), 86 concepts, 10 relationships, 56 aliases;
+- all 76 RPS synonyms queued as pending/controlled proposals, none auto-approved;
+- Phase 2 evidence tables correctly empty (no backfill run yet).
+
+The `barry-tools` deployment (commit `23e58e664`) was verified with live smoke tests:
+
+1. `my steeringbox is leaking, what do I do` — normal response (cautious, evidence-limited, no invented procedure), one `barry_grounding_runs` row, no raw or normalized question stored, frame resolved steering system, steering gear, external leak, inspect, and diagnose; shadow retrieval considered 5 candidates with 5/5 legacy citation overlap, zero exclusions, and 4 one-hop expansions.
+2. `the pump is leaking` — ambiguity retained: both `component.power_steering_pump` and `component.water_pump` recorded as candidates with neither silently selected; Barry answered normally without inventing a diagnosis.
+
+Phase 2 evidence backfill against production remains available but has not been authorized or run.
