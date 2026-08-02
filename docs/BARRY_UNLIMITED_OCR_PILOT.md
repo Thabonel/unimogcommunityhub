@@ -73,3 +73,28 @@ Structured callout table extracted like page 934.
 
 - `brew install llama.cpp` (Ollama 0.30.10 cannot attach a separate GGUF projector; llama.cpp's `llama-mtmd-cli` can).
 - Model files (~2.8GB) kept outside the repository.
+
+## Production pipeline (2026-08-02)
+
+`scripts/barry-ocr/reprocess-manual.ts` (`npm run barry:ocr:reprocess`) productionizes the pilot:
+
+- pdftoppm render, llama-mtmd-cli parse, det-marker stripping, per-page Markdown plus an `index.jsonl` ledger;
+- resumable: pages with existing Markdown are skipped, so interruptions (including machine sleep) are harmless;
+- page ranges, DPI, model paths, and token limits are flags; the model is pinned by file path and digest.
+
+Full workshop-manual batch launched in the background with `caffeinate -i`:
+
+```bash
+npm run barry:ocr:reprocess -- \
+  --pdf=$HOME/barry-ocr/workshop-manual.pdf \
+  --pages=1-1185 \
+  --model=$HOME/barry-ocr/model.gguf \
+  --mmproj=$HOME/barry-ocr/mmproj.gguf \
+  --out=$HOME/barry-ocr/workshop-manual-vol1
+```
+
+Monitor: `tail -f ~/barry-ocr/workshop-manual-vol1/batch.log`
+Progress: `ls ~/barry-ocr/workshop-manual-vol1/markdown | wc -l`
+Resume after interruption: rerun the same command (completed pages are skipped).
+
+Reprocessed text stays local in `~/barry-ocr/` until it is compared and deliberately promoted. Nothing is written to production by this pipeline.
