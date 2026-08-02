@@ -753,3 +753,14 @@ The production REST path was unavailable (legacy API keys are disabled and no ne
 - To roll back after applying: `SELECT public.rollback_barry_backfill_run('prod-steering-phase2-1');`
 
 A `SupabaseRestStore` and `SupabaseSourceReader` (`--target=supabase`) were also added to the backfill runner for environments where a secret API key is available; they are type-checked but were not exercised against production because no valid API credential exists locally.
+
+## Production Backfill Applied (2026-08-02)
+
+The owner ran all eight `BARRY_PHASE2_PROD_BACKFILL_STEERING` parts in the production SQL editor. Read-only verification confirmed the exact expected state:
+
+- 74 documents, 440 evidence units, 1,006 annotations (252 approved, 754 proposed), 199 evidence-mapping review items;
+- run `prod-steering-phase2-1` completed;
+- zero parts-catalogue units classified as procedures;
+- page-type distribution: 196 parts_list, 53 workshop procedures, 33 workshop specifications, 67 diagrams, 87 explanations, plus maintenance-manual units.
+
+Phase 2 is now live as data in production. Semantic retrieval remains shadow-only; the runtime planner still uses conservative runtime inference and does not yet read these annotations (that wiring is later-phase work).
