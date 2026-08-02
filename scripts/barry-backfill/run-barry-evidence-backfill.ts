@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import pg from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import {
   BARRY_SEMANTIC_VERSION,
   PHASE1_SEMANTIC_REGISTRY,
@@ -11,6 +12,11 @@ import {
   PgBackfillStore,
   type BackfillStore,
 } from './barry-evidence-store';
+import {
+  loadCoverageViaRest,
+  SupabaseRestStore,
+  SupabaseSourceReader,
+} from './barry-evidence-supabase';
 import {
   buildCoverageReport,
   CONFIDENCE_BAND_QUERY,
@@ -30,6 +36,9 @@ import type {
 
 interface CliOptions {
   dbUrl: string;
+  target: 'pg' | 'supabase';
+  supabaseUrl: string;
+  supabaseKey: string;
   apply: boolean;
   runKey: string;
   semanticVersion: string;
@@ -42,6 +51,9 @@ interface CliOptions {
 function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
     dbUrl: process.env.BARRY_BACKFILL_DB_URL ?? '',
+    target: 'pg',
+    supabaseUrl: process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '',
+    supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
     apply: false,
     runKey: `phase2-${Date.now()}`,
     semanticVersion: BARRY_SEMANTIC_VERSION,
@@ -52,6 +64,7 @@ function parseArgs(argv: string[]): CliOptions {
   for (const arg of argv) {
     if (arg === '--apply') options.apply = true;
     else if (arg === '--coverage') options.coverage = true;
+    else if (arg.startsWith('--target=')) options.target = arg.slice('--target='.length) as CliOptions['target'];
     else if (arg.startsWith('--db-url=')) options.dbUrl = arg.slice('--db-url='.length);
     else if (arg.startsWith('--run-key=')) options.runKey = arg.slice('--run-key='.length);
     else if (arg.startsWith('--semantic-version=')) options.semanticVersion = arg.slice('--semantic-version='.length);
@@ -319,6 +332,45 @@ async function loadSourceRows(
 
 async function run(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
+
+  if (options.target === 'supabase') {
+    if (!options.supabaseUrl || !options.supabaseKey) {
+      throw new Error('Supabase target requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    }
+    const supabase = createClient(options.supabaseUrl, options.supabaseKey, {
+      auth: { persistSession: false },
+    });
+    const { data: versionRow, error: versionError } = await supabase
+      .from('barry_semantic_versions')
+      .select('id')
+      .eq('version', options.semanticVersion)
+      .single();
+    if (versionError || !versionRow) throw new Error(`Unknown semantic version ${options.semanticVersion}`);
+    const versionId = versionRow.id;
+
+    if (options.rollback) {
+      const result = await new SupabaseRestStore(supabase, versionId).rollbackRun(options.rollback);
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    if (options.coverage) {
+      const { rows, bands, totalUnits } = await loadCoverageViaRest(supabase, versionId);
+      console.log(JSON.stringify(buildCoverageReport(rows, bands, totalUnits), null, 2));
+      return;
+    }
+
+    const reader = new SupabaseSourceReader(supabase);
+    const documents = await reader.loadSourceDocuments();
+    const registrations = registerDocuments(documents, options.filters);
+    const store: BackfillStore = options.apply
+      ? new SupabaseRestStore(supabase, versionId)
+      : new DryRunBackfillStore(versionId);
+    const rows = await reader.loadSourceRows(options.filters, registrations);
+    await executeBackfill(options, registrations, store, rows);
+    return;
+  }
+
   if (!options.dbUrl) {
     throw new Error('Provide --db-url or BARRY_BACKFILL_DB_URL');
   }
@@ -347,81 +399,89 @@ async function run(): Promise<void> {
 
     const documents = await loadSourceDocuments(client);
     const registrations = registerDocuments(documents, options.filters);
-    const context: AdapterContext = {
-      registry: PHASE1_SEMANTIC_REGISTRY,
-      semanticVersion: options.semanticVersion,
-      documentRoles: registrations,
-    };
-
     const store: BackfillStore = options.apply
       ? new PgBackfillStore(client, versionId)
       : new DryRunBackfillStore(versionId);
-
-    const mode = options.apply ? 'apply' : 'dry_run';
-    const runId = await store.ensureRun(options.runKey, mode, {
-      sources: options.filters.sources ?? 'all',
-      documentKey: options.filters.documentKey ?? null,
-      pages: options.filters.pageStart != null ? [options.filters.pageStart, options.filters.pageEnd] : null,
-    });
-
-    const stats: BackfillStats = {
-      documents: 0,
-      evidenceUnits: 0,
-      annotationsApproved: 0,
-      annotationsProposed: 0,
-      reviewItems: 0,
-      skipped: 0,
-    };
-
-    const documentIds = new Map<string, string>();
-    for (const registration of registrations.values()) {
-      documentIds.set(registration.documentKey, await store.upsertDocument(registration));
-      stats.documents += 1;
-    }
-
     const rows = await loadSourceRows(client, options.filters, registrations);
-    const startIndex = options.filters.resumeCursor ? Number(options.filters.resumeCursor) : 0;
-    const batchSize = options.filters.batchSize;
-    const batch = rows.slice(startIndex, startIndex + batchSize);
-
-    for (const [offset, row] of batch.entries()) {
-      const adapted = adaptEvidenceRow(row, context);
-      const documentId = documentIds.get(row.documentKey);
-      if (!documentId) {
-        stats.skipped += 1;
-        continue;
-      }
-      const unitId = await store.upsertEvidenceUnit(adapted.unit, documentId, runId);
-      stats.evidenceUnits += 1;
-      for (const annotation of adapted.annotations) {
-        await store.upsertAnnotation(annotation, unitId, runId);
-        if (annotation.reviewStatus === 'approved') stats.annotationsApproved += 1;
-        else stats.annotationsProposed += 1;
-      }
-      for (const item of adapted.reviewItems) {
-        await store.insertReviewItem(item);
-        stats.reviewItems += 1;
-      }
-      stats.cursor = String(startIndex + offset + 1);
-    }
-
-    await store.completeRun(options.runKey, stats);
-
-    const audit = {
-      runKey: options.runKey,
-      mode,
-      semanticVersion: options.semanticVersion,
-      stats,
-      totalRowsInScope: rows.length,
-      processedRange: [startIndex, startIndex + batch.length],
-      ...(store instanceof DryRunBackfillStore ? { planned: store.log } : {}),
-    };
-    const auditOut = options.auditOut ?? `/tmp/barry-evidence-backfill-${options.runKey}.json`;
-    writeFileSync(auditOut, JSON.stringify(audit, null, 2));
-    console.log(JSON.stringify({ ...stats, mode, auditOut, totalRowsInScope: rows.length }, null, 2));
+    await executeBackfill(options, registrations, store, rows);
   } finally {
     await client.end();
   }
+}
+
+async function executeBackfill(
+  options: CliOptions,
+  registrations: Map<string, DocumentRegistration>,
+  store: BackfillStore,
+  rows: EvidenceSourceRow[],
+): Promise<void> {
+  const context: AdapterContext = {
+    registry: PHASE1_SEMANTIC_REGISTRY,
+    semanticVersion: options.semanticVersion,
+    documentRoles: registrations,
+  };
+
+  const mode = options.apply ? 'apply' : 'dry_run';
+  const runId = await store.ensureRun(options.runKey, mode, {
+    sources: options.filters.sources ?? 'all',
+    documentKey: options.filters.documentKey ?? null,
+    pages: options.filters.pageStart != null ? [options.filters.pageStart, options.filters.pageEnd] : null,
+  });
+
+  const stats: BackfillStats = {
+    documents: 0,
+    evidenceUnits: 0,
+    annotationsApproved: 0,
+    annotationsProposed: 0,
+    reviewItems: 0,
+    skipped: 0,
+  };
+
+  const documentIds = new Map<string, string>();
+  for (const registration of registrations.values()) {
+    documentIds.set(registration.documentKey, await store.upsertDocument(registration));
+    stats.documents += 1;
+  }
+
+  const startIndex = options.filters.resumeCursor ? Number(options.filters.resumeCursor) : 0;
+  const batchSize = options.filters.batchSize;
+  const batch = rows.slice(startIndex, startIndex + batchSize);
+
+  for (const [offset, row] of batch.entries()) {
+    const adapted = adaptEvidenceRow(row, context);
+    const documentId = documentIds.get(row.documentKey);
+    if (!documentId) {
+      stats.skipped += 1;
+      continue;
+    }
+    const unitId = await store.upsertEvidenceUnit(adapted.unit, documentId, runId);
+    stats.evidenceUnits += 1;
+    for (const annotation of adapted.annotations) {
+      await store.upsertAnnotation(annotation, unitId, runId);
+      if (annotation.reviewStatus === 'approved') stats.annotationsApproved += 1;
+      else stats.annotationsProposed += 1;
+    }
+    for (const item of adapted.reviewItems) {
+      await store.insertReviewItem(item);
+      stats.reviewItems += 1;
+    }
+    stats.cursor = String(startIndex + offset + 1);
+  }
+
+  await store.completeRun(options.runKey, stats);
+
+  const audit = {
+    runKey: options.runKey,
+    mode,
+    semanticVersion: options.semanticVersion,
+    stats,
+    totalRowsInScope: rows.length,
+    processedRange: [startIndex, startIndex + batch.length],
+    ...(store instanceof DryRunBackfillStore ? { planned: store.log } : {}),
+  };
+  const auditOut = options.auditOut ?? `/tmp/barry-evidence-backfill-${options.runKey}.json`;
+  writeFileSync(auditOut, JSON.stringify(audit, null, 2));
+  console.log(JSON.stringify({ ...stats, mode, auditOut, totalRowsInScope: rows.length }, null, 2));
 }
 
 run().catch((error) => {
