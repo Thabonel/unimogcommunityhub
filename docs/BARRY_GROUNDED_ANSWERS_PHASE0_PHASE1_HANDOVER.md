@@ -764,3 +764,16 @@ The owner ran all eight `BARRY_PHASE2_PROD_BACKFILL_STEERING` parts in the produ
 - page-type distribution: 196 parts_list, 53 workshop procedures, 33 workshop specifications, 67 diagrams, 87 explanations, plus maintenance-manual units.
 
 Phase 2 is now live as data in production. Semantic retrieval remains shadow-only; the runtime planner still uses conservative runtime inference and does not yet read these annotations (that wiring is later-phase work).
+
+## Full-Corpus Backfill Applied (2026-08-02)
+
+Phase 2 was extended from the steering pilot to the full corpus. The CLI Management API accepts SQL files up to roughly 2MB (413 above), so the 27.5MB generated script was split into 15 ordered parts and applied via `supabase db query --linked -f`.
+
+Verified locally before application (fresh DB, exact counts, idempotent) and against production after application:
+
+- 80 documents, 9,716 evidence units, 13,229 annotations (2,283 approved, 10,946 proposed), 3,793 review items;
+- two runs recorded: `prod-steering-phase2-1` (pilot) and `prod-full-phase2-1` (full corpus);
+- zero parts-catalogue procedure classifications;
+- disputed steering pages remain correctly classified.
+
+The audit dry-run (`/tmp` artifact) confirmed zero skipped rows across 9,716 source records. Coverage details are in `docs/BARRY_SEMANTIC_COVERAGE_BASELINE.md`. The 27MB of SQL parts were not committed; they are regenerable with the committed generator.

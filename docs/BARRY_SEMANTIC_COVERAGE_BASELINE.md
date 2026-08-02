@@ -69,3 +69,39 @@ npm run barry:evidence:backfill -- \
   --db-url=<target> \
   --coverage
 ```
+
+## Full-Corpus Coverage (2026-08-02, production)
+
+Applied via 15 CLI-executed SQL parts generated from a verified local run (`prod-full-phase2-1`). Verified against production after application.
+
+| Metric | Steering pilot | Full corpus |
+|---|---:|---:|
+| Documents | 74 | 80 |
+| Evidence units | 440 | 9,716 |
+| Annotations | 1,006 | 13,229 |
+| Approved | 252 | 2,283 |
+| Proposed | 754 | 10,946 |
+| Review items | 199 | 3,793 |
+
+### Units by role and page type (production)
+
+| Role | Page type | Units |
+|---|---|---:|
+| workshop_manual | explanation | 2,781 |
+| workshop_manual | procedure | 932 |
+| workshop_manual | diagram | 437 |
+| workshop_manual | specification | 351 |
+| workshop_manual | index | 36 |
+| maintenance_manual | explanation | 119 |
+| maintenance_manual | procedure | 40 |
+| maintenance_manual | specification | 15 |
+| parts_catalog | parts_list | 3,086 |
+| parts_catalog | diagram | 1,253 |
+| parts_catalog | explanation | 481 |
+| parts_catalog | specification | 5 |
+| parts_catalog | index | 1 |
+| unknown (unverified role) | various | 179 |
+
+Policy checks: zero parts-catalogue units classified as procedures. The four `unknown`-role documents (UHB handbooks and unverified identities) stay out of authoritative claim classes until their roles are reviewed.
+
+The generated SQL parts are not committed (27MB, regenerable): `BACKFILL_RUN_KEY=prod-full-phase2-1 npx tsx scripts/barry-backfill/generate-backfill-sql.ts` after a local backfill run. Rollback: `SELECT public.rollback_barry_backfill_run('prod-full-phase2-1');` (steering-pilot rows keep their original run ownership).
