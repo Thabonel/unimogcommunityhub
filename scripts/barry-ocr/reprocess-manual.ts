@@ -173,7 +173,10 @@ async function run(): Promise<void> {
   console.log(JSON.stringify({ processed, skipped, failures: failures.length, outDir: options.outDir }));
 }
 
-run().catch((error) => {
-  console.error(error.message);
-  process.exit(1);
-});
+const isMainModule = process.argv[1]?.endsWith('reprocess-manual.ts');
+if (isMainModule) {
+  run().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}
