@@ -17,37 +17,39 @@ interface ReprocessOptions {
   maxTokens: number;
 }
 
-const DET_PATTERN = /<\|\/?det\|>([^<\s]+)(?:\s*\[[^\]]*\])?\s*<\|\/det\|>(.*)/s;
-const STRAY_DET_TAG = /<\|\/?det\|>/g;
+const LAYOUT_CATEGORIES = 'header|text|table|footer|image_caption|image|page_number|title|figure_caption|list';
 
 export function removeDetMarkers(raw: string): string {
-  const blocks: string[] = [];
-  let current: string[] | null = null;
+  const untagged = raw.replace(/<\|\/?det\|>/g, '\n');
+  const categoryPrefix = new RegExp(`^(?:${LAYOUT_CATEGORIES})\\s*`, 'i');
+  const terminatedBox = /^\[[\d,.\s]*\]\s*(?:\[Non-Text\])?\s*/;
+  const unterminatedBox = /^\[[\d,.\s]+/;
+  const numericResidue = /^[\d,.\s\]]+$/;
 
-  for (const line of raw.split('\n')) {
-    const trimmed = line.trimEnd();
-    if (!trimmed) continue;
-    const match = trimmed.match(DET_PATTERN);
-    if (match) {
-      const category = match[1].trim();
-      const content = match[2].trim();
-      if (category === 'image') continue;
-      if (current !== null) blocks.push(current.join('\n'));
-      current = content ? [content] : [];
+  const blocks: string[] = [];
+  let current: string[] = [];
+
+  for (const rawLine of untagged.split('\n')) {
+    let line = rawLine.trim();
+    line = line.replace(categoryPrefix, '');
+    line = line.replace(terminatedBox, '');
+    line = line.replace(unterminatedBox, '');
+    line = line.replace(/^\[Non-Text\]\s*/, '');
+    line = line.trim();
+    if (numericResidue.test(line)) line = '';
+
+    if (!line) {
+      if (current.length) {
+        blocks.push(current.join('\n'));
+        current = [];
+      }
       continue;
     }
-    const cleaned = trimmed.replace(STRAY_DET_TAG, '').trim();
-    if (!cleaned) continue;
-    if (current === null) current = [];
-    current.push(cleaned);
+    current.push(line);
   }
-  if (current !== null) blocks.push(current.join('\n'));
+  if (current.length) blocks.push(current.join('\n'));
 
-  return blocks
-    .map((block) => block.trim())
-    .filter(Boolean)
-    .join('\n\n')
-    .trim();
+  return blocks.join('\n\n').trim();
 }
 
 function parseArgs(argv: string[]): ReprocessOptions {
@@ -119,6 +121,8 @@ async function processPage(options: ReprocessOptions, page: number): Promise<voi
     '--jinja',
   ], { maxBuffer: 64 * 1024 * 1024 });
 
+  mkdirSync(join(options.outDir, 'raw'), { recursive: true });
+  writeFileSync(join(options.outDir, 'raw', `page_${String(page).padStart(4, '0')}.txt`), stdout);
   const markdown = removeDetMarkers(stdout);
   writeFileSync(markdownPath, markdown + '\n');
 
@@ -131,7 +135,27 @@ async function processPage(options: ReprocessOptions, page: number): Promise<voi
   appendFileSync(join(options.outDir, 'index.jsonl'), indexLine + '\n');
 }
 
+async function rederiveFromRaw(outDir: string): Promise<void> {
+  const rawDir = join(outDir, 'raw');
+  const markdownDir = join(outDir, 'markdown');
+  mkdirSync(markdownDir, { recursive: true });
+  const { readdirSync } = await import('node:fs');
+  let rewritten = 0;
+  for (const file of readdirSync(rawDir)) {
+    if (!file.endsWith('.txt')) continue;
+    const markdown = removeDetMarkers(readFileSync(join(rawDir, file), 'utf8'));
+    writeFileSync(join(markdownDir, file.replace(/\.txt$/, '.md')), markdown + '\n');
+    rewritten += 1;
+  }
+  console.log(JSON.stringify({ rederived: rewritten, outDir }));
+}
+
 async function run(): Promise<void> {
+  if (process.argv[2] === '--rederive') {
+    const outDir = process.argv[3] ?? '/tmp/barry-ocr-out';
+    await rederiveFromRaw(outDir);
+    return;
+  }
   const options = parseArgs(process.argv.slice(2));
   mkdirSync(options.outDir, { recursive: true });
   writeFileSync(join(options.outDir, 'run-config.json'), JSON.stringify({
