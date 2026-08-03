@@ -17,7 +17,8 @@ interface ReprocessOptions {
   maxTokens: number;
 }
 
-const DET_PATTERN = /<\|det\|>([^<\s]+)(?:\s*\[[^\]]*\])?\s*<\|\/det\|>(.*)/s;
+const DET_PATTERN = /<\|\/?det\|>([^<\s]+)(?:\s*\[[^\]]*\])?\s*<\|\/det\|>(.*)/s;
+const STRAY_DET_TAG = /<\|\/?det\|>/g;
 
 export function removeDetMarkers(raw: string): string {
   const blocks: string[] = [];
@@ -35,8 +36,10 @@ export function removeDetMarkers(raw: string): string {
       current = content ? [content] : [];
       continue;
     }
+    const cleaned = trimmed.replace(STRAY_DET_TAG, '').trim();
+    if (!cleaned) continue;
     if (current === null) current = [];
-    current.push(trimmed);
+    current.push(cleaned);
   }
   if (current !== null) blocks.push(current.join('\n'));
 
