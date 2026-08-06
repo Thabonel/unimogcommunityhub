@@ -98,3 +98,28 @@ Progress: `ls ~/barry-ocr/workshop-manual-vol1/markdown | wc -l`
 Resume after interruption: rerun the same command (completed pages are skipped).
 
 Reprocessed text stays local in `~/barry-ocr/` until it is compared and deliberately promoted. Nothing is written to production by this pipeline.
+
+## Batch completion record (2026-08-07)
+
+The full 1,185-page workshop manual was reprocessed locally. Final acceptance state:
+
+- 1,185/1,185 pages produced; zero pipeline failures;
+- zero tag/fragment/marker residue; zero degenerate repetition in final Markdown;
+- 6 legitimately sparse figure/blank pages (verified visually);
+- 10 initially failed pages (figure+legend pages, sparse indexes, repetition loops) recovered with a repeat-penalty retry pass and cleaner hardening; outputs visually verified against page images;
+- raw model output archived for 900+ pages, enabling free re-derivation when the post-processor or model improves (`--rederive`);
+- garbage-prefix lines on 4 recovered pages were trimmed manually.
+
+Evaluation-page comparison (legacy chunk vs reprocessed):
+
+| Page | Legacy | Reprocessed |
+|---:|---|---|
+| 928 | garbled tables | full spec tables incl. capacity/fluid conditions |
+| 934 | 20 garble markers | clean exploded view + complete callout table |
+| 946 | partial preview | complete procedure with 64 Nm and dimension checks |
+| 952 | 10 garble markers | clean callout table |
+| 605/609 | OCR damage | clean wheel-hub procedures |
+
+Post-processor hardening during the batch: stray closing tags, bare category/bbox fragments, truncated and split bounding boxes, `[Non-Text]` markers, and empty-table-row padding are all stripped by `removeDetMarkers`/`trimDegenerateRuns` (8 unit tests).
+
+Promotion to production is a separate, deliberate step: reprocessed text must be written alongside legacy chunks with provenance, then the backfill re-run, before any retrieval uses it.

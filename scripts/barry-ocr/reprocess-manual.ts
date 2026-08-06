@@ -15,6 +15,7 @@ interface ReprocessOptions {
   dpi: number;
   prompt: string;
   maxTokens: number;
+  repeatPenalty: number;
 }
 
 const LAYOUT_CATEGORIES = 'header|text|table|footer|image_caption|image|page_number|title|figure_caption|list';
@@ -49,7 +50,13 @@ export function removeDetMarkers(raw: string): string {
   }
   if (current.length) blocks.push(current.join('\n'));
 
-  return blocks.join('\n\n').trim();
+  return trimDegenerateRuns(blocks.join('\n\n').trim());
+}
+
+export function trimDegenerateRuns(text: string): string {
+  return text
+    .replace(/(?:<tr>(?:<td(?:\s+colspan="\d+")?>(?:&nbsp;|\s)*<\/td>)+<\/tr>[\s\n]*){3,}/g, '')
+    .trim();
 }
 
 function parseArgs(argv: string[]): ReprocessOptions {
@@ -63,6 +70,7 @@ function parseArgs(argv: string[]): ReprocessOptions {
     dpi: 300,
     prompt: 'document parsing.',
     maxTokens: 3000,
+    repeatPenalty: 1.0,
   };
   for (const arg of argv) {
     if (arg.startsWith('--pdf=')) options.pdfPath = arg.slice(6);
@@ -75,6 +83,7 @@ function parseArgs(argv: string[]): ReprocessOptions {
       options.pageEnd = end ?? start;
     } else if (arg.startsWith('--dpi=')) options.dpi = Number(arg.slice(6));
     else if (arg.startsWith('--max-tokens=')) options.maxTokens = Number(arg.slice(13));
+    else if (arg.startsWith('--repeat-penalty=')) options.repeatPenalty = Number(arg.slice(17));
     else throw new Error(`Unknown argument ${arg}`);
   }
   if (!options.pdfPath) throw new Error('Provide --pdf=<path>');
@@ -118,6 +127,7 @@ async function processPage(options: ReprocessOptions, page: number): Promise<voi
     '-p', options.prompt,
     '--temp', '0',
     '-n', String(options.maxTokens),
+    '--repeat-penalty', String(options.repeatPenalty),
     '--jinja',
   ], { maxBuffer: 64 * 1024 * 1024 });
 

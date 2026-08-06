@@ -43,6 +43,15 @@ describe('removeDetMarkers', () => {
     expect(removeDetMarkers('<|det|>image [1, 2, 3, 4]<|/det|>')).toBe('');
   });
 
+  it('trims degenerate empty table-row padding', () => {
+    const padded = '<table><tr><td>Ratio</td><td>19.33 : 1</td></tr>'
+      + '<tr><td></td><td></td></tr>'.repeat(200)
+      + '</table>';
+    const result = removeDetMarkers(padded);
+    expect(result).toContain('19.33 : 1');
+    expect(result.length).toBeLessThan(400);
+  });
+
   it('preserves table markup', () => {
     const raw = '<|det|>table [178, 520, 685, 934]<|/det|><table><tr><td>14</td><td>Sealing ring</td></tr></table>';
     expect(removeDetMarkers(raw)).toBe('<table><tr><td>14</td><td>Sealing ring</td></tr></table>');
