@@ -13,6 +13,15 @@ import {
   planSemanticRetrieval,
   type ShadowEvidenceCandidate,
 } from '../_shared/barry-retrieval-planner.ts';
+import {
+  redactClaimText,
+  summarizeLedger,
+} from '../_shared/barry-claims.ts';
+import {
+  groundTechnicalAnswer,
+  type ClaimVerifierModel,
+  type ModelVerdict,
+} from '../_shared/barry-claim-verifier.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +34,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
 const BARRY_V2_ENABLED = Deno.env.get('BARRY_V2_RETRIEVAL_ENABLED') === 'true';
+const CLAIM_GROUNDING_ENABLED = Deno.env.get('BARRY_CLAIM_GROUNDING') === 'true';
 
 if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY env var is required');
 if (!SUPABASE_URL) throw new Error('SUPABASE_URL env var is required');
@@ -1035,6 +1045,46 @@ Return only the corrected answer in concise markdown.`,
   return data.choices?.[0]?.message?.content?.trim() || draft;
 }
 
+const GROUNDING_FAIL_CLOSED_MESSAGE = 'I could not verify a safe technical answer in the available manuals. Limit work to safe external inspection, maintain fluid levels only with fluid confirmed correct from the vehicle documentation, and have the system assessed by a qualified Unimog specialist.';
+
+async function callClaimVerifierModel(
+  payload: Parameters<ClaimVerifierModel>[0],
+): Promise<ModelVerdict[]> {
+  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      max_tokens: 1600,
+      stream: false,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `You decide whether each technical claim in a draft answer is directly supported by the supplied evidence units.
+Rules:
+- "supported" only when the evidence directly entails the claim; cite the evidenceKey values that entail it.
+- "narrowed" when the evidence supports only a more limited statement; provide finalText with the narrower wording and cite evidenceKeys.
+- "unsupported" when no supplied evidence entails the claim.
+- "conflicted" when evidence units disagree.
+- A diagram or parts list can never support a repair procedure. Prior conversation and user statements are not evidence.
+- Never invent values, part numbers, or procedures.
+Return JSON only: {"verdicts":[{"claimId":"...","status":"supported|narrowed|unsupported|conflicted","evidenceKeys":["..."],"finalText":"..."}]}`,
+        },
+        { role: 'user', content: JSON.stringify(payload) },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`DeepSeek claim verification ${response.status}`);
+  }
+  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+  const content = data.choices?.[0]?.message?.content ?? '{}';
+  const parsed = JSON.parse(content) as { verdicts?: ModelVerdict[] };
+  return Array.isArray(parsed.verdicts) ? parsed.verdicts : [];
+}
+
 function referencesCitedInAnswer(
   answer: string,
   references: ManualReference[],
@@ -1321,12 +1371,52 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
     }
 
     if (!finalText) finalText = "I wasn't able to generate a complete response. Please try rephrasing your question.";
+    let groundedCitedRefs: ManualReference[] | null = null;
+    let claimGroundingSummary: Record<string, unknown> | null = null;
+    let claimAuditRows: Array<Record<string, unknown>> = [];
     if (technicalQuery) {
-      finalText = await verifyTechnicalAnswer(safeQuery, finalText, groundingResults);
+      if (CLAIM_GROUNDING_ENABLED && semanticFrame) {
+        const grounded = await groundTechnicalAnswer({
+          requestId: semanticFrame.queryId,
+          query: safeQuery,
+          draft: finalText,
+          frame: semanticFrame,
+          candidates: buildShadowCandidates(groundingResults),
+          callModel: callClaimVerifierModel,
+        });
+        claimGroundingSummary = grounded.ledger ? summarizeLedger(grounded.ledger) : { verifier_status: 'model_error' };
+        if (grounded.ok) {
+          finalText = grounded.answer;
+          const citedPages = new Set(
+            grounded.citedUnits.map((unit) => `${unit.pageNumber}|${unit.storageUrl ?? ''}`),
+          );
+          groundedCitedRefs = citedPages.size
+            ? manualRefs.filter((reference) => citedPages.has(`${reference.page_number}|${reference.storage_url}`))
+            : [];
+          claimAuditRows = grounded.ledger.decisions.map((decision) => {
+            const claim = grounded.ledger.claims.find((entry) => entry.claimId === decision.claimId);
+            return {
+              grounding_run_request_id: semanticFrame.queryId,
+              claim_class: claim?.claimClass ?? 'general_description',
+              claim_text_redacted: claim ? redactClaimText(claim.text) : '',
+              status: decision.status,
+              reason_code: decision.reasonCode,
+              confidence: decision.confidence,
+              evidence_keys: decision.evidenceKeys,
+              pipeline_version: grounded.ledger.pipelineVersion,
+            };
+          });
+        } else {
+          finalText = GROUNDING_FAIL_CLOSED_MESSAGE;
+          groundedCitedRefs = [];
+        }
+      } else {
+        finalText = await verifyTechnicalAnswer(safeQuery, finalText, groundingResults);
+      }
     }
     const content = addSafety(finalText);
     const citedManualRefs = technicalQuery
-      ? referencesCitedInAnswer(content, manualRefs)
+      ? groundedCitedRefs ?? referencesCitedInAnswer(content, manualRefs)
       : manualRefs;
 
     // Log v2 query if used
@@ -1374,9 +1464,14 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
           ambiguities: semanticFrame.ambiguities,
           confidence: semanticFrame.confidence,
           shadow_retrieval: buildShadowRetrievalTelemetry(groundingResults, citedManualRefs, semanticFrame),
+          claim_grounding: claimGroundingSummary ?? undefined,
         },
         latency_ms: Date.now() - t0,
       }).then(() => {}).catch(() => {});
+    }
+
+    if (claimAuditRows.length) {
+      db.from('barry_claim_decisions').insert(claimAuditRows).then(() => {}).catch(() => {});
     }
 
     return new Response(JSON.stringify({

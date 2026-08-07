@@ -101,6 +101,7 @@ export function inferDocumentRole(candidate: ShadowEvidenceCandidate): PolicyDoc
 
 export function inferPageType(candidate: ShadowEvidenceCandidate, documentRole: PolicyDocumentRole): PolicyPageType {
   if (candidate.source === 'validated_knowledge') return 'unknown';
+  if (documentRole === 'parts_catalog') return 'parts_list';
   const headingSource = `${candidate.title ?? ''}\n${(candidate.contentPreview ?? '').slice(0, 240)}`;
   const proceduralRole = documentRole === 'workshop_manual' || documentRole === 'maintenance_manual';
 
