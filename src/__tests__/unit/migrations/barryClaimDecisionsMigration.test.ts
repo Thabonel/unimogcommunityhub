@@ -26,9 +26,9 @@ describe('Barry Phase 4 claim decisions migration', () => {
     expect(migration).toContain("'procedure_step', 'diagnostic_cause', 'diagnostic_test', 'specification'");
   });
 
-  it('stores only redacted claim text', () => {
-    expect(migration).toContain('claim_text_redacted text NOT NULL');
-    expect(migration).not.toContain('claim_text text');
+  it('stores full claim text for debugging', () => {
+    expect(migration).toContain('claim_text text NOT NULL');
+    expect(migration).not.toContain('claim_text_redacted');
   });
 
   it('contains no destructive statements', () => {

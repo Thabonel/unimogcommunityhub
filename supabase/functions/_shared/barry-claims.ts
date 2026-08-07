@@ -147,15 +147,6 @@ export function extractTechnicalClaims(
   return claims;
 }
 
-const REDACTED_VALUE = '<value>';
-
-export function redactClaimText(text: string): string {
-  return text
-    .replace(MERCEDES_PART_NUMBER, REDACTED_VALUE)
-    .replace(/\d+(?:[.,]\d+)?\s*(?:litres?|liters?|ltr|l|nm|n[·.\s]?m|bar|psi|kpa|kg|mm)\b/gi, REDACTED_VALUE)
-    .slice(0, 160);
-}
-
 export function summarizeLedger(ledger: GroundingLedger): Record<string, unknown> {
   const byClass: Record<string, number> = {};
   for (const claim of ledger.claims) {

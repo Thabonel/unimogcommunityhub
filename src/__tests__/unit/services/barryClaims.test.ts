@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   BARRY_CLAIM_PIPELINE_VERSION,
   extractTechnicalClaims,
-  redactClaimText,
   summarizeLedger,
   type GroundingLedger,
 } from '../../../../supabase/functions/_shared/barry-claims';
@@ -67,15 +66,6 @@ describe('extractTechnicalClaims', () => {
     const claims = extractTechnicalClaims(draft);
     expect(claims).toHaveLength(1);
     expect(claims[0].lineIndex).toBe(0);
-  });
-});
-
-describe('redactClaimText', () => {
-  it('replaces numeric values and part numbers', () => {
-    const redacted = redactClaimText('Tighten to 64 Nm using kit 000 586 12 34.');
-    expect(redacted).not.toContain('64');
-    expect(redacted).not.toContain('000 586 12 34');
-    expect(redacted).toContain('<value>');
   });
 });
 

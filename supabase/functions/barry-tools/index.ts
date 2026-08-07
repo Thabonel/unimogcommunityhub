@@ -14,7 +14,6 @@ import {
   type ShadowEvidenceCandidate,
 } from '../_shared/barry-retrieval-planner.ts';
 import {
-  redactClaimText,
   summarizeLedger,
 } from '../_shared/barry-claims.ts';
 import {
@@ -1398,7 +1397,7 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
             return {
               grounding_run_request_id: semanticFrame.queryId,
               claim_class: claim?.claimClass ?? 'general_description',
-              claim_text_redacted: claim ? redactClaimText(claim.text) : '',
+              claim_text: claim?.text ?? '',
               status: decision.status,
               reason_code: decision.reasonCode,
               confidence: decision.confidence,

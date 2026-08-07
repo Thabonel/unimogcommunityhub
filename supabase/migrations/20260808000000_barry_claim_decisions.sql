@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS public.barry_claim_decisions (
     'fluid', 'capacity', 'torque', 'part_number', 'compatibility',
     'component_identity', 'safety_warning', 'general_description'
   )),
-  claim_text_redacted text NOT NULL,
+  claim_text text NOT NULL,
   status text NOT NULL CHECK (status IN ('supported', 'narrowed', 'unsupported', 'conflicted')),
   reason_code text NOT NULL,
   confidence numeric NOT NULL DEFAULT 0,

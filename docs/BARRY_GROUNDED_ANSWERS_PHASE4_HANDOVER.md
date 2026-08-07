@@ -18,7 +18,7 @@
 - Deterministic line-level claim extraction: numbered procedure steps, numeric values with units (torque/capacity/specification by unit), Mercedes-style and coded part numbers, fluid terms, safety language, compatibility statements, model mentions.
 - Claim-to-concept linkage through the existing `matchSemanticConcepts`.
 - Safety-critical classification per PRD governance levels.
-- `redactClaimText` (values and part numbers replaced with `<value>`) and `summarizeLedger` (count-only, no claim text) for telemetry.
+- `summarizeLedger` (count-only, no claim text) for telemetry.
 
 ### Validation pipeline
 
@@ -45,7 +45,7 @@
 
 `supabase/migrations/20260808000000_barry_claim_decisions.sql`
 
-- `barry_claim_decisions`: redacted claim text, class, status, reason code, confidence, evidence keys, pipeline version, request link.
+- `barry_claim_decisions`: full claim text, class, status, reason code, confidence, evidence keys, pipeline version, request link. Owner decision 2026-08-07: privacy redaction is unnecessary for this technical corpus; full text is kept so grounding failures are debuggable.
 - RLS enabled; service-role write; admin read; authenticated users hold no write grant.
 - Validated on an isolated local PostgreSQL scratch database with stubbed Supabase objects: first and second apply succeeded (idempotent), the exact runtime row shape inserts, and an invalid `status` is rejected by the check constraint. Scratch database destroyed. Not applied to any Supabase project.
 
@@ -74,7 +74,7 @@
 2. **AI slop:** no placeholders, invented facts, or unused exports; an unused helper was removed during review.
 3. **Minimalism:** no retrieval, PDF, or rollout-phase behavior introduced; one env flag is the only new runtime surface.
 4. **Robustness:** invalid model JSON, thrown model errors, missing model, over-cap claims, and out-of-set evidence keys all resolve to safe outcomes; migration is idempotent.
-5. **Security:** RLS and grants mirror Phase 1; telemetry and audit rows contain no raw question, claim values, or part numbers; no secrets in task files.
+5. **Security:** RLS and grants mirror Phase 1; request-level telemetry still contains no raw question; claim audit rows store full claim text by owner decision; no secrets in task files.
 
 ## Not implemented (later phases)
 
@@ -89,6 +89,6 @@
 1. Apply `supabase/migrations/20260808000000_barry_claim_decisions.sql` in the SQL editor.
 2. Set `BARRY_CLAIM_GROUNDING=true` on the `barry-tools` function and redeploy.
 3. Smoke tests:
-   - `my steeringbox is leaking, what do I do` — answer must not invent fluid, capacity, or procedure; one `barry_grounding_runs` row with a `claim_grounding` summary; claim rows in `barry_claim_decisions` contain no values or part numbers.
+   - `my steeringbox is leaking, what do I do` — answer must not invent fluid, capacity, or procedure; one `barry_grounding_runs` row with a `claim_grounding` summary; claim rows in `barry_claim_decisions` store full claim text for debugging.
    - `what oil and how much goes in the steering system` — configuration-conditional fluids only if supported; otherwise a named evidence gap.
    - Disable the DeepSeek key temporarily — response must be the fail-closed message, never an unverified draft.
