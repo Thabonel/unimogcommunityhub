@@ -200,7 +200,7 @@ function adaptTextualRow(
   const diagramOnly = page.pageType === 'diagram' || page.pageType === 'parts_list';
 
   for (const match of matches) {
-    let role: AnnotationRole = match.primary && (match.concept.conceptType === 'component' || match.concept.conceptType === 'part')
+    const role: AnnotationRole = match.primary && (match.concept.conceptType === 'component' || match.concept.conceptType === 'part')
       ? 'primary_subject'
       : ROLE_BY_CONCEPT_TYPE[match.concept.conceptType] ?? 'mentioned_component';
 

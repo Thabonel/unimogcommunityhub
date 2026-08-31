@@ -113,7 +113,11 @@ export class SupabaseSourceReader {
         .map((registration) => [registration.sourceRecordId as string, registration.documentKey]),
     );
 
-    const applyPageFilter = <T extends { gte: Function; lte: Function }>(query: T): T => {
+    type PageFilterQuery<T> = {
+      gte: (column: string, value: number) => T;
+      lte: (column: string, value: number) => T;
+    };
+    const applyPageFilter = <T extends PageFilterQuery<T>>(query: T): T => {
       if (filters.pageStart == null) return query;
       return query.gte('page_number', filters.pageStart).lte('page_number', filters.pageEnd ?? filters.pageStart) as T;
     };

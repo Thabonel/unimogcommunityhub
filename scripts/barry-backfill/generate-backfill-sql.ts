@@ -206,7 +206,7 @@ ON CONFLICT (dedupe_key) DO UPDATE SET proposed_payload = EXCLUDED.proposed_payl
   sql.push('');
   writeFileSync(OUT, sql.join('\n') + '\n');
 
-  console.log(JSON.stringify({
+  console.info(JSON.stringify({
     out: OUT,
     runKey: RUN_KEY,
     documents: documents.length,

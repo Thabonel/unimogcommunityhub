@@ -751,7 +751,7 @@ async function toolSearchRPS(input: Record<string, unknown>, db: ReturnType<type
 
 // Strip PostgREST filter syntax chars that would break or() string parsing
 function sanitiseFilterValue(v: string): string {
-  return v.replace(/[,%()\[\]]/g, ' ').trim().slice(0, 100);
+  return v.replace(/[,%()[\]]/g, ' ').trim().slice(0, 100);
 }
 
 async function toolFindNearbyServices(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {

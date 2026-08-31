@@ -157,7 +157,7 @@ async function rederiveFromRaw(outDir: string): Promise<void> {
     writeFileSync(join(markdownDir, file.replace(/\.txt$/, '.md')), markdown + '\n');
     rewritten += 1;
   }
-  console.log(JSON.stringify({ rederived: rewritten, outDir }));
+  console.info(JSON.stringify({ rederived: rewritten, outDir }));
 }
 
 async function run(): Promise<void> {
@@ -191,7 +191,7 @@ async function run(): Promise<void> {
       const elapsedMin = (Date.now() - startedAt) / 60000;
       const rate = processed / elapsedMin;
       const remaining = (options.pageEnd - options.pageStart + 1) - processed - skipped;
-      console.log(`[${page}/${options.pageEnd}] ok | ${processed} done, ${skipped} resumed, ~${Math.round(remaining / rate)} min left`);
+      console.info(`[${page}/${options.pageEnd}] ok | ${processed} done, ${skipped} resumed, ~${Math.round(remaining / rate)} min left`);
     } catch (error) {
       failures.push(page);
       console.error(`[${page}/${options.pageEnd}] FAILED: ${(error as Error).message.slice(0, 160)}`);
@@ -204,7 +204,7 @@ async function run(): Promise<void> {
     failures,
     finished_at: new Date().toISOString(),
   }, null, 2));
-  console.log(JSON.stringify({ processed, skipped, failures: failures.length, outDir: options.outDir }));
+  console.info(JSON.stringify({ processed, skipped, failures: failures.length, outDir: options.outDir }));
 }
 
 const isMainModule = process.argv[1]?.endsWith('reprocess-manual.ts');

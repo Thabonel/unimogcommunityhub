@@ -350,13 +350,13 @@ async function run(): Promise<void> {
 
     if (options.rollback) {
       const result = await new SupabaseRestStore(supabase, versionId).rollbackRun(options.rollback);
-      console.log(JSON.stringify(result, null, 2));
+      console.info(JSON.stringify(result, null, 2));
       return;
     }
 
     if (options.coverage) {
       const { rows, bands, totalUnits } = await loadCoverageViaRest(supabase, versionId);
-      console.log(JSON.stringify(buildCoverageReport(rows, bands, totalUnits), null, 2));
+      console.info(JSON.stringify(buildCoverageReport(rows, bands, totalUnits), null, 2));
       return;
     }
 
@@ -384,7 +384,7 @@ async function run(): Promise<void> {
     if (options.rollback) {
       const store: BackfillStore = new PgBackfillStore(client, versionId);
       const result = await store.rollbackRun(options.rollback);
-      console.log(JSON.stringify(result, null, 2));
+      console.info(JSON.stringify(result, null, 2));
       return;
     }
 
@@ -393,7 +393,7 @@ async function run(): Promise<void> {
       const bands = (await client.query(CONFIDENCE_BAND_QUERY, [versionId])).rows as CoverageBucket[];
       const totalUnits = Number((await client.query(TOTAL_UNITS_QUERY, [versionId])).rows[0]?.total_units ?? 0);
       const report = buildCoverageReport(coverageRows, bands, totalUnits);
-      console.log(JSON.stringify(report, null, 2));
+      console.info(JSON.stringify(report, null, 2));
       return;
     }
 
@@ -481,7 +481,7 @@ async function executeBackfill(
   };
   const auditOut = options.auditOut ?? `/tmp/barry-evidence-backfill-${options.runKey}.json`;
   writeFileSync(auditOut, JSON.stringify(audit, null, 2));
-  console.log(JSON.stringify({ ...stats, mode, auditOut, totalRowsInScope: rows.length }, null, 2));
+  console.info(JSON.stringify({ ...stats, mode, auditOut, totalRowsInScope: rows.length }, null, 2));
 }
 
 run().catch((error) => {

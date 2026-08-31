@@ -145,6 +145,13 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
 
     try {
       const file = uploadedFiles[0];
+      const supportedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!supportedImageTypes.includes(file.type)) {
+        throw new Error('Please upload a JPEG, PNG, WebP, or GIF image');
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('Receipt image must be 10MB or smaller');
+      }
 
       // Step 1: Convert file to base64
       setProcessingStatus({
@@ -167,7 +174,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
       setProcessingStatus({
         step: 'ocr',
         progress: 30,
-        message: 'Analyzing receipt with Claude Vision...'
+        message: 'Analyzing receipt with AI vision...'
       });
 
       const { data: ocrData, error: ocrError } = await supabase.functions.invoke('process-invoice-ocr', {
@@ -388,7 +395,7 @@ export const FuelReceiptUploadModal: React.FC<FuelReceiptUploadModalProps> = ({
 
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• Uploading image to secure storage</p>
-        <p>• Analyzing with Claude Vision OCR</p>
+        <p>• Analyzing with AI vision OCR</p>
         <p>• Extracting fuel station and volume data</p>
         <p>• Validating dual tank breakdown</p>
       </div>

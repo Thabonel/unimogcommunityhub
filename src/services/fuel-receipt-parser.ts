@@ -33,6 +33,34 @@ export interface FuelReceiptData {
   currency: string;
 }
 
+interface ProviderFuelEntry {
+  fuel_type?: string;
+  volume_liters?: number | string;
+  price_per_liter?: number | string;
+  total_amount?: number | string;
+  tank_number?: number | null;
+}
+
+interface ProviderFuelData {
+  receipt_type?: FuelReceiptData['receiptType'];
+  station_name?: string;
+  date?: string;
+  time?: string;
+  fuel_entries?: ProviderFuelEntry[];
+  combined_totals?: {
+    total_volume_liters?: number | string;
+    total_amount?: number | string;
+    blended_price_per_liter?: number | string;
+  };
+  odometer_reading?: number;
+  confidence?: number;
+}
+
+function numericValue(value: unknown): number {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 /**
  * Service for parsing Claude Vision OCR results and converting to fuel log data
  */
@@ -42,28 +70,28 @@ export class FuelReceiptParser {
    */
   static parseClaudeVisionResult(
     extractedData: ExtractedData,
-    metadata: Record<string, any>
+    metadata: Record<string, unknown>
   ): FuelReceiptData {
-    const fuelData = metadata.fuel_data;
+    const fuelData = metadata.fuel_data as ProviderFuelData | undefined;
 
-    if (!fuelData) {
+    if (!fuelData || typeof fuelData !== 'object') {
       throw new Error('No fuel data found in Claude Vision metadata');
     }
 
     // Parse dual tank entries
-    const dualTankEntries: DualTankEntry[] = (fuelData.fuel_entries || []).map((entry: any) => ({
+    const dualTankEntries: DualTankEntry[] = (fuelData.fuel_entries || []).map((entry) => ({
       fuelType: entry.fuel_type || 'Unknown',
-      volumeLiters: parseFloat(entry.volume_liters) || 0,
-      pricePerLiter: parseFloat(entry.price_per_liter) || 0,
-      totalAmount: parseFloat(entry.total_amount) || 0,
+      volumeLiters: numericValue(entry.volume_liters),
+      pricePerLiter: numericValue(entry.price_per_liter),
+      totalAmount: numericValue(entry.total_amount),
       tankNumber: entry.tank_number || null
     }));
 
     // Combine tank data if not already provided
     const combinedTotals: CombinedTotals = fuelData.combined_totals ? {
-      totalVolume: parseFloat(fuelData.combined_totals.total_volume_liters) || 0,
-      totalAmount: parseFloat(fuelData.combined_totals.total_amount) || 0,
-      blendedPrice: parseFloat(fuelData.combined_totals.blended_price_per_liter) || 0
+      totalVolume: numericValue(fuelData.combined_totals.total_volume_liters),
+      totalAmount: numericValue(fuelData.combined_totals.total_amount),
+      blendedPrice: numericValue(fuelData.combined_totals.blended_price_per_liter)
     } : this.combineTankData(dualTankEntries);
 
     // Detect currency from various sources
@@ -171,7 +199,7 @@ export class FuelReceiptParser {
 
     lines.push('');
     lines.push(`Confidence: ${fuelReceiptData.confidence}%`);
-    lines.push('Auto-processed by Claude Vision OCR');
+    lines.push('Auto-processed by AI vision OCR');
 
     return lines.join('\n');
   }
@@ -179,7 +207,7 @@ export class FuelReceiptParser {
   /**
    * Determine if manual review is required based on confidence and data quality
    */
-  static shouldRequireReview(fuelData: any): boolean {
+  static shouldRequireReview(fuelData: ProviderFuelData): boolean {
     // Low confidence threshold
     if ((fuelData.confidence || 0) < 70) {
       return true;
@@ -192,13 +220,13 @@ export class FuelReceiptParser {
 
     // Validation: Check if individual entries sum to combined totals
     const entries = fuelData.fuel_entries || [];
-    const calculatedVolume = entries.reduce((sum: number, entry: any) =>
-      sum + (parseFloat(entry.volume_liters) || 0), 0);
-    const calculatedAmount = entries.reduce((sum: number, entry: any) =>
-      sum + (parseFloat(entry.total_amount) || 0), 0);
+    const calculatedVolume = entries.reduce((sum, entry) =>
+      sum + numericValue(entry.volume_liters), 0);
+    const calculatedAmount = entries.reduce((sum, entry) =>
+      sum + numericValue(entry.total_amount), 0);
 
-    const declaredVolume = parseFloat(fuelData.combined_totals.total_volume_liters) || 0;
-    const declaredAmount = parseFloat(fuelData.combined_totals.total_amount) || 0;
+    const declaredVolume = numericValue(fuelData.combined_totals.total_volume_liters);
+    const declaredAmount = numericValue(fuelData.combined_totals.total_amount);
 
     // Allow 1% tolerance for rounding, but avoid division by zero
     if (declaredVolume > 0) {
@@ -217,9 +245,9 @@ export class FuelReceiptParser {
 
     // Check for suspicious prices (too high or too low) and internal consistency
     for (const entry of entries) {
-      const price = parseFloat(entry.price_per_liter) || 0;
-      const volume = parseFloat(entry.volume_liters) || 0;
-      const amount = parseFloat(entry.total_amount) || 0;
+      const price = numericValue(entry.price_per_liter);
+      const volume = numericValue(entry.volume_liters);
+      const amount = numericValue(entry.total_amount);
 
       if (price < 0.5 || price > 10.0) {
         return true; // Suspicious fuel price
@@ -300,15 +328,17 @@ export class FuelReceiptParser {
   /**
    * Validate fuel receipt data structure
    */
-  static validateFuelReceiptData(data: any): boolean {
+  static validateFuelReceiptData(data: unknown): boolean {
     if (!data || typeof data !== 'object') return false;
 
-    if (!data.fuel_entries || !Array.isArray(data.fuel_entries)) return false;
+    const fuelData = data as ProviderFuelData;
 
-    if (data.fuel_entries.length === 0) return false;
+    if (!fuelData.fuel_entries || !Array.isArray(fuelData.fuel_entries)) return false;
+
+    if (fuelData.fuel_entries.length === 0) return false;
 
     // Validate each entry has required fields
-    for (const entry of data.fuel_entries) {
+    for (const entry of fuelData.fuel_entries) {
       if (!entry.volume_liters || !entry.price_per_liter || !entry.total_amount) {
         return false;
       }
@@ -320,11 +350,11 @@ export class FuelReceiptParser {
   /**
    * Calculate expected total from individual entries (for validation)
    */
-  static calculateExpectedTotals(entries: any[]): CombinedTotals {
+  static calculateExpectedTotals(entries: ProviderFuelEntry[]): CombinedTotals {
     const totalVolume = entries.reduce((sum, entry) =>
-      sum + (parseFloat(entry.volume_liters) || 0), 0);
+      sum + numericValue(entry.volume_liters), 0);
     const totalAmount = entries.reduce((sum, entry) =>
-      sum + (parseFloat(entry.total_amount) || 0), 0);
+      sum + numericValue(entry.total_amount), 0);
 
     return {
       totalVolume: Math.round(totalVolume * 100) / 100,
