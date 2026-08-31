@@ -6,14 +6,16 @@ import { PdfSearchBar } from './pdf-viewer/PdfSearchBar';
 import { usePdfViewerState } from './pdf-viewer/usePdfViewerState';
 import { usePdfLoader } from './pdf-viewer/usePdfLoader';
 import { toast } from '@/hooks/use-toast';
+import { clampPdfPage } from './pdf-viewer/pdfPage';
 
 interface SimplePDFViewerProps {
   url: string;
   onClose: () => void;
   embedded?: boolean; // If true, renders inline without modal overlay
+  initialPage?: number;
 }
 
-export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFViewerProps) {
+export function SimplePDFViewer({ url, onClose, embedded = false, initialPage = 1 }: SimplePDFViewerProps) {
   const [scrollPosition, setScrollPosition] = React.useState(0);
 
   // Use our custom hooks for state management and PDF loading
@@ -38,6 +40,7 @@ export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFVie
   // Load PDF when component mounts or URL changes
   usePdfLoader({
     url,
+    initialPage,
     setPdfDoc,
     setNumPages,
     setCurrentPage,
@@ -73,7 +76,7 @@ export function SimplePDFViewer({ url, onClose, embedded = false }: SimplePDFVie
   // Explicitly handle page changes
   const handlePageChange = (page: number) => {
     // Ensure page is within valid bounds
-    const validPage = Math.max(1, Math.min(page, numPages || 1));
+    const validPage = clampPdfPage(page, numPages);
     console.log(`Changing to page ${validPage} of ${numPages} (requested: ${page})`);
 
     if (validPage !== currentPage) {

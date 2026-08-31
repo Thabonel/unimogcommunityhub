@@ -2,9 +2,11 @@
 import { useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { PDFDocumentProxy } from 'pdfjs-dist/types/src/display/api';
+import { clampPdfPage } from './pdfPage';
 
 interface UsePdfLoaderProps {
   url: string;
+  initialPage?: number;
   setPdfDoc: (doc: PDFDocumentProxy | null) => void;
   setNumPages: (pages: number) => void;
   setCurrentPage: (page: number) => void;
@@ -14,6 +16,7 @@ interface UsePdfLoaderProps {
 
 export const usePdfLoader = ({
   url,
+  initialPage = 1,
   setPdfDoc,
   setNumPages,
   setCurrentPage,
@@ -121,7 +124,7 @@ export const usePdfLoader = ({
         
         setPdfDoc(pdf);
         setNumPages(pdf.numPages);
-        setCurrentPage(1);
+        setCurrentPage(clampPdfPage(initialPage, pdf.numPages));
         
       } catch (error: unknown) {
         console.error(`❌ PDF loading error (attempt ${attempt}):`, error);
@@ -187,5 +190,5 @@ export const usePdfLoader = ({
       // Cleanup function will run when component unmounts or URL changes
       setPdfDoc(null);
     };
-  }, [url, setPdfDoc, setNumPages, setCurrentPage, setIsLoading, setError]);
+  }, [url, initialPage, setPdfDoc, setNumPages, setCurrentPage, setIsLoading, setError]);
 };

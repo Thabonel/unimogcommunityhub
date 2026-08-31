@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { SimplePDFViewer } from '@/components/knowledge/SimplePDFViewer';
 import { ManualHeader } from '@/components/knowledge/ManualHeader';
@@ -14,13 +15,27 @@ import { useStorageInitialization } from '@/components/knowledge/useStorageIniti
 import { ErrorBoundary } from '@/components/error-boundary';
 import { supabase } from '@/lib/supabase-client';
 import { checkIsAdmin } from '@/utils/adminUtils';
+import { ManualLibrarySearch } from '@/components/knowledge/ManualLibrarySearch';
+import {
+  getManualSearchResultByChunkId,
+  type ManualLibrarySearchResult,
+} from '@/services/manuals/manualSearchService';
+
+interface ManualPageUser {
+  name: string;
+  avatarUrl: string;
+  unimogModel: string;
+}
 
 const KnowledgeManuals = () => {
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('approved');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<ManualPageUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [viewerInitialPage, setViewerInitialPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handledChunkRef = useRef<string | null>(null);
 
   // Storage initialization
   const {
@@ -58,8 +73,7 @@ const KnowledgeManuals = () => {
           setUser({
             name: authUser.email?.split('@')[0] || 'User',
             avatarUrl: '/lovable-uploads/56c274f5-535d-42c0-98b7-fc29272c4faa.png',
-            unimogModel: 'U1700L',
-            email: authUser.email
+            unimogModel: 'U1700L'
           });
           
           // Check if user is admin
@@ -85,6 +99,45 @@ const KnowledgeManuals = () => {
     });
     fetchManuals(); // Refresh the list after submission
   };
+
+  const openManual = useCallback((fileName: string, pageNumber = 1) => {
+    setViewerInitialPage(pageNumber);
+    handleViewPdf(fileName);
+  }, [handleViewPdf]);
+
+  const handleOpenSearchResult = (result: ManualLibrarySearchResult) => {
+    handledChunkRef.current = result.chunkId ?? null;
+    if (result.chunkId) {
+      setSearchParams({ chunk: result.chunkId });
+    } else {
+      setSearchParams({});
+    }
+    openManual(result.fileName, result.pageNumber);
+  };
+
+  useEffect(() => {
+    const chunkId = searchParams.get('chunk');
+    if (!chunkId || isLoading || approvedManuals.length === 0 || handledChunkRef.current === chunkId) return;
+
+    let cancelled = false;
+    handledChunkRef.current = chunkId;
+    getManualSearchResultByChunkId(chunkId, approvedManuals).then((result) => {
+      if (cancelled) return;
+      if (result) {
+        openManual(result.fileName, result.pageNumber);
+      } else {
+        toast({
+          title: 'Manual result unavailable',
+          description: 'The linked PDF page could not be found or is not available to your account.',
+          variant: 'destructive',
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [approvedManuals, isLoading, openManual, searchParams]);
   
   if (checkingAuth) {
     return (
@@ -127,6 +180,15 @@ const KnowledgeManuals = () => {
           verificationResult={verificationResult}
           onRetry={checkAndInitializeBuckets}
         />
+
+        {(!isAdmin || activeTab === 'approved') && (
+          <div className="mb-4">
+            <ManualLibrarySearch
+              manuals={approvedManuals}
+              onOpenResult={handleOpenSearchResult}
+            />
+          </div>
+        )}
         
         <ErrorBoundary>
           {isAdmin ? (
@@ -136,7 +198,7 @@ const KnowledgeManuals = () => {
               isLoading={isLoading || isVerifying}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              onView={handleViewPdf}
+              onView={(fileName) => openManual(fileName)}
               onDelete={(manual) => {
                 setManualToDelete(manual);
                 setDeleteDialogOpen(true);
@@ -150,7 +212,7 @@ const KnowledgeManuals = () => {
             <UserManualView
               approvedManuals={approvedManuals}
               isLoading={isLoading || isVerifying}
-              onView={handleViewPdf}
+              onView={(fileName) => openManual(fileName)}
               onSubmit={() => setSubmissionDialogOpen(true)}
               error={error}
             />
@@ -159,7 +221,16 @@ const KnowledgeManuals = () => {
         
         {/* PDF Viewer Component */}
         {viewingPdf && (
-          <SimplePDFViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />
+          <SimplePDFViewer
+            url={viewingPdf}
+            initialPage={viewerInitialPage}
+            onClose={() => {
+              setViewingPdf(null);
+              setViewerInitialPage(1);
+              handledChunkRef.current = null;
+              setSearchParams({});
+            }}
+          />
         )}
       </div>
 

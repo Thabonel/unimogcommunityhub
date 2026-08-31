@@ -98,7 +98,7 @@ export function useManuals() {
     }
   };
 
-  const handleViewPdf = async (fileName: string) => {
+  const handleViewPdf = useCallback(async (fileName: string) => {
     try {
       // Use simple public URL - no complex fallbacks needed
       const url = getManualPublicUrl(fileName);
@@ -112,7 +112,7 @@ export function useManuals() {
         variant: 'destructive',
       });
     }
-  };
+  }, []);
 
   const handleDownload = async (fileName: string, title: string) => {
     try {
