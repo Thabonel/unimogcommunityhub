@@ -5,6 +5,25 @@ export interface BarryToolsRequest {
   messages: BarryOpenClawMessage[];
   location?: { latitude: number; longitude: number };
   conversationId?: string;
+  context?: BarryToolsContext;
+}
+
+export interface BarryToolsContext {
+  vehicle?: {
+    model?: string;
+    year?: number;
+    name?: string;
+    modifications?: string;
+    location?: string;
+  };
+  page?: {
+    name?: string;
+    title?: string;
+    listingTitle?: string;
+    listingCategory?: string;
+    listingCondition?: string;
+    upcomingEventCount?: number;
+  };
 }
 
 type BarryToolsManualReference = {
@@ -21,6 +40,11 @@ type BarryToolsResponse = {
   searchResultCount?: number;
   skill_chain?: string[];
   execution_time_ms?: number;
+  grounding_mode?: string;
+  grounding_required?: boolean;
+  grounding_reason?: string | null;
+  pipeline_version?: string | null;
+  semantic_version?: string;
 };
 
 function normaliseManualReferences(rawRefs: BarryToolsManualReference[] | undefined): ManualReference[] {
@@ -58,6 +82,20 @@ export function normaliseBarryToolsResponse(data: BarryToolsResponse): BarryOpen
     searchResultCount: data.searchResultCount ?? 0,
     skill_chain: data.skill_chain ?? [],
     execution_time_ms: data.execution_time_ms,
+    grounding_mode: data.grounding_mode,
+    grounding_required: data.grounding_required,
+    grounding_reason: data.grounding_reason,
+    pipeline_version: data.pipeline_version,
+    semantic_version: data.semantic_version,
+  };
+}
+
+export function buildBarryToolsPayload(request: BarryToolsRequest) {
+  return {
+    messages: request.messages,
+    userLocation: request.location,
+    conversationId: request.conversationId,
+    context: request.context,
   };
 }
 
@@ -67,11 +105,7 @@ export function normaliseBarryToolsResponse(data: BarryToolsResponse): BarryOpen
  */
 export async function callBarryTools(request: BarryToolsRequest): Promise<BarryOpenClawResponse> {
   const { data, error } = await supabase.functions.invoke('barry-tools', {
-    body: {
-      messages: request.messages,
-      userLocation: request.location,
-      conversationId: request.conversationId,
-    },
+    body: buildBarryToolsPayload(request),
   });
 
   if (error) throw new Error(error.message || 'Barry Tools unavailable');

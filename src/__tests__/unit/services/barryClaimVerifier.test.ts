@@ -56,12 +56,27 @@ function frameFor(query: string) {
 }
 
 describe('buildEvidenceUnits', () => {
-  it('classifies document roles and page types for evidence', () => {
+  it('classifies relevant document roles and excludes role-violating evidence', () => {
     const units = buildEvidenceUnits(frameFor('steering torque specs'), [SPEC_PAGE, DIAGRAM_PAGE, RPS_PAGE]);
     const byId = new Map(units.map((unit) => [unit.evidenceKey, unit]));
     expect(byId.get('spec-928')?.documentRole).toBe('workshop_manual');
     expect(byId.get('diagram-934')?.pageType).toBe('diagram');
-    expect(byId.get('rps-pa')?.documentRole).toBe('parts_catalog');
+    expect(byId.has('rps-pa')).toBe(false);
+  });
+
+  it('rejects structured results that have no semantic relationship to the question', () => {
+    const unrelated = candidate({
+      candidateId: 'unrelated-header-tank',
+      source: 'structured_manual_search',
+      manualTitle: 'U1700L U435 Workshop Manual',
+      title: 'Header tank, bracket, lines and fittings',
+      pageNumber: 135,
+      storageUrl: 'https://example.invalid/manual.pdf#page=135',
+      contentPreview: 'Header tank, bracket, lines and fittings.',
+    });
+
+    expect(buildEvidenceUnits(frameFor('what is the u1700 tray lenth?'), [unrelated]))
+      .toHaveLength(0);
   });
 });
 
@@ -248,13 +263,30 @@ describe('groundTechnicalAnswer model stage', () => {
 });
 
 describe('groundTechnicalAnswer reconstruction', () => {
-  it('passes through a draft with no technical claims unchanged', async () => {
+  it('removes an unsupported technical description even without an exact value', async () => {
     const draft = 'The steering box sits between the column and the linkage.';
     const result = await groundTechnicalAnswer({
       requestId: 'r12',
       query: 'where is the steering box',
       draft,
       frame: frameFor('where is the steering box'),
+      candidates: [],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.answer).not.toContain(draft);
+    expect(result.answer).toContain('no verified technical description');
+    expect(result.ledger.claims).toHaveLength(1);
+    expect(result.citedUnits).toHaveLength(0);
+  });
+
+  it('does not treat an explicit evidence gap as a claim requiring support', async () => {
+    const draft = 'The available documentation has no verified tray length for this question.';
+    const result = await groundTechnicalAnswer({
+      requestId: 'r12-gap',
+      query: 'what is the tray length',
+      draft,
+      frame: frameFor('what is the tray length'),
       candidates: [],
     });
     expect(result.ok).toBe(true);

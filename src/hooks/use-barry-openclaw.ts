@@ -12,7 +12,7 @@ import {
   HybridResponse,
   BarryOpenClawMessage
 } from '@/services/openclaw';
-import { callBarryTools } from '@/services/openclaw/barryToolsService';
+import { callBarryTools, type BarryToolsContext } from '@/services/openclaw/barryToolsService';
 
 const BARRY_TOOLS_DISABLED = import.meta.env.VITE_BARRY_TOOLS_DISABLED === 'true';
 
@@ -222,7 +222,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
   const [conversations, setConversations] = useState<BarryOpenClawConversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [lastResponse, setLastResponse] = useState<HybridResponse | null>(null);
-  const [vehicleContext, setVehicleContext] = useState<string | null>(null);
+  const [vehicleContext, setVehicleContext] = useState<BarryToolsContext['vehicle']>();
   const { user } = useAuth();
   const { pageContext } = useBarry();
 
@@ -262,13 +262,13 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
 
         if (vehicles && vehicles.length > 0) {
           const v = vehicles[0];
-          let ctx = `User's Unimog: ${v.model || 'Unknown'}`;
-          if (v.year) ctx += ` (${v.year})`;
-          if (v.name) ctx += ` - "${v.name}"`;
-          if (v.current_odometer) ctx += `. Odometer: ${v.current_odometer} ${v.odometer_unit || 'km'}`;
-          if (v.modifications) ctx += `. Modifications: ${v.modifications}`;
-          if (v.country) ctx += `. Location: ${v.city ? v.city + ', ' : ''}${v.country}`;
-          setVehicleContext(ctx);
+          setVehicleContext({
+            model: v.model || undefined,
+            year: v.year || undefined,
+            name: v.name || undefined,
+            modifications: v.modifications || undefined,
+            location: v.country ? `${v.city ? `${v.city}, ` : ''}${v.country}` : undefined,
+          });
         } else {
           // Fallback to profile
           const { data: profile } = await supabase
@@ -277,7 +277,7 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
             .eq('id', user.id)
             .single();
           if (profile?.unimog_model) {
-            setVehicleContext(`User's Unimog: ${profile.unimog_model}`);
+            setVehicleContext({ model: profile.unimog_model });
           }
         }
       } catch (err) {
@@ -434,37 +434,26 @@ export function useBarryOpenClaw(options: UseBarryOpenClawOptions = {}) {
         content: m.content
       }));
 
-      // Add vehicle and page context to the user message
-      let userMessageContent = message.trim();
-      let contextPrefix = '';
-
-      // Vehicle context (always present if user has a vehicle)
-      if (vehicleContext) {
-        contextPrefix += `[${vehicleContext}] `;
-      }
-
-      // Page context (from Phase 2)
-      if (pageContext) {
-        let pagePrefix = `[Context: User is on ${pageContext.pageName} page`;
-        if (pageContext.pageTitle) pagePrefix += ` - ${pageContext.pageTitle}`;
-        if (pageContext.relevantData) {
-          const data = pageContext.relevantData;
-          if (data.listingTitle) pagePrefix += `. Viewing listing: "${data.listingTitle}" - ${data.price} (${data.category}, ${data.condition})`;
-          if (data.upcomingEventCount) pagePrefix += `. ${data.upcomingEventCount} upcoming events`;
-        }
-        pagePrefix += `] `;
-        contextPrefix += pagePrefix;
-      }
-
-      // Final message: contextPrefix + actual user message
-      if (contextPrefix) {
-        userMessageContent = contextPrefix + userMessageContent;
-      }
-
-      const allMessages = [...apiMessages, { role: 'user' as const, content: userMessageContent }];
+      const allMessages = [...apiMessages, { role: 'user' as const, content: message.trim() }];
+      const requestContext: BarryToolsContext = {
+        vehicle: vehicleContext,
+        page: pageContext ? {
+          name: pageContext.pageName,
+          title: pageContext.pageTitle,
+          listingTitle: pageContext.relevantData?.listingTitle,
+          listingCategory: pageContext.relevantData?.category,
+          listingCondition: pageContext.relevantData?.condition,
+          upcomingEventCount: pageContext.relevantData?.upcomingEventCount,
+        } : undefined,
+      };
       const response: HybridResponse = !BARRY_TOOLS_DISABLED
         ? {
-            ...await callBarryTools({ messages: allMessages, location, conversationId: conversationId ?? undefined }),
+            ...await callBarryTools({
+              messages: allMessages,
+              location,
+              conversationId: conversationId ?? undefined,
+              context: requestContext,
+            }),
             usedOpenClaw: true,
             fallbackUsed: false,
           }

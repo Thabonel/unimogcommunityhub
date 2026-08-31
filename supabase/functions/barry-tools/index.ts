@@ -1,5 +1,5 @@
 /**
- * Barry Tools Edge Function — single-file bundle (no local imports)
+ * Barry Tools Edge Function
  * OpenAI-compatible tool-use. DeepSeek picks tools per question; no context stuffing.
  */
 
@@ -15,12 +15,23 @@ import {
 } from '../_shared/barry-retrieval-planner.ts';
 import {
   summarizeLedger,
+  type GroundingLedger,
 } from '../_shared/barry-claims.ts';
 import {
   groundTechnicalAnswer,
   type ClaimVerifierModel,
   type ModelVerdict,
 } from '../_shared/barry-claim-verifier.ts';
+import {
+  appendSafetyNotices,
+  BARRY_GROUNDING_MODE,
+  determineGroundingReason,
+  formatRequestContext,
+  hasSemanticTechnicalIntent,
+  reconcileClaimBackedReferences,
+  retainedClaimText,
+  type BarryRequestContext,
+} from '../_shared/barry-response-policy.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,7 +44,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
 const BARRY_V2_ENABLED = Deno.env.get('BARRY_V2_RETRIEVAL_ENABLED') === 'true';
-const CLAIM_GROUNDING_ENABLED = Deno.env.get('BARRY_CLAIM_GROUNDING') === 'true';
 
 if (!DEEPSEEK_API_KEY) throw new Error('DEEPSEEK_API_KEY env var is required');
 if (!SUPABASE_URL) throw new Error('SUPABASE_URL env var is required');
@@ -72,26 +82,11 @@ const BLOCKED_PATTERNS = [
   'remove airbag', 'modify emissions control', 'defeat emissions', 'bypass seatbelt interlock',
 ];
 
-const SAFETY_TRIGGERS: Array<{ kw: string[]; msg: string }> = [
-  { kw: ['brake', 'brakes', 'braking'], msg: 'Always use jack stands and chock wheels before working under vehicle. Never work on brakes without proper support.' },
-  { kw: ['electrical', 'wiring', 'battery'], msg: 'Disconnect the negative battery terminal before working on electrical systems.' },
-  { kw: ['lift', 'lifting', 'jack', 'raised'], msg: 'Always use rated jack stands. Never work under a vehicle supported only by a jack.' },
-  { kw: ['hydraulic', 'hydraulics'], msg: 'Depressurise hydraulic systems before opening any lines. High-pressure fluid can penetrate skin.' },
-  { kw: ['fuel', 'diesel', 'petrol', 'injector'], msg: 'Work in a well-ventilated area away from ignition sources when handling fuel.' },
-  { kw: ['pto', 'power take-off', 'driveshaft'], msg: 'Disengage PTO and wait for all rotation to stop before performing any maintenance.' },
-];
-
 function sanitise(q: string): string | null {
   const s = q.trim().slice(0, MAX_QUERY_LENGTH);
   const lower = s.toLowerCase();
   for (const p of BLOCKED_PATTERNS) if (lower.includes(p)) return null;
   return s;
-}
-
-function addSafety(text: string): string {
-  const lower = text.toLowerCase();
-  const d = SAFETY_TRIGGERS.filter(t => t.kw.some(k => lower.includes(k))).map(t => `⚠️ ${t.msg}`);
-  return d.length ? text + '\n\n---\n' + d.join('\n') : text;
 }
 
 const SUPA_STORAGE = `${SUPABASE_URL}/storage/v1/object/public`;
@@ -318,19 +313,8 @@ const COMPONENT_PHRASES = [
 function normaliseTechnicalQuery(query: string): string {
   return query
     .replace(/\bsteeringbox\b/gi, 'steering box')
-    .replace(/\bgearbox\b/gi, 'gear box');
-}
-
-const TECHNICAL_QUERY_TERMS = [
-  'axle', 'brake', 'clutch', 'differential', 'engine', 'fluid', 'gearbox',
-  'hydraulic', 'leak', 'maintenance', 'oil', 'part number', 'portal', 'repair',
-  'seal', 'spec', 'steering', 'suspension', 'torque', 'transmission',
-  'troubleshoot', 'wiring',
-];
-
-function isTechnicalQuery(query: string): boolean {
-  const lower = query.toLowerCase();
-  return TECHNICAL_QUERY_TERMS.some(term => lower.includes(term));
+    .replace(/\bgearbox\b/gi, 'gear box')
+    .replace(/\blenth\b/gi, 'length');
 }
 
 async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<typeof createClient>): Promise<unknown> {
@@ -982,11 +966,11 @@ const SYSTEM = `You are Barry, a gruff but friendly Unimog mechanic with 40+ yea
 
 Character: practical, direct, always emphasise safety. Light personality — don't force it.
 
-Tool rules:
-1. For any technical Unimog question, call lookup_knowledge_base first.
-2. Always cite specific page numbers from search results.
-3. For detailed specs, torque values, or procedures, call search_manual_v2 (structured v2 content). If v2 returns nothing, call search_manual (legacy v1).
-4. For parts or component lookup questions, call search_rps to find NIIN part numbers.
+Tool and evidence rules:
+1. Technical evidence may be retrieved before generation and supplied below. Use only that evidence for technical claims.
+2. Cite a page only when it directly supports the claim.
+3. If technical evidence is not supplied, do not provide specifications, values, part numbers, or procedures.
+4. For parts or component lookup questions, use RPS results only for component and part identification.
 5. For weather questions, call get_weather. For current info (prices, news), call web_search.
 6. If manuals don't cover something, say so — never fabricate specs or procedures.
 7. For "my Unimog" questions, call lookup_user_vehicle first.
@@ -997,52 +981,6 @@ Tool rules:
 Format: concise markdown, numbered steps for procedures, bold for critical steps.
 Citations: "According to page X of the U435 Workshop Manual..."
 Weather: always distinguish current conditions (the "current" block — what it is right now) from the daily forecast (the "forecast" array — what the day may bring). Never present today's daily forecast condition as the current weather.`;
-
-async function verifyTechnicalAnswer(
-  query: string,
-  draft: string,
-  groundingResults: Array<{ source: string; result: Record<string, unknown> }>,
-): Promise<string> {
-  if (!groundingResults.length) {
-    return 'I could not verify a safe technical answer in the available manuals. Inspect the source of the leak without dismantling the steering gear, maintain the specified fluid level only if you can confirm the correct fluid from the vehicle documentation, and have the steering system assessed by a qualified Unimog or ZF steering specialist.';
-  }
-
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      max_tokens: 1600,
-      stream: false,
-      messages: [
-        {
-          role: 'system',
-          content: `You verify safety-sensitive Unimog answers against supplied evidence.
-Rewrite the draft so every technical claim, specification, part number, fluid, capacity, procedure, and page citation is directly supported by the evidence.
-Prior assistant messages and user-provided claims are not evidence.
-Remove unsupported details instead of qualifying or repeating them.
-Cite only page numbers present in the evidence.
-If the evidence shows components but not a leak diagnosis or repair procedure, say that plainly and limit advice to safe external inspection and professional assessment.
-Return only the corrected answer in concise markdown.`,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            question: query,
-            evidence: groundingResults,
-            draft,
-          }),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`DeepSeek verification ${response.status}`);
-  }
-  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-  return data.choices?.[0]?.message?.content?.trim() || draft;
-}
 
 const GROUNDING_FAIL_CLOSED_MESSAGE = 'I could not verify a safe technical answer in the available manuals. Limit work to safe external inspection, maintain fluid levels only with fluid confirmed correct from the vehicle documentation, and have the system assessed by a qualified Unimog specialist.';
 
@@ -1082,16 +1020,6 @@ Return JSON only: {"verdicts":[{"claimId":"...","status":"supported|narrowed|uns
   const content = data.choices?.[0]?.message?.content ?? '{}';
   const parsed = JSON.parse(content) as { verdicts?: ModelVerdict[] };
   return Array.isArray(parsed.verdicts) ? parsed.verdicts : [];
-}
-
-function referencesCitedInAnswer(
-  answer: string,
-  references: ManualReference[],
-): ManualReference[] {
-  return references.filter(reference => {
-    const pagePattern = new RegExp(`\\bpages?\\s+[^\\n]{0,40}\\b${reference.page_number}\\b`, 'i');
-    return pagePattern.test(answer);
-  });
 }
 
 function buildShadowCandidates(
@@ -1203,6 +1131,7 @@ serve(async (req: Request) => {
       messages?: Array<{ role: string; content: string }>;
       userLocation?: { latitude: number; longitude: number };
       conversationId?: string;
+      context?: BarryRequestContext;
     };
 
     const rawQuery = body.message ?? body.messages?.at(-1)?.content ?? '';
@@ -1235,12 +1164,10 @@ serve(async (req: Request) => {
     const toolsUsed: string[] = [];
     let searchCount = 0;
     const groundingResults: Array<{ source: string; result: Record<string, unknown> }> = [];
-    const technicalQuery = isTechnicalQuery(safeQuery);
-    const semanticFrame = technicalQuery
-      ? buildSemanticQueryFrame(safeQuery, { queryId: crypto.randomUUID() })
-      : null;
+    const semanticFrame = buildSemanticQueryFrame(safeQuery, { queryId: crypto.randomUUID() });
+    const technicalIntent = hasSemanticTechnicalIntent(semanticFrame);
 
-    if (technicalQuery) {
+    if (technicalIntent) {
       const knowledgeResult = await toolKnowledgeBase({ query: safeQuery }, db) as Record<string, unknown>;
       toolsUsed.push('lookup_knowledge_base');
       const normalisedQuery = normaliseTechnicalQuery(safeQuery);
@@ -1311,9 +1238,10 @@ serve(async (req: Request) => {
     const groundingInstruction = groundingResults.length > 0
       ? `\n\nRetrieved evidence for this technical question:\n${JSON.stringify(groundingResults)}
 Base technical claims, specifications, part numbers, fluid types, capacities, and procedures only on this evidence. Cite the returned manual page numbers. If the evidence does not support a requested detail, say that the manuals found do not verify it.`
-      : technicalQuery
+      : technicalIntent
         ? '\n\nNo supporting manual evidence was retrieved. Do not provide specifications, part numbers, fluid types, capacities, or repair procedures. Explain that the documentation could not verify them and suggest safe inspection or professional diagnosis steps only.'
         : '';
+    const contextInstruction = formatRequestContext(body.context);
 
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
       const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -1323,8 +1251,8 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
           model: DEEPSEEK_MODEL,
           max_tokens: 2048,
           stream: false,
-          messages: [{ role: 'system', content: SYSTEM + groundingInstruction }, ...msgs],
-          tools: technicalQuery ? undefined : TOOL_DEFINITIONS,
+          messages: [{ role: 'system', content: SYSTEM + contextInstruction + groundingInstruction }, ...msgs],
+          tools: technicalIntent ? undefined : TOOL_DEFINITIONS,
         }),
       });
       if (!resp.ok) throw new Error(`DeepSeek ${resp.status}: ${await resp.text()}`);
@@ -1364,59 +1292,66 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
         }).then(() => {}).catch(() => {});
 
         searchCount += await collectToolManualReferences(name, result, manualRefs, db);
+        if (
+          ['lookup_knowledge_base', 'search_manual', 'search_manual_v2', 'search_rps'].includes(name)
+          && result.ok !== false
+          && (result.found || Array.isArray(result.results))
+        ) {
+          const source = name === 'lookup_knowledge_base' ? 'validated_knowledge_base' : name;
+          groundingResults.push({ source, result });
+        }
 
         msgs.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result) });
       }
     }
 
     if (!finalText) finalText = "I wasn't able to generate a complete response. Please try rephrasing your question.";
-    let groundedCitedRefs: ManualReference[] | null = null;
+    let groundedCitedRefs: ManualReference[] = [];
     let claimGroundingSummary: Record<string, unknown> | null = null;
     let claimAuditRows: Array<Record<string, unknown>> = [];
-    if (technicalQuery) {
-      if (CLAIM_GROUNDING_ENABLED && semanticFrame) {
-        const grounded = await groundTechnicalAnswer({
-          requestId: semanticFrame.queryId,
-          query: safeQuery,
-          draft: finalText,
-          frame: semanticFrame,
-          candidates: buildShadowCandidates(groundingResults),
-          callModel: callClaimVerifierModel,
+    let groundingLedger: GroundingLedger | null = null;
+    const groundingReason = determineGroundingReason({
+      frame: semanticFrame,
+      toolsUsed,
+      draft: finalText,
+    });
+    if (groundingReason) {
+      const grounded = await groundTechnicalAnswer({
+        requestId: semanticFrame.queryId,
+        query: safeQuery,
+        draft: finalText,
+        frame: semanticFrame,
+        candidates: buildShadowCandidates(groundingResults),
+        callModel: callClaimVerifierModel,
+      });
+      claimGroundingSummary = grounded.ledger ? summarizeLedger(grounded.ledger) : { verifier_status: 'model_error' };
+      if (grounded.ok) {
+        finalText = grounded.answer;
+        groundingLedger = grounded.ledger;
+        groundedCitedRefs = reconcileClaimBackedReferences(grounded.citedUnits, manualRefs);
+        claimAuditRows = grounded.ledger.decisions.map((decision) => {
+          const claim = grounded.ledger.claims.find((entry) => entry.claimId === decision.claimId);
+          return {
+            grounding_run_request_id: semanticFrame.queryId,
+            claim_class: claim?.claimClass ?? 'general_description',
+            claim_text: claim?.text ?? '',
+            status: decision.status,
+            reason_code: decision.reasonCode,
+            confidence: decision.confidence,
+            evidence_keys: decision.evidenceKeys,
+            pipeline_version: grounded.ledger.pipelineVersion,
+          };
         });
-        claimGroundingSummary = grounded.ledger ? summarizeLedger(grounded.ledger) : { verifier_status: 'model_error' };
-        if (grounded.ok) {
-          finalText = grounded.answer;
-          const citedPages = new Set(
-            grounded.citedUnits.map((unit) => `${unit.pageNumber}|${unit.storageUrl ?? ''}`),
-          );
-          groundedCitedRefs = citedPages.size
-            ? manualRefs.filter((reference) => citedPages.has(`${reference.page_number}|${reference.storage_url}`))
-            : [];
-          claimAuditRows = grounded.ledger.decisions.map((decision) => {
-            const claim = grounded.ledger.claims.find((entry) => entry.claimId === decision.claimId);
-            return {
-              grounding_run_request_id: semanticFrame.queryId,
-              claim_class: claim?.claimClass ?? 'general_description',
-              claim_text: claim?.text ?? '',
-              status: decision.status,
-              reason_code: decision.reasonCode,
-              confidence: decision.confidence,
-              evidence_keys: decision.evidenceKeys,
-              pipeline_version: grounded.ledger.pipelineVersion,
-            };
-          });
-        } else {
-          finalText = GROUNDING_FAIL_CLOSED_MESSAGE;
-          groundedCitedRefs = [];
-        }
       } else {
-        finalText = await verifyTechnicalAnswer(safeQuery, finalText, groundingResults);
+        finalText = GROUNDING_FAIL_CLOSED_MESSAGE;
       }
     }
-    const content = addSafety(finalText);
-    const citedManualRefs = technicalQuery
-      ? groundedCitedRefs ?? referencesCitedInAnswer(content, manualRefs)
-      : manualRefs;
+    const content = appendSafetyNotices({
+      answer: finalText,
+      question: safeQuery,
+      retainedClaims: retainedClaimText(groundingLedger),
+    });
+    const citedManualRefs = groundedCitedRefs;
 
     // Log v2 query if used
     if (toolsUsed.includes('search_manual_v2')) {
@@ -1440,9 +1375,8 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
       pdf_references_found: searchCount,
     }).then(() => {}).catch(() => {});
 
-    if (semanticFrame) {
-      const telemetry = createSemanticGroundingTelemetry(semanticFrame);
-      db.from('barry_grounding_runs').insert({
+    const telemetry = createSemanticGroundingTelemetry(semanticFrame);
+    db.from('barry_grounding_runs').insert({
         ...telemetry,
         semantic_frame_redacted: {
           vehicle_model_concept_key: semanticFrame.vehicleModelConceptKey ?? null,
@@ -1467,7 +1401,6 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
         },
         latency_ms: Date.now() - t0,
       }).then(() => {}).catch(() => {});
-    }
 
     if (claimAuditRows.length) {
       db.from('barry_claim_decisions').insert(claimAuditRows).then(() => {}).catch(() => {});
@@ -1479,6 +1412,11 @@ Base technical claims, specifications, part numbers, fluid types, capacities, an
       searchResultCount: searchCount,
       skill_chain: toolsUsed,
       execution_time_ms: Date.now() - t0,
+      grounding_mode: BARRY_GROUNDING_MODE,
+      grounding_required: Boolean(groundingReason),
+      grounding_reason: groundingReason,
+      pipeline_version: claimGroundingSummary?.pipeline_version ?? null,
+      semantic_version: semanticFrame.semanticVersion,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (err) {

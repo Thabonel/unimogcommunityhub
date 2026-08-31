@@ -64,6 +64,7 @@ const MERCEDES_PART_NUMBER = /\b(?:a\s?)?\d{3}\s?\d{3}\s?\d{2}\s?\d{2}\b/g;
 const CODED_PART_NUMBER = /\b(?:pa|pb|pba|pbb|niin|nsn)\s?[-:]?\s?[a-z0-9][a-z0-9\s-]{2,14}\b/gi;
 
 const FLUID_TERMS = /\b(atf|automatic transmission fluid|hydraulic (?:oil|fluid)|engine oil|motor oil|gear oil|sae\s?\d+w(?:[-/]\d+)?|antifreeze|coolant|brake fluid)\b/i;
+const EVIDENCE_GAP_PATTERN = /\b(could not verify|cannot verify|not verified|no verified|does not establish|do not establish|not found in (?:the )?(?:manuals|documentation))\b/i;
 
 function splitDraftLines(draft: string): string[] {
   return draft
@@ -122,14 +123,14 @@ export function extractTechnicalClaims(
   const claims: TechnicalClaim[] = [];
 
   lines.forEach((line, lineIndex) => {
+    if (EVIDENCE_GAP_PATTERN.test(line)) return;
     const numericValues = extractNumericValues(line);
     const partNumbers = extractPartNumbers(line);
     const modelMentions = extractModelMentions(line);
-    const claimClass = classifyLine(line, numericValues, partNumbers, modelMentions);
-    if (claimClass === 'general_description') return;
-
     const subjectConceptKeys = matchSemanticConcepts('', line, registry)
       .map((match) => match.conceptKey);
+    const claimClass = classifyLine(line, numericValues, partNumbers, modelMentions);
+    if (claimClass === 'general_description' && !subjectConceptKeys.length && !modelMentions.length) return;
 
     claims.push({
       claimId: `claim-${lineIndex}`,

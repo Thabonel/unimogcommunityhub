@@ -82,7 +82,9 @@ const GAP_LABELS: Record<string, string> = {
   torque: 'no applicable torque value',
   part_number: 'no confirmed part number',
   compatibility: 'no verified applicability statement',
+  component_identity: 'no verified component identification',
   safety_warning: 'no documented warning',
+  general_description: 'no verified technical description',
 };
 
 export function buildEvidenceUnits(
@@ -95,6 +97,12 @@ export function buildEvidenceUnits(
   const units: VerifierEvidenceUnit[] = [];
 
   for (const ranked of plan.ranked) {
+    const semanticallyRelevant = ranked.components.conceptIdentity > 0
+      || ranked.components.relationshipRelevance > 0
+      || ranked.components.lexical > 0;
+    const exactPartNumberSource = ranked.documentRole === 'parts_catalog'
+      && ranked.permittedClaimClasses.includes('part_number');
+    if (!semanticallyRelevant && !exactPartNumberSource) continue;
     const candidate = byId.get(ranked.candidateId);
     if (!candidate) continue;
     const text = `${candidate.title ?? ''}\n${candidate.contentPreview ?? ''}`.trim();

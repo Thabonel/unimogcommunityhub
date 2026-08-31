@@ -34,6 +34,11 @@ export interface BarryOpenClawResponse {
   degraded?: boolean;
   skill_chain?: string[];
   execution_time_ms?: number;
+  grounding_mode?: string;
+  grounding_required?: boolean;
+  grounding_reason?: string | null;
+  pipeline_version?: string | null;
+  semantic_version?: string;
   error?: string;
 }
 
