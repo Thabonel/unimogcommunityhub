@@ -119,11 +119,18 @@ const UNIT_ALIASES: Record<string, string> = {
   kpa: 'kilopascal',
   kg: 'kilogram',
   mm: 'millimetre',
+  m: 'metre',
+  metre: 'metre',
+  metres: 'metre',
+  meter: 'metre',
+  meters: 'metre',
 };
 
 const UNIT_CONVERSIONS: Record<string, { unit: string; factor: number }> = {
   psi: { unit: 'bar', factor: 0.0689476 },
   kilopascal: { unit: 'bar', factor: 0.01 },
+  metre: { unit: 'millimetre', factor: 1000 },
+  millimetre: { unit: 'metre', factor: 0.001 },
 };
 
 export function normalizeUnit(unit: string): string {
@@ -138,7 +145,7 @@ export interface NumericValue {
   range?: { min: number; max: number };
 }
 
-const NUMERIC_PATTERN = /(?:approx(?:imately)?\.?|about|max(?:imum)?\.?|min(?:imum)?\.?)?\s*(\d+(?:[.,]\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:[.,]\d+)?))?\s*(litres?|liters?|ltr|l|nm|n[·.\s]?m|newton\s?metres?|bar|psi|kpa|kg|mm)\b/gi;
+const NUMERIC_PATTERN = /(?:approx(?:imately)?\.?|about|max(?:imum)?\.?|min(?:imum)?\.?)?\s*(\d+(?:[.,]\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:[.,]\d+)?))?\s*(litres?|liters?|ltr|l|nm|n[·.\s]?m|newton\s?metres?|bar|psi|kpa|kg|mm|metres?|meters?|m)\b/gi;
 
 export function extractNumericValues(text: string): NumericValue[] {
   const values: NumericValue[] = [];

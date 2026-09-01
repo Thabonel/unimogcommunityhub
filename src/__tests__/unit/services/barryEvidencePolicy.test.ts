@@ -81,6 +81,7 @@ describe('numeric normalization and matching', () => {
     expect(normalizeUnit('Nm')).toBe('newton_metre');
     expect(normalizeUnit('N·m')).toBe('newton_metre');
     expect(normalizeUnit('bar')).toBe('bar');
+    expect(normalizeUnit('metres')).toBe('metre');
   });
 
   it('extracts values, ranges, and approximate qualifiers', () => {
@@ -89,6 +90,18 @@ describe('numeric normalization and matching', () => {
     expect(values[0]).toMatchObject({ value: 2.5, unit: 'litre', qualifier: 'approximate' });
     expect(values[1]).toMatchObject({ unit: 'newton_metre', range: { min: 80, max: 100 } });
     expect(values[2]).toMatchObject({ value: 6.3, unit: 'bar' });
+  });
+
+  it('extracts and verifies metre conversions against millimetre evidence', () => {
+    const values = extractNumericValues('either 4.05 m or 3.3 metres');
+    expect(values).toEqual([
+      { value: 4.05, unit: 'metre', qualifier: undefined },
+      { value: 3.3, unit: 'metre', qualifier: undefined },
+    ]);
+    expect(numericValuesMatch(
+      { value: 4.05, unit: 'metre' },
+      { value: 4050, unit: 'millimetre' },
+    )).toBe(true);
   });
 
   it('matches exact values with unit conversion', () => {
