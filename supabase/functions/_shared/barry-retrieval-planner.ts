@@ -85,7 +85,7 @@ export interface ShadowRetrievalPlan {
 }
 
 const PROCEDURE_HEADING = /^(checking|check|disassembly and assembly|removal and installation|removing|installing|adjusting|refilling|bleeding|replacing|draining|topping up)\b/im;
-const SPECIFICATION_HEADING = /\btechnical data\b|\bspecifications?\b|\btightening torques?\b|\bfilling quantities\b|\blubricants?\b/i;
+const SPECIFICATION_HEADING = /\btechnical data\b|\bspecifications?\b|\btightening torques?\b|\bfilling quantities\b|\blubricants?\b|\b(?:internal\s+)?(?:tray\s+)?dimensions?\b/i;
 const DIAGRAM_HEADING = /\bexploded\s+v?[1i]?ew\b|\billustration\b|\bassembly drawing\b/i;
 const WARNING_HEADING = /\b(warning|caution|danger)\b/i;
 
@@ -95,6 +95,7 @@ export function inferDocumentRole(candidate: ShadowEvidenceCandidate): PolicyDoc
   if (title.startsWith('rps')) return 'parts_catalog';
   if (/u435[_-]maint[_-]/.test(title)) return 'maintenance_manual';
   if (title.includes('workshop manual')) return 'workshop_manual';
+  if (/^uhb(?:\s|_|-)/.test(title) || title.includes('user handbook')) return 'owners_manual';
   if (candidate.source === 'structured_manual_search') return 'workshop_manual';
   return 'unknown';
 }

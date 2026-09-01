@@ -32,6 +32,11 @@ describe('document-role permissions', () => {
     expect(DOCUMENT_ROLE_PERMISSIONS.community_content.has('specification')).toBe(false);
     expect(DOCUMENT_ROLE_PERMISSIONS.community_content.has('safety_warning')).toBe(false);
   });
+
+  it('allows owner handbooks to establish published vehicle specifications', () => {
+    expect(DOCUMENT_ROLE_PERMISSIONS.owners_manual.has('specification')).toBe(true);
+    expect(isClaimClassPermitted('owners_manual', 'specification', 'specification')).toBe(true);
+  });
 });
 
 describe('page-type permissions', () => {

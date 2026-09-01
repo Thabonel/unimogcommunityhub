@@ -300,13 +300,18 @@ function keywords(q: string): string[] {
 
 const COMPONENT_PHRASES = [
   'air compressor',
+  'cargo body',
   'fuel injector',
+  'load platform',
   'oil pan',
+  'platform body',
   'portal hub',
   'power steering',
   'steering box',
   'steering gear',
   'transfer case',
+  'tray',
+  'truck bed',
   'wheel hub',
 ];
 
@@ -325,51 +330,63 @@ async function toolSearchManual(input: Record<string, unknown>, db: ReturnType<t
   await loadAvailablePdfs(db);
 
   const kws = keywords(query);
+  const contentTerms = kws.filter(term => term !== 'unimog' && !/^u\d{3,4}l?$/.test(term));
   let chunks: Record<string, unknown>[] = [];
   const lowerQuery = query.toLowerCase();
   const componentPhrase = COMPONENT_PHRASES.find(phrase => lowerQuery.includes(phrase));
 
-  if (componentPhrase) {
+  const rankRows = (rows: Record<string, unknown>[]): Record<string, unknown>[] => rows
+    .map(row => {
+      const title = String(row.manual_title ?? '').toLowerCase();
+      const section = String(row.section_title ?? '').toLowerCase();
+      const content = String(row.content ?? '').toLowerCase();
+      const relevance = contentTerms.reduce((score, term) => {
+        const contentMatches = content.split(term).length - 1;
+        return score + Math.min(contentMatches, 8) +
+          (section.includes(term) ? 8 : 0) +
+          (title.includes(term) ? 12 : 0);
+      }, 0) + (componentPhrase && content.includes(componentPhrase) ? 4 : 0);
+      return { row, relevance };
+    })
+    .sort((a, b) => b.relevance - a.relevance)
+    .slice(0, max)
+    .map(item => item.row);
+
+  if (contentTerms.length) {
+    const { data } = await db.from('manual_chunks')
+      .select('content,section_title,page_number,manual_title')
+      .textSearch('content_tsv', contentTerms.join(' '), { type: 'plain', config: 'english' })
+      .limit(Math.max(max * 6, 30));
+    if (data?.length) chunks = rankRows(data);
+  }
+
+  if (!chunks.length && componentPhrase) {
     const { data } = await db.from('manual_chunks')
       .select('content,section_title,page_number,manual_title')
       .or(`content.ilike.%${componentPhrase}%,section_title.ilike.%${componentPhrase}%`)
-      .limit(30);
+      .limit(Math.max(max * 6, 30));
     if (data?.length) {
-      chunks = data
-        .map(row => {
-          const searchable = `${row.section_title ?? ''} ${row.content ?? ''}`.toLowerCase();
-          let relevance = searchable.split(componentPhrase).length - 1;
-          if (lowerQuery.includes('leak')) {
-            relevance += (searchable.split('seal').length - 1) * 3;
-            relevance += searchable.split('oil').length - 1;
-          }
-          return { row, relevance };
-        })
-        .sort((a, b) => b.relevance - a.relevance)
-        .slice(0, max)
-        .map(item => item.row);
+      chunks = rankRows(data);
     }
   }
 
-  if (!chunks.length && kws.length) {
-    const { data: fts } = await db.from('manual_chunks')
-      .select('content,section_title,page_number,manual_title')
-      .textSearch('content', kws.join(' & '), { type: 'websearch', config: 'english' })
-      .limit(max);
-    if (fts?.length) { chunks = fts; }
-    else {
-      const seen = new Set<string>();
-      for (const kw of kws.slice(0, 4)) {
-        const { data } = await db.from('manual_chunks')
-          .select('content,section_title,page_number,manual_title')
-          .ilike('content', `%${kw}%`).limit(max);
-        for (const r of data ?? []) {
-          const key = `${r.manual_title}|${r.page_number}`;
-          if (!seen.has(key)) { seen.add(key); chunks.push(r); }
+  if (!chunks.length && contentTerms.length) {
+    const candidates: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
+    for (const term of contentTerms.slice(0, 4)) {
+      const { data } = await db.from('manual_chunks')
+        .select('content,section_title,page_number,manual_title')
+        .ilike('content', `%${term}%`)
+        .limit(max * 3);
+      for (const row of data ?? []) {
+        const key = `${row.manual_title}|${row.page_number}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          candidates.push(row);
         }
-        if (chunks.length >= max) break;
       }
     }
+    chunks = rankRows(candidates);
   }
 
   const resolvedResults = chunks.map(c => {

@@ -20,6 +20,7 @@ import { useBarry } from '@/contexts/BarryContext';
 import { toast } from '@/hooks/use-toast';
 import { useSubscription } from '@/hooks/use-subscription';
 import { BarryUpgradePrompt } from '@/components/barry/BarryUpgradePrompt';
+import { formatBarryVehicleLabel } from '@/utils/barryVehicleLabel';
 
 interface EnhancedBarryChatProps {
   className?: string;
@@ -269,10 +270,7 @@ export function EnhancedBarryChat({
                   {vehicleContext && (
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <Car className="h-3 w-3" />
-                      <span>{(() => {
-                        const match = vehicleContext.match(/User's Unimog: ([^.]+)/);
-                        return match ? match[1].trim() : 'Your Unimog';
-                      })()}</span>
+                      <span>{formatBarryVehicleLabel(vehicleContext, userModel)}</span>
                     </div>
                   )}
                 </div>

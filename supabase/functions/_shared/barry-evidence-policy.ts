@@ -34,8 +34,8 @@ export const DOCUMENT_ROLE_PERMISSIONS: Record<PolicyDocumentRole, ReadonlySet<B
     'torque', 'component_identity', 'safety_warning', 'general_description',
   ]),
   owners_manual: new Set([
-    'procedure_step', 'diagnostic_test', 'fluid', 'capacity',
-    'component_identity', 'safety_warning', 'general_description',
+    'procedure_step', 'diagnostic_test', 'specification', 'fluid', 'capacity',
+    'compatibility', 'component_identity', 'safety_warning', 'general_description',
   ]),
   parts_catalog: new Set(['component_identity', 'part_number', 'compatibility']),
   service_bulletin: new Set([

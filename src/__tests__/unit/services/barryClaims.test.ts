@@ -56,9 +56,11 @@ describe('extractTechnicalClaims', () => {
     expect(claims[0].subjectConceptKeys).toContain('component.steering_gear');
   });
 
-  it('ignores general descriptive sentences', () => {
+  it('grounds general descriptions that identify a known technical concept', () => {
     const claims = extractTechnicalClaims('The steering box sits between the column and the linkage.');
-    expect(claims).toHaveLength(0);
+    expect(claims).toHaveLength(1);
+    expect(claims[0].claimClass).toBe('general_description');
+    expect(claims[0].subjectConceptKeys).toContain('component.steering_gear');
   });
 
   it('skips headings and bold-only label lines', () => {

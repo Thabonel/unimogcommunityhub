@@ -59,7 +59,7 @@ describe('runtime role and page inference', () => {
     expect(inferDocumentRole(candidate({ manualTitle: 'U1700L U435 Workshop Manual Volume 1' }))).toBe('workshop_manual');
     expect(inferDocumentRole(candidate({ manualTitle: 'u435-maint-46-steering' }))).toBe('maintenance_manual');
     expect(inferDocumentRole(candidate({ source: 'validated_knowledge_base' }))).toBe('validated_knowledge');
-    expect(inferDocumentRole(candidate({ manualTitle: 'UHB Unimog Cargo' }))).toBe('unknown');
+    expect(inferDocumentRole(candidate({ manualTitle: 'UHB Unimog Cargo' }))).toBe('owners_manual');
   });
 
   it('classifies exploded views as diagrams even in workshop manuals', () => {
@@ -70,6 +70,10 @@ describe('runtime role and page inference', () => {
     expect(inferPageType(candidate({
       contentPreview: 'Technical data Steering box Ratio in steering box',
     }), 'workshop_manual')).toBe('specification');
+    expect(inferPageType(candidate({
+      contentPreview: 'Internal Tray Dimensions: (1) Length 4050 mm (2) Width 2130 mm',
+      manualTitle: 'UHB Unimog Cargo',
+    }), 'owners_manual')).toBe('specification');
     expect(inferPageType(candidate({
       contentPreview: 'Checking tightness of universal joint at steering box',
     }), 'workshop_manual')).toBe('procedure');
