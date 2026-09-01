@@ -9,6 +9,10 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+export function isSupportedSupabaseAnonKey(value: string): boolean {
+  return value.startsWith('eyJ') || value.startsWith('sb_publishable_');
+}
+
 export function validateEnvironment(): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -29,7 +33,7 @@ export function validateEnvironment(): ValidationResult {
   // Required: Supabase Anon Key
   if (!supabaseAnonKey) {
     errors.push('VITE_SUPABASE_ANON_KEY is not configured');
-  } else if (!supabaseAnonKey.startsWith('eyJ') && !supabaseAnonKey.startsWith('sb_publi_')) {
+  } else if (!isSupportedSupabaseAnonKey(supabaseAnonKey)) {
     errors.push('VITE_SUPABASE_ANON_KEY must be a valid JWT or Supabase publishable key');
   } else if (supabaseAnonKey.startsWith('eyJ') && supabaseAnonKey.length < 100) {
     errors.push('VITE_SUPABASE_ANON_KEY appears to be truncated');
@@ -125,5 +129,5 @@ if (typeof window !== 'undefined') {
   const result = validateEnvironment();
   
   // Store result for other components to access
-  (window as any).__ENV_VALIDATION__ = result;
+  (window as Window & { __ENV_VALIDATION__?: ValidationResult }).__ENV_VALIDATION__ = result;
 }

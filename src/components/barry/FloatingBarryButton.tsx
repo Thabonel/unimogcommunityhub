@@ -1,7 +1,13 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { MobileTooltip } from '@/components/ui/mobile-tooltip';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Wrench } from 'lucide-react';
 import { TabbedBarryLayout } from '../knowledge/TabbedBarryLayout';
 import { useUserLocation } from '@/hooks/use-user-location';
@@ -109,12 +115,12 @@ export function FloatingBarryButton() {
                 <Wrench className="h-3 w-3 md:h-4 md:w-4 absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 text-unimog-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base md:text-xl font-bold text-unimog-800 dark:text-unimog-200 truncate">
+                <DialogTitle className="text-base md:text-xl font-bold text-unimog-800 dark:text-unimog-200 truncate">
                   Barry - AI Mechanic with Manual Access
-                </h2>
-                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">
+                </DialogTitle>
+                <DialogDescription className="text-xs md:text-sm text-muted-foreground hidden sm:block">
                   Ask Barry about maintenance, repairs, or any technical questions - click manual citations to view PDFs
-                </p>
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
