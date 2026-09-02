@@ -3,11 +3,24 @@ import { supabase } from '@/lib/supabase-client';
 
 export interface DashboardVehicle {
   id: string;
+  user_id: string;
   name: string;
   model: string;
   year: string;
-  photos: string[] | null;
+  description?: string;
+  modifications?: string;
+  country_code?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  is_showcase: boolean;
+  photos: string[];
   thumbnail_url?: string | null;
+  purchase_odometer?: number;
+  current_odometer?: number;
+  odometer_unit?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export function useDashboardVehicle(userId: string | undefined) {
@@ -18,7 +31,7 @@ export function useDashboardVehicle(userId: string | undefined) {
 
       const { data, error } = await supabase
         .from('vehicles')
-        .select('id, name, model, year, photos, thumbnail_url')
+        .select('*')
         .eq('user_id', userId)
         .eq('is_showcase', true)
         .order('created_at', { ascending: false })
