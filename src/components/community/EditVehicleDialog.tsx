@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Upload, X, Loader2, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/profile';
 import { supabase } from '@/lib/supabase-client';
 import { toast } from '@/hooks/use-toast';
 import CountrySelector from './CountrySelector';
@@ -37,63 +36,41 @@ interface EditVehicleDialogProps {
   onSuccess?: () => void;
 }
 
+type VehicleFormData = Omit<Vehicle, 'id' | 'photos'>;
+
+// Fields the caller did not supply stay undefined so handleSubmit can omit them
+// from the update instead of writing a blank over stored data.
+const buildFormData = (vehicle: Vehicle): VehicleFormData => ({
+  name: vehicle.name || '',
+  model: vehicle.model || '',
+  year: vehicle.year || '',
+  description: vehicle.description,
+  modifications: vehicle.modifications,
+  country_code: vehicle.country_code,
+  country: vehicle.country,
+  region: vehicle.region,
+  city: vehicle.city,
+  is_showcase: vehicle.is_showcase ?? true,
+  purchase_odometer: vehicle.purchase_odometer,
+  current_odometer: vehicle.current_odometer,
+  odometer_unit: vehicle.odometer_unit,
+});
+
 export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditVehicleDialogProps) => {
   const { user } = useAuth();
-  const { userData } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>(vehicle.photos || []);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
-    name: vehicle.name || '',
-    model: vehicle.model || '',
-    year: vehicle.year || '',
-    description: vehicle.description || '',
-    modifications: vehicle.modifications || '',
-    country_code: vehicle.country_code || '',
-    country: vehicle.country || '',
-    region: vehicle.region || '',
-    city: vehicle.city || '',
-    is_showcase: vehicle.is_showcase ?? true,
-    purchase_odometer: vehicle.purchase_odometer || 0,
-    current_odometer: vehicle.current_odometer || 0,
-    odometer_unit: vehicle.odometer_unit || 'km',
-  });
+  const [formData, setFormData] = useState<VehicleFormData>(() => buildFormData(vehicle));
 
-  // Update form when vehicle changes, and auto-fill location from profile if vehicle has no location
+  // Update form when vehicle changes
   useEffect(() => {
-    const hasVehicleLocation = vehicle.country_code || vehicle.city || vehicle.country;
-
-    // If vehicle has no location data, use profile location
-    const locationData = hasVehicleLocation ? {
-      country_code: vehicle.country_code || '',
-      country: vehicle.country || '',
-      region: vehicle.region || '',
-      city: vehicle.city || '',
-    } : {
-      // Auto-fill from profile
-      country_code: userData?.country || '',
-      country: '', // Will be populated by CountrySelector
-      region: '', // Profile doesn't have region
-      city: userData?.city || '',
-    };
-
-    setFormData({
-      name: vehicle.name || '',
-      model: vehicle.model || '',
-      year: vehicle.year || '',
-      description: vehicle.description || '',
-      modifications: vehicle.modifications || '',
-      ...locationData,
-      is_showcase: vehicle.is_showcase ?? true,
-      purchase_odometer: vehicle.purchase_odometer || 0,
-      current_odometer: vehicle.current_odometer || 0,
-      odometer_unit: vehicle.odometer_unit || 'km',
-    });
+    setFormData(buildFormData(vehicle));
     setPhotos(vehicle.photos || []);
-  }, [vehicle, userData]);
+  }, [vehicle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,26 +97,24 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
     setIsLoading(true);
 
     try {
+      const updates: Record<string, unknown> = {
+        ...formData,
+        photos: photos,
+        updated_at: new Date().toISOString()
+      };
+
+      // Drop fields the caller never supplied, so a partial vehicle record
+      // cannot blank out stored values the form never showed.
+      for (const key of Object.keys(updates)) {
+        if (updates[key] === undefined) {
+          delete updates[key];
+        }
+      }
+
       // Update vehicle
       const { error: updateError } = await supabase
         .from('vehicles')
-        .update({
-          name: formData.name,
-          model: formData.model,
-          year: formData.year,
-          description: formData.description,
-          modifications: formData.modifications,
-          country_code: formData.country_code,
-          country: formData.country,
-          region: formData.region,
-          city: formData.city,
-          is_showcase: formData.is_showcase,
-          purchase_odometer: formData.purchase_odometer,
-          current_odometer: formData.current_odometer,
-          odometer_unit: formData.odometer_unit,
-          photos: photos,
-          updated_at: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', vehicle.id);
 
       if (updateError) throw updateError;
@@ -432,8 +407,8 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
                   id="purchase_odometer"
                   type="number"
                   min="0"
-                  value={formData.purchase_odometer}
-                  onChange={(e) => setFormData({ ...formData, purchase_odometer: Number(e.target.value) })}
+                  value={formData.purchase_odometer ?? ''}
+                  onChange={(e) => setFormData({ ...formData, purchase_odometer: e.target.value === '' ? undefined : Number(e.target.value) })}
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground">Odometer when purchased</p>
@@ -444,8 +419,8 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
                   id="current_odometer"
                   type="number"
                   min="0"
-                  value={formData.current_odometer}
-                  onChange={(e) => setFormData({ ...formData, current_odometer: Number(e.target.value) })}
+                  value={formData.current_odometer ?? ''}
+                  onChange={(e) => setFormData({ ...formData, current_odometer: e.target.value === '' ? undefined : Number(e.target.value) })}
                   placeholder="0"
                 />
                 <p className="text-xs text-muted-foreground">Auto-updates from logs</p>
@@ -454,7 +429,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
                 <Label htmlFor="odometer_unit">Unit</Label>
                 <select
                   id="odometer_unit"
-                  value={formData.odometer_unit}
+                  value={formData.odometer_unit ?? 'km'}
                   onChange={(e) => setFormData({ ...formData, odometer_unit: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
@@ -470,7 +445,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={formData.description}
+              value={formData.description ?? ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Tell us about your Unimog..."
               rows={3}
@@ -482,7 +457,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
             <Label htmlFor="modifications">Modifications</Label>
             <Textarea
               id="modifications"
-              value={formData.modifications}
+              value={formData.modifications ?? ''}
               onChange={(e) => setFormData({ ...formData, modifications: e.target.value })}
               placeholder="List any modifications or upgrades..."
               rows={3}
@@ -493,7 +468,7 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
           <div className="space-y-4">
             <Label>Location</Label>
             <CountrySelector
-              value={formData.country_code}
+              value={formData.country_code ?? ''}
               onChange={(value) => setFormData({ ...formData, country_code: value })}
               showAll={false}
               placeholder="Select your country"
@@ -501,12 +476,12 @@ export const EditVehicleDialog = ({ isOpen, onClose, vehicle, onSuccess }: EditV
             <div className="grid grid-cols-2 gap-4">
               <Input
                 placeholder="Region/State"
-                value={formData.region}
+                value={formData.region ?? ''}
                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
               />
               <Input
                 placeholder="City"
-                value={formData.city}
+                value={formData.city ?? ''}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
               />
             </div>

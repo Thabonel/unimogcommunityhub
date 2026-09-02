@@ -49,17 +49,6 @@ export const VehicleHeroBanner = () => {
     setIsEditingVehicle(false);
   };
 
-  // Debug logging
-  console.log('VehicleHeroBanner - Data:', {
-    hasVehicle: !!vehicle,
-    vehicleId: vehicle?.id,
-    photosCount: vehicle?.photos?.length || 0,
-    bannerPhotosCount: bannerPhotos.length,
-    hasPhotos,
-    showOnDashboard,
-    displayMode: preferences?.dashboard_display_mode,
-  });
-
   // Don't render anything while loading
   if (isLoading || preferencesLoading) {
     return (
